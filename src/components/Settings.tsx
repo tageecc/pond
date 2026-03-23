@@ -1,27 +1,24 @@
 import { useState, useEffect } from "react"
-import { invoke } from "@tauri-apps/api/core"
+import { getVersion } from "@tauri-apps/api/app"
 import { useAppStore } from "../stores/appStore"
 import { loadAppConfig, saveAppConfig } from "../lib/appStore"
 import { Button } from "./ui/button"
 import { Switch } from "./ui/switch"
 import { ThemeToggle } from "./ThemeToggle"
-import { FolderOpen } from "lucide-react"
 
 export function Settings() {
   const { loadConfigs } = useAppStore()
   const [launchAtLogin, setLaunchAtLogin] = useState(false)
   const [stopAgentsOnExit, setStopAgentsOnExit] = useState(false)
   const [minimizeToTray, setMinimizeToTray] = useState(true)
-  const [configDirPath, setConfigDirPath] = useState<string>("")
+  const [appVersion, setAppVersion] = useState("")
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
     loadConfigs()
   }, [loadConfigs])
   useEffect(() => {
-    invoke<string>("get_config_dir_path")
-      .then(setConfigDirPath)
-      .catch(() => setConfigDirPath(""))
+    void getVersion().then(setAppVersion).catch(() => setAppVersion(""))
   }, [])
   useEffect(() => {
     loadAppConfig()
@@ -40,14 +37,6 @@ export function Settings() {
       .then((enabled) => setLaunchAtLogin((prev) => (prev !== enabled ? enabled : prev)))
       .catch(() => {})
   }, [ready])
-
-  const openConfigDir = async () => {
-    try {
-      await invoke("open_config_dir")
-    } catch (e) {
-      console.error("打开目录失败", e)
-    }
-  }
 
   if (!ready) {
     return (

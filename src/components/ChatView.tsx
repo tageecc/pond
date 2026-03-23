@@ -1542,7 +1542,7 @@ export function ChatView() {
                   disabled={sending || sessionsLoading || !chatState.sessionKey}
                 >
                   <SelectTrigger
-                    className="h-8 min-w-0 max-w-[min(100%,14rem)] border-0 bg-transparent text-xs shadow-none hover:bg-app-hover/80 focus:ring-0 dark:hover:bg-app-hover/40"
+                    className="h-8 w-fit min-w-0 max-w-[min(100%,14rem)] shrink-0 border-0 bg-transparent px-2 text-xs shadow-none hover:bg-app-hover/80 focus:ring-0 dark:hover:bg-app-hover/40"
                     title="当前会话"
                   >
                     {transcriptLoading ? (

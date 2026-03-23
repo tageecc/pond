@@ -828,6 +828,21 @@ export function AgentView() {
     if (modelSelectedId && llmModels[modelSelectedId]) loadModelForm(modelSelectedId)
   }, [modelSelectedId, openclawConfig, loadModelForm, llmModels])
 
+  const handleOpenSkillDirectory = useCallback(
+    async (skillName: string) => {
+      if (!selectedId) return
+      try {
+        await invoke("open_skill_directory_for_instance", {
+          instanceId: selectedId,
+          skillName,
+        })
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : String(e))
+      }
+    },
+    [selectedId],
+  )
+
   if (openclawConfig === null) {
     return (
       <div className="flex h-full items-center justify-center p-8">
@@ -1251,21 +1266,6 @@ export function AgentView() {
       setUninstallingSkillId(null)
     }
   }
-
-  const handleOpenSkillDirectory = useCallback(
-    async (skillName: string) => {
-      if (!selectedId) return
-      try {
-        await invoke("open_skill_directory_for_instance", {
-          instanceId: selectedId,
-          skillName,
-        })
-      } catch (e) {
-        toast.error(e instanceof Error ? e.message : String(e))
-      }
-    },
-    [selectedId],
-  )
 
   const openAddModal = () => {
     setShowAddModal(true)

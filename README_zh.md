@@ -1,10 +1,10 @@
+<div align="center">
+
 # Pond
 
-> **OpenClaw runs on disk. Pond runs the control plane.**
+**OpenClaw runs on disk. Pond runs the control plane.**
 
-| [English](./README.md)
-
-<p align="center">
+<br/>
 
 [![GitHub Release](https://img.shields.io/github/v/release/tageecc/pond)](https://github.com/tageecc/pond/releases)
 [![License](https://img.shields.io/github/license/tageecc/pond)](https://github.com/tageecc/pond/blob/main/LICENSE)
@@ -13,9 +13,13 @@
 [![GitHub Stars](https://img.shields.io/github/stars/tageecc/pond)](https://github.com/tageecc/pond/stargazers)
 [![GitHub Issues](https://img.shields.io/github/issues/tageecc/pond)](https://github.com/tageecc/pond/issues)
 
-</p>
+<br/>
 
-社区参与准则见 [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md)。
+**Pond 是 [OpenClaw](https://docs.openclaw.ai) 的桌面控制面**：当你从「一个 bot」升级到 **多智能体**、**多实例** 时，不必在多个终端和零散配置里来回切换——**团队管理、Gateway、对话、概览与数据分析** 都在一个原生窗口里完成。
+
+OpenClaw 跑在磁盘上；Pond 负责 **实例边界、进程与团队协作面**：同一台机器上多套 `~/.openclaw` 与 `~/.openclaw-{id}`，各自 Gateway、配置与团队数据范围清晰可管理。
+
+</div>
 
 ---
 
@@ -26,12 +30,6 @@
 **macOS：** 按芯片选择对应 DMG（**M 系列** 选 aarch64/arm64；**Intel Mac** 选 x86_64）。未签名时首次可能被拦截，请 **Control-点按** 应用选 **打开**，或在 **系统设置 → 隐私与安全性** 中允许。
 
 维护者发布流程见 [RELEASING.md](./RELEASING.md)。
-
----
-
-**Pond 是 [OpenClaw](https://docs.openclaw.ai) 的桌面控制面**：当你从「一个 bot」升级到 **多智能体**、**多实例** 时，不必在多个终端和零散配置里来回切换——**团队管理、Gateway、对话、概览与数据分析** 都在一个原生窗口里完成。
-
-OpenClaw 跑在磁盘上；Pond 负责 **实例边界、进程与团队协作面**：同一台机器上多套 `~/.openclaw` 与 `~/.openclaw-{id}`，各自 Gateway、配置与团队数据范围清晰可管理。
 
 ---
 
@@ -178,3 +176,4 @@ Rust：`src-tauri/src/commands/` · 注册：`lib.rs` · 界面：`src/component
 
 - 仓库：<https://github.com/tageecc/pond>
 - OpenClaw 文档：<https://docs.openclaw.ai>
+- [English README](./README.md)

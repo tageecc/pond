@@ -1,10 +1,10 @@
+<div align="center">
+
 # Pond
 
-> **OpenClaw runs on disk. Pond runs the control plane.**
+**OpenClaw runs on disk. Pond runs the control plane.**
 
-| [简体中文](./README_zh.md)
-
-<p align="center">
+<br/>
 
 [![GitHub Release](https://img.shields.io/github/v/release/tageecc/pond)](https://github.com/tageecc/pond/releases)
 [![License](https://img.shields.io/github/license/tageecc/pond)](https://github.com/tageecc/pond/blob/main/LICENSE)
@@ -13,11 +13,13 @@
 [![GitHub Stars](https://img.shields.io/github/stars/tageecc/pond)](https://github.com/tageecc/pond/stargazers)
 [![GitHub Issues](https://img.shields.io/github/issues/tageecc/pond)](https://github.com/tageecc/pond/issues)
 
-</p>
+<br/>
 
 **Pond is a native desktop shell for [OpenClaw](https://docs.openclaw.ai)**—built so you are not stuck in five terminals and three config files when you scale from one bot to **many agents** and **many instances** on the same machine.
 
 If you use OpenClaw seriously, you already split **profiles** (`~/.openclaw` vs `~/.openclaw-{id}`), restart Gateways, watch spend, and coordinate who talks to whom. Pond puts **team management**, **Gateway control**, **chat**, **dashboards**, and **analytics** behind one UI, with Rust doing the process and filesystem work.
+
+</div>
 
 ---
 
@@ -34,8 +36,6 @@ If you use OpenClaw seriously, you already split **profiles** (`~/.openclaw` vs 
 - [FAQ](#faq)
 - [Contributing](#contributing)
 - [License](#license)
-
-Community standards: [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md)
 
 ---
 
@@ -196,3 +196,4 @@ Issues and PRs are welcome. Run `pnpm exec tsc --noEmit` before you open a PR. S
 
 - Repository: <https://github.com/tageecc/pond>
 - OpenClaw: <https://docs.openclaw.ai>
+- [README in Chinese](./README_zh.md)
