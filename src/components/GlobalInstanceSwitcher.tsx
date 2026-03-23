@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 import { useAppStore } from "../stores/appStore"
 import { getAgentDisplayName } from "../lib/utils"
 import { Check, ChevronDown, Plus, Users } from "lucide-react"
@@ -14,6 +15,7 @@ import { CreateOpenClawInstanceDialog } from "./CreateOpenClawInstanceDialog"
 import { pondInstanceIdsList, resolvePondInstanceId } from "../lib/pondInstanceId"
 
 export function GlobalInstanceSwitcher() {
+  const { t } = useTranslation()
   const instanceIds = useAppStore((s) => s.instanceIds)
   const instanceDisplayNames = useAppStore((s) => s.instanceDisplayNames) ?? {}
   const selectedInstanceId = useAppStore((s) => s.selectedInstanceId)
@@ -39,7 +41,7 @@ export function GlobalInstanceSwitcher() {
             <Users className="h-4 w-4" />
           </span>
           <span className="min-w-0 flex-1 truncate text-left">
-            {currentId ? getAgentDisplayName(currentId, displayNames) : "选择实例"}
+            {currentId ? getAgentDisplayName(currentId, displayNames) : t("instanceSwitcher.placeholder")}
           </span>
           <ChevronDown className="h-4 w-4 shrink-0 text-app-muted transition-transform group-data-[state=open]:rotate-180" />
         </DropdownMenuTrigger>
@@ -79,7 +81,7 @@ export function GlobalInstanceSwitcher() {
             onSelect={() => setCreateOpen(true)}
           >
             <Plus className="h-4 w-4 shrink-0" />
-            新建 OpenClaw 实例
+            {t("instanceSwitcher.createNew")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

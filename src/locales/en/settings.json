@@ -1,0 +1,17 @@
+{
+  "settings": {
+    "title": "Settings",
+    "appearance": "Appearance",
+    "appearanceHint": "Light / dark / follow system",
+    "language": "Language",
+    "languageHint": "Default follows the system; saved to this device",
+    "langZh": "中文",
+    "langEn": "English",
+    "launchAtLogin": "Launch at login",
+    "launchAtLoginHint": "Start Pond when you sign in",
+    "minimizeToTray": "Minimize to tray",
+    "minimizeToTrayHint": "Closing the window hides to the tray instead of quitting",
+    "stopAgentsOnExit": "Stop agents on quit",
+    "stopAgentsOnExitHint": "Stop all Gateways when quitting the app"
+  }
+}

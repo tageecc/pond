@@ -1,0 +1,10 @@
+{
+  "createInstance": {
+    "title": "New OpenClaw instance",
+    "description": "Creates an isolated data directory at {{short}} separate from the main profile {{default}} (default).",
+    "short": "~/.openclaw-<short id>",
+    "defaultPath": "~/.openclaw",
+    "creating": "Creating…",
+    "create": "Create"
+  }
+}

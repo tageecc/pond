@@ -22,7 +22,7 @@ export function chatSessionStoreKey(pondInstanceId: string, roleAgentId: string)
 
 export function resolveChatStoreKey(storeKey: string): string {
   const k = storeKey.trim()
-  if (!k) throw new Error("chat store key 不能为空")
+  if (!k) throw new Error("chat store key cannot be empty")
   return k
 }
 

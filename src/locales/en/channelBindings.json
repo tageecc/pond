@@ -1,0 +1,22 @@
+{
+  "channelBindings": {
+    "routingRules": "Routing rules",
+    "add": "Add",
+    "role": "Role",
+    "channel": "Channel",
+    "accountId": "Account ID",
+    "sessionType": "Session type",
+    "sessionId": "Session ID",
+    "optional": "Optional",
+    "selectChannel": "Select",
+    "peerAny": "Any",
+    "peerDirect": "Direct",
+    "peerGroup": "Group",
+    "peerChannel": "Channel",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "remove": "Remove",
+    "discordGuildId": "Discord guildId",
+    "slackTeamId": "Slack teamId"
+  }
+}

@@ -1,3 +1,4 @@
+pub mod tray_menu;
 pub mod gateway;
 pub mod instance_cleanup;
 pub mod channel_cli;

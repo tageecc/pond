@@ -1,0 +1,17 @@
+{
+  "settings": {
+    "title": "设置",
+    "appearance": "外观",
+    "appearanceHint": "浅色 / 深色 / 跟随系统",
+    "language": "语言",
+    "languageHint": "默认跟随系统；将保存到本机",
+    "langZh": "中文",
+    "langEn": "English",
+    "launchAtLogin": "开机自启",
+    "launchAtLoginHint": "登录时自动启动 Pond",
+    "minimizeToTray": "最小化到托盘",
+    "minimizeToTrayHint": "点击关闭按钮时最小化到托盘而非退出",
+    "stopAgentsOnExit": "退出时停止 Agent",
+    "stopAgentsOnExitHint": "关闭应用后停止所有 Gateway"
+  }
+}

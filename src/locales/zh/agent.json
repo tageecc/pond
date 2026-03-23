@@ -1,0 +1,37 @@
+{
+  "agent": {
+    "workspaceFile": {
+      "AGENTS_md": "操作指令与记忆",
+      "SOUL_md": "人设、边界、语气",
+      "TOOLS_md": "工具说明与约定",
+      "IDENTITY_md": "名称、风格、表情",
+      "USER_md": "用户档案与称呼",
+      "BOOT_md": "启动检查清单",
+      "HEARTBEAT_md": "心跳任务清单",
+      "BOOTSTRAP_md": "首次运行仪式"
+    },
+    "workspaceFallback": "工作区文件",
+    "toolProfile": {
+      "full": {
+        "label": "Full - 无限制",
+        "desc": "所有工具均可用"
+      },
+      "coding": {
+        "label": "Coding - 编程场景",
+        "desc": "文件系统 + 运行时 + 会话 + 记忆"
+      },
+      "messaging": {
+        "label": "Messaging - 纯消息",
+        "desc": "仅会话和消息工具"
+      },
+      "minimal": {
+        "label": "Minimal - 最小化",
+        "desc": "仅状态查询工具"
+      }
+    },
+    "chromeExtension": {
+      "hint": "Chrome 模式需安装 OpenClaw Browser Relay 扩展，安装后在目标标签页点击扩展图标即可附加控制。",
+      "install": "去安装"
+    }
+  }
+}

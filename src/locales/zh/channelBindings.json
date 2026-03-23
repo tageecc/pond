@@ -1,0 +1,22 @@
+{
+  "channelBindings": {
+    "routingRules": "路由规则",
+    "add": "添加",
+    "role": "角色",
+    "channel": "渠道",
+    "accountId": "账户 ID",
+    "sessionType": "会话类型",
+    "sessionId": "会话 ID",
+    "optional": "可选",
+    "selectChannel": "选择",
+    "peerAny": "不限",
+    "peerDirect": "私聊",
+    "peerGroup": "群组",
+    "peerChannel": "频道",
+    "moveUp": "上移",
+    "moveDown": "下移",
+    "remove": "删除",
+    "discordGuildId": "Discord guildId",
+    "slackTeamId": "Slack teamId"
+  }
+}

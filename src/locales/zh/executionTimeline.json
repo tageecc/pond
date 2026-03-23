@@ -1,0 +1,25 @@
+{
+  "executionTimeline": {
+    "stepTypes": {
+      "message": "消息",
+      "tool_call": "工具调用",
+      "thinking": "思考",
+      "approval": "等待审批",
+      "completion": "完成"
+    },
+    "unknown": "未知",
+    "collapseDetails": "收起详情",
+    "expandDetails": "查看详情",
+    "toolName": "工具名称：",
+    "args": "参数：",
+    "result": "结果：",
+    "error": "错误：",
+    "running": "执行中",
+    "stepsProgress": "{{completed}}/{{total}} 步骤",
+    "errorsCount": "{{n}} 个错误",
+    "totalDuration": "总计 {{duration}}",
+    "title": "执行时间线",
+    "emptyTitle": "暂无执行记录",
+    "emptyHint": "Agent 执行时会显示详细的步骤时间线"
+  }
+}

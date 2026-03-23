@@ -1,0 +1,8 @@
+{
+  "tray": {
+    "show": "Show window",
+    "start": "Start Gateway",
+    "stop": "Stop Gateway",
+    "quit": "Quit"
+  }
+}

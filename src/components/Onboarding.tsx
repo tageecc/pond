@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { useTranslation } from "react-i18next"
 import { invoke } from "@tauri-apps/api/core"
 import { useAppStore } from "../stores/appStore"
 import { Button } from "./ui/button"
@@ -25,6 +26,7 @@ import {
 import { ExternalLink, Loader2, Sparkles, Download, ChevronRight, ChevronDown } from "lucide-react"
 import { cn } from "../lib/utils"
 import { PROVIDERS, getProvider } from "../constants/providers"
+import { providerLabel } from "../lib/providerLabel"
 import { ModelIdField } from "./ModelIdField"
 import type { OpenClawConfig } from "../types"
 import { hasConfiguredModel as hasConfiguredModelFromConfig } from "../lib/openclawAgentsModels"
@@ -39,6 +41,7 @@ function hasConfiguredModel(config: OpenClawConfig | null): boolean {
 }
 
 export function Onboarding() {
+  const { t } = useTranslation()
   const { completeOnboarding, importSystemOpenClaw } = useAppStore()
   const [step, setStep] = useState<"choice" | "key">("choice")
   const [providerId, setProviderId] = useState("openai")
@@ -91,7 +94,7 @@ export function Onboarding() {
     try {
       await open(url)
     } catch {
-      setError("无法打开浏览器，请手动访问：" + url)
+      setError(t("onboarding.browserOpenFailed", { url }))
     }
   }
 
@@ -116,7 +119,7 @@ export function Onboarding() {
   const handleComplete = async () => {
     const key = apiKey.trim()
     if (!key) {
-      setError("请填写 API Key")
+      setError(t("onboarding.apiKeyRequired"))
       return
     }
     // Re-check on disk; avoid stale detect_system_openclaw
@@ -152,15 +155,15 @@ export function Onboarding() {
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-claw-500/15">
             <Sparkles className="h-7 w-7 text-claw-500" />
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-app-text">欢迎使用 Pond</h1>
-          <p className="mt-1.5 text-sm text-app-muted">连接第一个模型</p>
+          <h1 className="text-xl font-bold tracking-tight text-app-text">{t("onboarding.welcomeTitle")}</h1>
+          <p className="mt-1.5 text-sm text-app-muted">{t("onboarding.welcomeSubtitle")}</p>
         </div>
 
         {hasSystemOpenClaw === true && (
           <div className="flex items-center justify-between gap-3 rounded-xl border border-claw-500/20 bg-claw-500/5 px-4 py-3">
             <div className="flex min-w-0 items-center gap-2">
               <Download className="h-4 w-4 shrink-0 text-claw-500" />
-              <span className="text-sm text-app-text">本机已安装 OpenClaw</span>
+              <span className="text-sm text-app-text">{t("onboarding.systemOpenClaw")}</span>
             </div>
             <Button
               type="button"
@@ -170,26 +173,26 @@ export function Onboarding() {
               disabled={importing}
             >
               {importing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-              一键导入
+              {t("onboarding.importOneClick")}
             </Button>
           </div>
         )}
 
         <div className="flex items-center gap-3">
           <span className="h-px flex-1 bg-app-border/80" />
-          <span className="text-xs text-app-muted">或手动配置</span>
+          <span className="text-xs text-app-muted">{t("onboarding.orManual")}</span>
           <span className="h-px flex-1 bg-app-border/80" />
         </div>
 
         {step === "choice" && (
           <Card className="bg-app-surface">
             <CardHeader className="pb-2 pt-5 px-5">
-              <CardTitle className="text-sm font-semibold text-app-text">选择模型提供商</CardTitle>
-              <CardDescription className="text-xs text-app-muted">选择后点击下一步填写 API Key</CardDescription>
+              <CardTitle className="text-sm font-semibold text-app-text">{t("onboarding.chooseProvider")}</CardTitle>
+              <CardDescription className="text-xs text-app-muted">{t("onboarding.chooseProviderDesc")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 px-5 pb-5">
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-app-muted">提供商</label>
+                <label className="text-xs font-medium text-app-muted">{t("onboarding.provider")}</label>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -197,19 +200,19 @@ export function Onboarding() {
                       variant="outline"
                       className="h-10 w-full justify-between rounded-lg border-app-border bg-app-elevated text-app-text text-sm hover:bg-app-hover [&>svg]:opacity-80"
                     >
-                      <span>{selectedProvider?.name ?? "选择提供商"}</span>
+                      <span>{providerLabel(t, providerId)}</span>
                       <ChevronDown className="h-4 w-4 shrink-0" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="max-h-[70vh] min-w-[14rem] overflow-y-auto rounded-lg border-app-border bg-app-surface">
-                    <DropdownMenuLabel className="text-xs font-medium text-app-muted">选择提供商</DropdownMenuLabel>
+                    <DropdownMenuLabel className="text-xs font-medium text-app-muted">{t("onboarding.selectProvider")}</DropdownMenuLabel>
                     {PROVIDERS.map((p) => (
                       <DropdownMenuItem
                         key={p.id}
                         onSelect={() => { setProviderId(p.id); setError(null) }}
                         className="cursor-pointer rounded-lg text-app-text focus:bg-claw-500/10 focus:text-app-text"
                       >
-                        {p.name}
+                        {providerLabel(t, p.id)}
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuContent>
@@ -233,7 +236,7 @@ export function Onboarding() {
                   }
                 }}
               >
-                下一步 <ChevronRight className="h-4 w-4" />
+                {t("onboarding.next")} <ChevronRight className="h-4 w-4" />
               </Button>
             </CardContent>
           </Card>
@@ -242,8 +245,8 @@ export function Onboarding() {
         {step === "key" && (
           <Card className="bg-app-surface">
             <CardHeader className="pb-2 pt-5 px-5">
-              <CardTitle className="text-sm font-semibold text-app-text">填写 API Key</CardTitle>
-              <CardDescription className="text-xs text-app-muted">在 {selectedProvider?.name} 登录并创建 Key，粘贴到下方</CardDescription>
+              <CardTitle className="text-sm font-semibold text-app-text">{t("onboarding.enterApiKey")}</CardTitle>
+              <CardDescription className="text-xs text-app-muted">{t("onboarding.enterApiKeyDesc", { name: providerLabel(t, providerId) })}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 px-5 pb-5">
               <Button
@@ -254,20 +257,20 @@ export function Onboarding() {
                 onClick={openKeyUrl}
               >
                 <ExternalLink className="h-3.5 w-3.5" />
-                前往 {selectedProvider?.name} 获取 Key
+                {t("onboarding.getKeyAt", { name: providerLabel(t, providerId) })}
               </Button>
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-app-muted">API Key</label>
                 <Input
                   type="password"
-                  placeholder="sk-... 或从控制台复制的 Key"
+                  placeholder={t("onboarding.apiKeyPlaceholder")}
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   className="h-10 rounded-lg border-app-border bg-app-elevated text-app-text placeholder:text-app-muted text-sm"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-app-muted">模型 ID（可选）</label>
+                <label className="text-xs font-medium text-app-muted">{t("onboarding.modelIdOptional")}</label>
                 <ModelIdField
                   provider={providerId}
                   value={model}
@@ -294,7 +297,7 @@ export function Onboarding() {
                     }
                   }}
                 >
-                  返回
+                  {t("onboarding.back")}
                 </Button>
                 <Button
                   type="button"
@@ -303,7 +306,7 @@ export function Onboarding() {
                   onClick={handleComplete}
                   disabled={saving}
                 >
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "完成"}
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : t("onboarding.done")}
                 </Button>
               </div>
             </CardContent>
@@ -314,13 +317,13 @@ export function Onboarding() {
       <AlertDialog open={showOverwriteConfirm} onOpenChange={setShowOverwriteConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>本机已有 OpenClaw 配置</AlertDialogTitle>
+            <AlertDialogTitle>{t("onboarding.overwriteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              手动配置将覆盖本机已有的 OpenClaw 配置（~/.openclaw/openclaw.json）中的模型与 Agent 设置。如需保留原配置，请点击上方「一键导入」。
+              {t("onboarding.overwriteDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-lg border-app-border text-app-muted hover:bg-app-hover">取消</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-lg border-app-border text-app-muted hover:bg-app-hover">{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className="rounded-lg bg-claw-500 text-white hover:bg-claw-600"
               onClick={() => {
@@ -328,7 +331,7 @@ export function Onboarding() {
                 doComplete()
               }}
             >
-              确认覆盖
+              {t("onboarding.confirmOverwrite")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

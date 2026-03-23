@@ -1,0 +1,14 @@
+{
+  "titleBarGateway": {
+    "runningOnPort": "运行中 · 端口 {{port}}",
+    "starting": "正在启动",
+    "stopped": "未运行",
+    "statusRunning": "运行中，本地端口 {{port}}",
+    "statusStarting": "正在启动",
+    "statusStopped": "未运行",
+    "running": "运行中",
+    "start": "启动",
+    "stop": "停止",
+    "restart": "重启"
+  }
+}

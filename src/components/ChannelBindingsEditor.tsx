@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -88,6 +89,7 @@ export function ChannelBindingsEditor({
   onChange,
   disabled,
 }: Props) {
+  const { t } = useTranslation();
   const agentFallback = agentIds[0] ?? "main";
 
   const move = (i: number, dir: -1 | 1) => {
@@ -126,7 +128,9 @@ export function ChannelBindingsEditor({
   return (
     <div className="space-y-3 rounded-2xl border border-app-border/50 bg-app-elevated/15 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <Label className="text-sm font-medium text-app-text">路由规则</Label>
+        <Label className="text-sm font-medium text-app-text">
+          {t("channelBindings.routingRules")}
+        </Label>
         <Button
           type="button"
           size="sm"
@@ -138,7 +142,7 @@ export function ChannelBindingsEditor({
           }
         >
           <Plus className="mr-1 h-3.5 w-3.5" />
-          添加
+          {t("channelBindings.add")}
         </Button>
       </div>
       {bindings.length === 0 ? null : (
@@ -153,7 +157,7 @@ export function ChannelBindingsEditor({
             >
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6 lg:items-end">
                 <div className="space-y-1.5 lg:col-span-1">
-                  <Label className="text-xs text-app-muted">角色</Label>
+                  <Label className="text-xs text-app-muted">{t("channelBindings.role")}</Label>
                   {agentIds.length > 0 ? (
                     <Select
                       value={row.agentId}
@@ -182,7 +186,7 @@ export function ChannelBindingsEditor({
                   )}
                 </div>
                 <div className="space-y-1.5 lg:col-span-1">
-                  <Label className="text-xs text-app-muted">渠道</Label>
+                  <Label className="text-xs text-app-muted">{t("channelBindings.channel")}</Label>
                   <Select
                     value={row.match.channel ?? ""}
                     onValueChange={(v) =>
@@ -191,19 +195,19 @@ export function ChannelBindingsEditor({
                     disabled={disabled}
                   >
                     <SelectTrigger className="h-9 border-app-border bg-app-surface text-app-text">
-                      <SelectValue placeholder="选择" />
+                      <SelectValue placeholder={t("channelBindings.selectChannel")} />
                     </SelectTrigger>
                     <SelectContent className="max-h-60 border-app-border bg-app-surface">
                       {OPENCLAW_CHANNEL_TYPES.map((c) => (
                         <SelectItem key={c.id} value={c.id}>
-                          {c.name}
+                          {t(`channelTypes.${c.id}`)}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1.5 lg:col-span-1">
-                  <Label className="text-xs text-app-muted">账户 ID</Label>
+                  <Label className="text-xs text-app-muted">{t("channelBindings.accountId")}</Label>
                   <Input
                     value={row.match.accountId ?? ""}
                     onChange={(e) =>
@@ -216,11 +220,11 @@ export function ChannelBindingsEditor({
                     }
                     disabled={disabled}
                     className="h-9 border-app-border bg-app-surface"
-                    placeholder="可选"
+                    placeholder={t("channelBindings.optional")}
                   />
                 </div>
                 <div className="space-y-1.5 lg:col-span-1">
-                  <Label className="text-xs text-app-muted">会话类型</Label>
+                  <Label className="text-xs text-app-muted">{t("channelBindings.sessionType")}</Label>
                   <Select
                     value={row.match.peer?.kind ?? "_any"}
                     onValueChange={(v) =>
@@ -235,18 +239,18 @@ export function ChannelBindingsEditor({
                     disabled={disabled}
                   >
                     <SelectTrigger className="h-9 border-app-border bg-app-surface text-app-text">
-                      <SelectValue placeholder="不限" />
+                      <SelectValue placeholder={t("channelBindings.peerAny")} />
                     </SelectTrigger>
                     <SelectContent className="border-app-border bg-app-surface">
-                      <SelectItem value="_any">不限</SelectItem>
-                      <SelectItem value="direct">私聊</SelectItem>
-                      <SelectItem value="group">群组</SelectItem>
-                      <SelectItem value="channel">频道</SelectItem>
+                      <SelectItem value="_any">{t("channelBindings.peerAny")}</SelectItem>
+                      <SelectItem value="direct">{t("channelBindings.peerDirect")}</SelectItem>
+                      <SelectItem value="group">{t("channelBindings.peerGroup")}</SelectItem>
+                      <SelectItem value="channel">{t("channelBindings.peerChannel")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1.5 lg:col-span-1">
-                  <Label className="text-xs text-app-muted">会话 ID</Label>
+                  <Label className="text-xs text-app-muted">{t("channelBindings.sessionId")}</Label>
                   <Input
                     value={row.match.peer?.id ?? ""}
                     onChange={(e) =>
@@ -258,7 +262,7 @@ export function ChannelBindingsEditor({
                     }
                     disabled={disabled}
                     className="h-9 border-app-border bg-app-surface"
-                    placeholder="可选"
+                    placeholder={t("channelBindings.optional")}
                   />
                 </div>
                 <div className="flex flex-wrap items-center gap-1 lg:col-span-1 lg:justify-end">
@@ -269,7 +273,7 @@ export function ChannelBindingsEditor({
                     className="h-8 w-8 text-app-muted"
                     disabled={disabled || i === 0}
                     onClick={() => move(i, -1)}
-                    aria-label="上移"
+                    aria-label={t("channelBindings.moveUp")}
                   >
                     <ChevronUp className="h-4 w-4" />
                   </Button>
@@ -280,7 +284,7 @@ export function ChannelBindingsEditor({
                     className="h-8 w-8 text-app-muted"
                     disabled={disabled || i >= bindings.length - 1}
                     onClick={() => move(i, 1)}
-                    aria-label="下移"
+                    aria-label={t("channelBindings.moveDown")}
                   >
                     <ChevronDown className="h-4 w-4" />
                   </Button>
@@ -293,7 +297,7 @@ export function ChannelBindingsEditor({
                     onClick={() =>
                       onChange(bindings.filter((_, j) => j !== i))
                     }
-                    aria-label="删除"
+                    aria-label={t("channelBindings.remove")}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -301,7 +305,7 @@ export function ChannelBindingsEditor({
               </div>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-app-muted">Discord guildId</Label>
+                  <Label className="text-xs text-app-muted">{t("channelBindings.discordGuildId")}</Label>
                   <Input
                     value={row.match.guildId ?? ""}
                     onChange={(e) =>
@@ -311,11 +315,11 @@ export function ChannelBindingsEditor({
                     }
                     disabled={disabled}
                     className="h-9 border-app-border bg-app-surface"
-                    placeholder="可选"
+                    placeholder={t("channelBindings.optional")}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-app-muted">Slack teamId</Label>
+                  <Label className="text-xs text-app-muted">{t("channelBindings.slackTeamId")}</Label>
                   <Input
                     value={row.match.teamId ?? ""}
                     onChange={(e) =>
@@ -325,7 +329,7 @@ export function ChannelBindingsEditor({
                     }
                     disabled={disabled}
                     className="h-9 border-app-border bg-app-surface"
-                    placeholder="可选"
+                    placeholder={t("channelBindings.optional")}
                   />
                 </div>
               </div>

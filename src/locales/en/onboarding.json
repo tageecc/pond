@@ -1,0 +1,26 @@
+{
+  "onboarding": {
+    "welcomeTitle": "Welcome to Pond",
+    "welcomeSubtitle": "Connect your first model",
+    "systemOpenClaw": "OpenClaw detected on this machine",
+    "importOneClick": "Import",
+    "orManual": "Or configure manually",
+    "chooseProvider": "Choose provider",
+    "chooseProviderDesc": "Then continue to enter your API key",
+    "provider": "Provider",
+    "selectProvider": "Select provider",
+    "next": "Next",
+    "enterApiKey": "Enter API Key",
+    "enterApiKeyDesc": "Sign in at {{name}}, create a key, and paste it below",
+    "getKeyAt": "Get key at {{name}}",
+    "apiKeyPlaceholder": "sk-... or paste from console",
+    "modelIdOptional": "Model ID (optional)",
+    "back": "Back",
+    "done": "Done",
+    "overwriteTitle": "OpenClaw config already exists",
+    "overwriteDesc": "Manual setup will overwrite model and Agent settings in ~/.openclaw/openclaw.json. To keep the existing config, use the import button above.",
+    "confirmOverwrite": "Confirm overwrite",
+    "browserOpenFailed": "Could not open browser. Visit manually: {{url}}",
+    "apiKeyRequired": "Please enter your API Key"
+  }
+}

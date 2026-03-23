@@ -1,0 +1,14 @@
+{
+  "gatewayLog": {
+    "title": "Gateway 日志",
+    "clear": "清空",
+    "clearTitle": "仅清空本页缓冲区，不删除磁盘上的日志文件",
+    "live": "实时更新",
+    "liveTitle": "实时拉取当前实例的 Gateway 日志文件",
+    "autoScroll": "自动贴底",
+    "autoScrollTitle": "有新日志时自动滚动到底部",
+    "hintPaused": "开启「实时更新」拉取当前实例的日志；开启「自动贴底」则新日志时自动滚到底部",
+    "hintConnecting": "正在连接当前实例的 Gateway 日志文件…",
+    "hintIdle": "暂无展示行；有新写入时会出现在这里（清空仅影响本页缓冲区）"
+  }
+}

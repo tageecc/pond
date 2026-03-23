@@ -1,0 +1,30 @@
+{
+  "providers": {
+    "names": {
+      "anthropic": "Anthropic (Claude)",
+      "openai": "OpenAI (GPT)",
+      "google": "Google (Gemini)",
+      "deepseek": "DeepSeek",
+      "openrouter": "OpenRouter",
+      "xai": "xAI (Grok)",
+      "mistral": "Mistral",
+      "groq": "Groq",
+      "together": "Together AI",
+      "cerebras": "Cerebras",
+      "bailian": "Alibaba Bailian",
+      "moonshot": "Moonshot (Kimi)",
+      "zhipu": "Zhipu (GLM)",
+      "minimax": "MiniMax",
+      "volcengine": "Volcengine (Doubao)",
+      "huggingface": "Hugging Face",
+      "nvidia": "NVIDIA",
+      "bedrock": "Amazon Bedrock",
+      "azure": "Azure OpenAI",
+      "ollama": "Ollama (local)",
+      "vllm": "vLLM (local)",
+      "opencode": "OpenCode Zen",
+      "vercel-ai-gateway": "Vercel AI Gateway",
+      "custom": "Custom (OpenAI-compatible)"
+    }
+  }
+}

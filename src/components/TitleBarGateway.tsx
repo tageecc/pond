@@ -1,58 +1,60 @@
-import { useState } from "react";
-import { Loader2, Play, RotateCw, Square } from "lucide-react";
-import { toast } from "sonner";
-import { useAppStore } from "../stores/appStore";
-import { resolvePondInstanceId } from "../lib/pondInstanceId";
-import { cn } from "../lib/utils";
-import { Button } from "./ui/button";
+import { useState } from "react"
+import { useTranslation } from "react-i18next"
+import { Loader2, Play, RotateCw, Square } from "lucide-react"
+import { toast } from "sonner"
+import { useAppStore } from "../stores/appStore"
+import { resolvePondInstanceId } from "../lib/pondInstanceId"
+import { cn } from "../lib/utils"
+import { Button } from "./ui/button"
 
 export function TitleBarGateway() {
-  const instanceIds = useAppStore((s) => s.instanceIds);
-  const selectedInstanceId = useAppStore((s) => s.selectedInstanceId);
-  const openclawConfig = useAppStore((s) => s.openclawConfig);
-  const startAgentGateway = useAppStore((s) => s.startAgentGateway);
-  const stopAgentGateway = useAppStore((s) => s.stopAgentGateway);
-  const restartAgentGateway = useAppStore((s) => s.restartAgentGateway);
-  const loadAllGatewayStatuses = useAppStore((s) => s.loadAllGatewayStatuses);
+  const { t } = useTranslation()
+  const instanceIds = useAppStore((s) => s.instanceIds)
+  const selectedInstanceId = useAppStore((s) => s.selectedInstanceId)
+  const openclawConfig = useAppStore((s) => s.openclawConfig)
+  const startAgentGateway = useAppStore((s) => s.startAgentGateway)
+  const stopAgentGateway = useAppStore((s) => s.stopAgentGateway)
+  const restartAgentGateway = useAppStore((s) => s.restartAgentGateway)
+  const loadAllGatewayStatuses = useAppStore((s) => s.loadAllGatewayStatuses)
 
   const [busy, setBusy] = useState<"idle" | "start" | "stop" | "restart">(
     "idle",
-  );
+  )
 
   const instanceId =
     resolvePondInstanceId(instanceIds, selectedInstanceId, openclawConfig) ??
-    "default";
+    "default"
 
   const gatewayKey =
-    !instanceId || instanceId === "default" ? "default" : instanceId;
-  const gwEntry = useAppStore((s) => s.agentGateways[gatewayKey]);
-  const port = gwEntry?.port ?? 18789;
-  const agentGatewayStatus = gwEntry?.status ?? "stopped";
-  const running = agentGatewayStatus === "running";
-  const starting = agentGatewayStatus === "starting";
-  const stopped = !running && !starting;
-  const disabled = busy !== "idle";
+    !instanceId || instanceId === "default" ? "default" : instanceId
+  const gwEntry = useAppStore((s) => s.agentGateways[gatewayKey])
+  const port = gwEntry?.port ?? 18789
+  const agentGatewayStatus = gwEntry?.status ?? "stopped"
+  const running = agentGatewayStatus === "running"
+  const starting = agentGatewayStatus === "starting"
+  const stopped = !running && !starting
+  const disabled = busy !== "idle"
 
   const run = async (
     kind: "start" | "stop" | "restart",
     fn: () => Promise<void>,
   ) => {
-    setBusy(kind);
+    setBusy(kind)
     try {
-      await fn();
-      await loadAllGatewayStatuses();
+      await fn()
+      await loadAllGatewayStatuses()
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
+      toast.error(e instanceof Error ? e.message : String(e))
     } finally {
-      setBusy("idle");
+      setBusy("idle")
     }
-  };
+  }
 
   const statusTitle = running
-    ? `运行中，本地端口 ${port}`
+    ? t("titleBarGateway.statusRunning", { port })
     : starting
-      ? "正在启动"
-      : "未运行";
+      ? t("titleBarGateway.statusStarting")
+      : t("titleBarGateway.statusStopped")
 
   return (
     <div
@@ -75,15 +77,19 @@ export function TitleBarGateway() {
       <p className="min-w-0 truncate text-[11px] leading-none text-app-muted">
         {running ? (
           <>
-            <span className="text-emerald-600 dark:text-emerald-400">运行中</span>
+            <span className="text-emerald-600 dark:text-emerald-400">
+              {t("titleBarGateway.running")}
+            </span>
             <span className="text-app-border/60"> · </span>
-            <span>端口</span>{" "}
+            <span>{t("common.port")}</span>{" "}
             <span className="font-mono tabular-nums text-app-text">{port}</span>
           </>
         ) : starting ? (
-          <span className="text-amber-600 dark:text-amber-400">正在启动…</span>
+          <span className="text-amber-600 dark:text-amber-400">
+            {t("titleBarGateway.starting")}
+          </span>
         ) : (
-          "未运行"
+          t("titleBarGateway.stopped")
         )}
       </p>
       <div className="flex shrink-0 items-center">
@@ -95,7 +101,7 @@ export function TitleBarGateway() {
               variant="ghost"
               className="h-7 w-7 text-app-muted hover:bg-app-hover/70 hover:text-app-text"
               disabled={disabled}
-              title="停止"
+              title={t("titleBarGateway.stop")}
               onClick={() => run("stop", () => stopAgentGateway(instanceId))}
             >
               {busy === "stop" ? (
@@ -110,7 +116,7 @@ export function TitleBarGateway() {
               variant="ghost"
               className="h-7 w-7 text-app-muted hover:bg-app-hover/70 hover:text-app-text"
               disabled={disabled}
-              title="重启"
+              title={t("titleBarGateway.restart")}
               onClick={() =>
                 run("restart", () => restartAgentGateway(instanceId))
               }
@@ -135,7 +141,7 @@ export function TitleBarGateway() {
             variant="ghost"
             className="h-7 w-7 text-claw-600 hover:bg-claw-500/10 hover:text-claw-700 dark:text-claw-400 dark:hover:text-claw-300"
             disabled={disabled}
-            title="启动"
+            title={t("titleBarGateway.start")}
             onClick={() => run("start", () => startAgentGateway(instanceId))}
           >
             {busy === "start" ? (
@@ -147,5 +153,5 @@ export function TitleBarGateway() {
         )}
       </div>
     </div>
-  );
+  )
 }

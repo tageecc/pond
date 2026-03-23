@@ -1,0 +1,30 @@
+{
+  "nav": {
+    "dashboard": "概览",
+    "analytics": "数据分析",
+    "agents": "实例管理",
+    "chat": "对话"
+  },
+  "navGroups": {
+    "team": "团队",
+    "run": "运行基础",
+    "capabilities": "能力与运行环境",
+    "sessionWs": "会话与工作区",
+    "automation": "自动化与集成",
+    "system": "系统"
+  },
+  "navSections": {
+    "model": "模型配置",
+    "channels": "渠道配置",
+    "skills": "技能与工具",
+    "browser": "浏览器",
+    "session": "会话管理",
+    "workspace": "工作区文件",
+    "wakeup": "心跳与定时",
+    "hooks": "Hooks",
+    "logs": "Gateway 日志",
+    "advanced": "高级配置",
+    "team_agents": "角色列表",
+    "team_space": "团队空间"
+  }
+}

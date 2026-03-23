@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
 import { useAppStore } from "../stores/appStore";
@@ -74,97 +76,32 @@ const EMPTY_CHANNELS: Record<string, never> = Object.freeze({});
 
 type ChannelTypeId = OpenClawChannelTypeId;
 
-const CHANNEL_INSTRUCTIONS: Record<
+const CHANNEL_FORM_FIELDS: Record<
   ChannelTypeId,
-  { steps: string[]; fields: "telegram" | "discord" | "generic" | "feishu" }
+  "telegram" | "discord" | "generic" | "feishu"
 > = {
-  whatsapp: {
-    steps: [
-      "1. 运行 openclaw channels login --channel whatsapp 扫码绑定",
-      "2. 在 allowFrom 填写允许的手机号（E.164 格式，如 +86138...）",
-    ],
-    fields: "generic",
-  },
-  telegram: {
-    steps: [
-      "1. 搜索 @BotFather 发送 /newbot 获取 Bot Token",
-      "2. 搜索 @userinfobot 获取 User ID（用于 allowFrom）",
-      "3. 或终端：openclaw channels add --channel telegram --token <token>",
-    ],
-    fields: "telegram",
-  },
-  discord: {
-    steps: [
-      "1. 在 Discord 开发者门户创建应用，获取 Bot Token",
-      "2. 启用 Message Content Intent，邀请 Bot 到服务器",
-    ],
-    fields: "discord",
-  },
-  slack: {
-    steps: ["1. 在 Slack API 创建应用", "2. 配置 OAuth 与 Bot Token"],
-    fields: "generic",
-  },
-  imessage: {
-    steps: [
-      "1. 需要 macOS 且安装 imsg CLI 桥接",
-      "2. 填写允许的 Apple ID 或手机号",
-    ],
-    fields: "generic",
-  },
-  signal: {
-    steps: ["1. 安装 signal-cli 并注册/链接号码", "2. 配置 allowFrom 列表"],
-    fields: "generic",
-  },
-  msteams: {
-    steps: ["1. 在 Azure 门户注册应用并创建 Bot", "2. 配置 Bot Framework 凭据"],
-    fields: "generic",
-  },
-  googlechat: {
-    steps: [
-      "1. 在 Google Cloud Console 创建 Chat API 应用",
-      "2. 配置 Service Account JSON",
-    ],
-    fields: "generic",
-  },
-  mattermost: {
-    steps: ["1. 在 Mattermost 创建 Bot 账号", "2. 获取 Bot Token 和服务器 URL"],
-    fields: "generic",
-  },
-  matrix: {
-    steps: [
-      "1. 创建 Matrix Bot 账号",
-      "2. 获取 Access Token 和 Homeserver URL",
-    ],
-    fields: "generic",
-  },
-  irc: {
-    steps: ["1. 配置 IRC 服务器地址和频道", "2. 设置 Bot 昵称和认证信息"],
-    fields: "generic",
-  },
-  feishu: {
-    steps: [],
-    fields: "feishu",
-  },
-  line: {
-    steps: [
-      "1. 在 LINE Developers 创建 Messaging API Channel",
-      "2. 获取 Channel Access Token",
-    ],
-    fields: "generic",
-  },
-  nostr: {
-    steps: ["1. 生成 Nostr 密钥对（nsec/npub）", "2. 配置中继服务器列表"],
-    fields: "generic",
-  },
-  twitch: {
-    steps: ["1. 在 Twitch 开发者门户注册应用", "2. 获取 OAuth Token 和频道名"],
-    fields: "generic",
-  },
-  bluebubbles: {
-    steps: ["1. 在 macOS 安装 BlueBubbles Server", "2. 配置 API URL 和密码"],
-    fields: "generic",
-  },
+  whatsapp: "generic",
+  telegram: "telegram",
+  discord: "discord",
+  slack: "generic",
+  imessage: "generic",
+  signal: "generic",
+  msteams: "generic",
+  googlechat: "generic",
+  mattermost: "generic",
+  matrix: "generic",
+  irc: "generic",
+  feishu: "feishu",
+  line: "generic",
+  nostr: "generic",
+  twitch: "generic",
+  bluebubbles: "generic",
 };
+
+function getChannelSteps(t: TFunction, typeId: ChannelTypeId): string[] {
+  const v = t(`configWizard.channelSteps.${typeId}`, { returnObjects: true });
+  return Array.isArray(v) ? (v as string[]) : [];
+}
 
 function channelTypeFromTopKey(instanceId: string): ChannelTypeId {
   if (!OPENCLAW_CHANNEL_ID_SET.has(instanceId)) {
@@ -186,12 +123,12 @@ function isInstanceConfigured(
 function getInstanceDisplayName(
   raw: ChannelInstanceConfig | Record<string, any>,
   instanceId: string,
+  channelTypeLabel: (typeId: ChannelTypeId) => string,
 ): string {
   const name = (raw as ChannelInstanceConfig).name;
   if (name && String(name).trim()) return String(name).trim();
   const typeId = channelTypeFromTopKey(instanceId);
-  const typeName =
-    OPENCLAW_CHANNEL_TYPES.find((c) => c.id === typeId)?.name ?? typeId;
+  const typeName = channelTypeLabel(typeId);
   const agentId = (raw as ChannelInstanceConfig).agentId;
   if (agentId) return `${typeName} · ${agentId}`;
   return typeName;
@@ -210,6 +147,7 @@ function getChannelIds(
 }
 
 export function ChannelManager({ embedded }: { embedded?: boolean }) {
+  const { t } = useTranslation();
   const { openclawConfig, loadConfigs, loadInstanceConfig } = useAppStore();
   const selectedInstanceId = useAppStore((s) => s.selectedInstanceId);
   const instanceIds = useAppStore((s) => s.instanceIds);
@@ -219,6 +157,7 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
     openclawConfig,
   );
   const openclawInstanceId = pondInstanceId ?? "default";
+  const channelTypeLabel = (id: ChannelTypeId) => t(`channelTypes.${id}`);
   const roleIds = useMemo(
     () => getAgentIds(openclawConfig ?? undefined),
     [openclawConfig],
@@ -338,13 +277,12 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
 
   const handleAddChannel = async () => {
     if (!addType) {
-      toast.error("请先选择渠道类型");
+      toast.error(t("configWizard.pickChannelFirst"));
       return;
     }
     if (channels[addType]) {
-      const label =
-        OPENCLAW_CHANNEL_TYPES.find((c) => c.id === addType)?.name ?? addType;
-      toast.error(`已存在「${label}」，每个平台只能添加一条。`);
+      const label = channelTypeLabel(addType);
+      toast.error(t("configWizard.channelExists", { name: label }));
       return;
     }
     setAddingChannel(true);
@@ -361,7 +299,7 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
       setAddType(null);
       setSelectedId(addType);
       loadForm(addType);
-      toast.success("已添加渠道，请填写凭据并保存");
+      toast.success(t("configWizard.channelAdded"));
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       setSaveError(msg);
@@ -419,7 +357,7 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
         payload: basePayload,
       });
       await loadInstanceConfig(openclawInstanceId);
-      toast.success("渠道配置已保存");
+      toast.success(t("configWizard.channelConfigSaved"));
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
       setSaveError(msg);
@@ -439,7 +377,7 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
       await loadInstanceConfig(openclawInstanceId);
       setSelectedId(null);
       setDeleteDialogOpen(false);
-      toast.success("已删除该渠道实例");
+      toast.success(t("configWizard.channelDeleted"));
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       setSaveError(msg);
@@ -457,7 +395,7 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
         bindings: payload,
       });
       await loadInstanceConfig(openclawInstanceId);
-      toast.success("路由已保存");
+      toast.success(t("configWizard.bindingsSaved"));
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       setBindingsError(msg);
@@ -472,13 +410,13 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
       <div className="flex h-full items-center justify-center p-8">
         <Card className="w-full max-w-md bg-app-surface">
           <CardContent className="flex flex-col items-center justify-center py-16">
-            <p className="text-app-muted">加载配置中…</p>
+            <p className="text-app-muted">{t("configWizard.loadConfig")}</p>
             <Button
               variant="outline"
               className="mt-4 border-app-border text-app-muted hover:bg-app-hover"
               onClick={() => loadConfigs()}
             >
-              重试
+              {t("configWizard.retry")}
             </Button>
           </CardContent>
         </Card>
@@ -497,8 +435,11 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-xs text-app-muted">
             {instanceList.length === 0
-              ? `实例 ${openclawInstanceId}`
-              : `共 ${instanceList.length} 个渠道 · ${openclawInstanceId}`}
+              ? t("configWizard.instanceLabelSingle", { id: openclawInstanceId })
+              : t("configWizard.instanceLabel", {
+                  count: instanceList.length,
+                  current: openclawInstanceId,
+                })}
           </p>
           <Button
             size="sm"
@@ -506,13 +447,13 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
             disabled={availableChannelTypes.length === 0}
             title={
               availableChannelTypes.length === 0
-                ? "各平台均已添加，无法再选"
+                ? t("configWizard.addChannelDisabled")
                 : undefined
             }
             onClick={() => openAddModal()}
           >
             <Plus className="h-4 w-4" />
-            添加渠道
+            {t("configWizard.addChannel")}
           </Button>
         </div>
 
@@ -535,7 +476,7 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
             onClick={() => void saveBindings()}
           >
             <Save className="mr-1.5 h-3.5 w-3.5" />
-            {bindingsSaving ? "保存中…" : "保存路由"}
+            {bindingsSaving ? t("configWizard.savingBindings") : t("configWizard.saveRoute")}
           </Button>
         </div>
 
@@ -546,7 +487,7 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
             </div>
             <div className="max-w-sm px-4">
               <p className="text-base font-semibold tracking-tight text-app-text">
-                尚未连接消息渠道
+                {t("configWizard.noChannelsTitle")}
               </p>
             </div>
             <Button
@@ -556,7 +497,7 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
               onClick={() => openAddModal()}
             >
               <Plus className="mr-2 h-4 w-4" />
-              选择并添加渠道
+              {t("configWizard.pickAndAdd")}
             </Button>
           </div>
         ) : (
@@ -565,9 +506,11 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
               const configured = isInstanceConfigured(raw);
               const selected = selectedId === id;
               const typeId = channelTypeFromTopKey(id);
-              const meta = OPENCLAW_CHANNEL_TYPES.find((c) => c.id === typeId);
-              const displayName = getInstanceDisplayName(raw, id);
-              const instructions = CHANNEL_INSTRUCTIONS[typeId];
+              const displayName = getInstanceDisplayName(raw, id, channelTypeLabel);
+              const instructions = {
+                steps: getChannelSteps(t, typeId),
+                fields: CHANNEL_FORM_FIELDS[typeId],
+              };
               return (
                 <div
                   key={id}
@@ -595,10 +538,10 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
                         <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs">
                         {configured ? (
                           <span className="inline-flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400">
-                            已配置
+                            {t("configWizard.configured")}
                           </span>
                         ) : (
-                          <span className="text-app-muted">待完善凭据</span>
+                          <span className="text-app-muted">{t("configWizard.needsCredentials")}</span>
                         )}
                       </div>
                     </div>
@@ -614,10 +557,12 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
                       <div className="flex flex-col gap-5 p-4 pt-5">
                         <div className="space-y-2">
                           <Label className="text-xs font-medium uppercase tracking-wider text-app-muted">
-                            实例名称
+                            {t("configWizard.instanceName")}
                           </Label>
                           <Input
-                            placeholder={`如：客服 ${meta?.name ?? ""}`}
+                            placeholder={t("configWizard.instanceNamePlaceholder", {
+                              channel: channelTypeLabel(typeId),
+                            })}
                             value={instanceName}
                             onChange={(e) => setInstanceName(e.target.value)}
                             className="border-app-border bg-app-surface text-app-text placeholder:text-app-muted"
@@ -626,7 +571,7 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
                         <div className="grid gap-4 sm:grid-cols-2">
                           <div className="space-y-2">
                             <Label className="text-xs font-medium uppercase tracking-wider text-app-muted">
-                              默认角色
+                              {t("configWizard.defaultRole")}
                             </Label>
                             {roleIds.length > 0 ? (
                               <Select
@@ -667,7 +612,7 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
                           </div>
                           <div className="space-y-2">
                             <Label className="text-xs font-medium uppercase tracking-wider text-app-muted">
-                              默认账户 ID
+                              {t("configWizard.defaultAccountId")}
                             </Label>
                             <Input
                               value={channelDefaultAccount}
@@ -675,7 +620,7 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
                                 setChannelDefaultAccount(e.target.value)
                               }
                               className="border-app-border bg-app-surface text-app-text"
-                              placeholder="多账号时填写，如 default"
+                              placeholder={t("configWizard.accountIdPlaceholder")}
                             />
                           </div>
                         </div>
@@ -692,7 +637,7 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
                               <Label className="text-app-muted">App ID</Label>
                               <Input
                                 type="text"
-                                placeholder="cli_xxx"
+                                placeholder={t("configWizard.feishu.appIdPlaceholder")}
                                 value={appId}
                                 onChange={(e) => setAppId(e.target.value)}
                                 className="border-app-border bg-app-surface text-app-text placeholder:text-app-muted"
@@ -705,7 +650,7 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
                               <div className="relative">
                                 <Input
                                   type={showAppSecret ? "text" : "password"}
-                                  placeholder="从飞书开放平台获取"
+                                  placeholder={t("configWizard.feishu.appSecretPlaceholder")}
                                   value={appSecret}
                                   onChange={(e) => setAppSecret(e.target.value)}
                                   className="border-app-border bg-app-surface pr-10 text-app-text placeholder:text-app-muted"
@@ -716,7 +661,7 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
                                     setShowAppSecret(!showAppSecret)
                                   }
                                   className="absolute right-2 top-1/2 -translate-y-1/2 text-app-muted hover:text-app-text"
-                                  aria-label={showAppSecret ? "隐藏" : "显示"}
+                                  aria-label={showAppSecret ? t("configWizard.hide") : t("configWizard.show")}
                                 >
                                   {showAppSecret ? (
                                     <EyeOff className="h-4 w-4" />
@@ -728,7 +673,7 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
                             </div>
                             <div className="space-y-2">
                               <Label className="text-app-muted">
-                                机器人名称（可选）
+                                {t("configWizard.feishu.botNameOptional")}
                               </Label>
                               <Input
                                 type="text"
@@ -739,7 +684,7 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
                               />
                             </div>
                             <div className="space-y-2">
-                              <Label className="text-app-muted">域名</Label>
+                              <Label className="text-app-muted">{t("configWizard.feishu.domain")}</Label>
                               <Select
                                 value={feishuDomain}
                                 onValueChange={(v: "feishu" | "lark") =>
@@ -754,18 +699,18 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
                                     value="feishu"
                                     className="text-app-text focus:bg-app-hover focus:text-app-text"
                                   >
-                                    飞书（国内）
+                                    {t("configWizard.feishu.feishuCn")}
                                   </SelectItem>
                                   <SelectItem
                                     value="lark"
                                     className="text-app-text focus:bg-app-hover focus:text-app-text"
                                   >
-                                    Lark（国际版）
+                                    {t("configWizard.feishu.larkIntl")}
                                   </SelectItem>
                                 </SelectContent>
                               </Select>
                               <p className="text-xs text-app-muted">
-                                国际版租户选 Lark
+                                {t("configWizard.feishu.larkHint")}
                               </p>
                             </div>
                           </div>
@@ -777,7 +722,7 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 text-xs text-claw-400 hover:text-claw-300 hover:underline"
                           >
-                            飞书配置说明
+                            {t("configWizard.feishu.docsLink")}
                             <ExternalLink className="h-3 w-3" />
                           </a>
                         )}
@@ -791,7 +736,7 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
                               <div className="relative">
                                 <Input
                                   type={showToken ? "text" : "password"}
-                                  placeholder="请输入 Bot Token"
+                                  placeholder={t("configWizard.feishu.botTokenPlaceholder")}
                                   value={botToken}
                                   onChange={(e) => setBotToken(e.target.value)}
                                   className="border-app-border bg-app-surface pr-10 text-app-text placeholder:text-app-muted"
@@ -800,7 +745,7 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
                                   type="button"
                                   onClick={() => setShowToken(!showToken)}
                                   className="absolute right-2 top-1/2 -translate-y-1/2 text-app-muted hover:text-app-text"
-                                  aria-label={showToken ? "隐藏" : "显示"}
+                                  aria-label={showToken ? t("configWizard.hide") : t("configWizard.show")}
                                 >
                                   {showToken ? (
                                     <EyeOff className="h-4 w-4" />
@@ -817,7 +762,7 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
                                 </Label>
                                 <Input
                                   type="text"
-                                  placeholder="请输入 User ID"
+                                  placeholder={t("configWizard.feishu.userIdPlaceholder")}
                                   value={userId}
                                   onChange={(e) => setUserId(e.target.value)}
                                   className="border-app-border bg-app-surface text-app-text placeholder:text-app-muted"
@@ -828,11 +773,11 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
                         )}
                         <div className="space-y-2">
                           <Label className="text-app-muted">
-                            白名单 allowFrom（可选，多个用逗号分隔）
+                            {t("configWizard.feishu.allowFromLabel")}
                           </Label>
                           <Input
                             type="text"
-                            placeholder="+8613800138000, tg:123456789"
+                            placeholder={t("configWizard.allowFromPlaceholder")}
                             value={allowFrom}
                             onChange={(e) => setAllowFrom(e.target.value)}
                             className="border-app-border bg-app-surface text-app-text placeholder:text-app-muted"
@@ -841,7 +786,7 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
                         <div className="grid gap-4 sm:grid-cols-2">
                           <div className="space-y-2">
                             <Label className="text-app-muted">
-                              私聊策略 (dmPolicy)
+                              {t("configWizard.feishu.dmPolicy")}
                             </Label>
                             <Select
                               value={dmPolicy}
@@ -855,32 +800,32 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
                                   value="pairing"
                                   className="text-app-text focus:bg-app-hover focus:text-app-text"
                                 >
-                                  配对模式 (pairing)
+                                  {t("configWizard.feishu.pairing")}
                                 </SelectItem>
                                 <SelectItem
                                   value="allowlist"
                                   className="text-app-text focus:bg-app-hover focus:text-app-text"
                                 >
-                                  白名单 (allowlist)
+                                  {t("configWizard.feishu.allowlist")}
                                 </SelectItem>
                                 <SelectItem
                                   value="open"
                                   className="text-app-text focus:bg-app-hover focus:text-app-text"
                                 >
-                                  开放 (open)
+                                  {t("configWizard.feishu.open")}
                                 </SelectItem>
                                 <SelectItem
                                   value="disabled"
                                   className="text-app-text focus:bg-app-hover focus:text-app-text"
                                 >
-                                  禁用 (disabled)
+                                  {t("configWizard.feishu.disabled")}
                                 </SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
                           <div className="space-y-2">
                             <Label className="text-app-muted">
-                              群组策略 (groupPolicy)
+                              {t("configWizard.feishu.groupPolicy")}
                             </Label>
                             <Select
                               value={groupPolicy}
@@ -894,19 +839,19 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
                                   value="allowlist"
                                   className="text-app-text focus:bg-app-hover focus:text-app-text"
                                 >
-                                  白名单 (allowlist)
+                                  {t("configWizard.feishu.allowlist")}
                                 </SelectItem>
                                 <SelectItem
                                   value="pairing"
                                   className="text-app-text focus:bg-app-hover focus:text-app-text"
                                 >
-                                  配对模式 (pairing)
+                                  {t("configWizard.feishu.pairing")}
                                 </SelectItem>
                                 <SelectItem
                                   value="open"
                                   className="text-app-text focus:bg-app-hover focus:text-app-text"
                                 >
-                                  开放 (open)
+                                  {t("configWizard.feishu.open")}
                                 </SelectItem>
                               </SelectContent>
                             </Select>
@@ -915,24 +860,24 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
                         <div className="grid gap-4 sm:grid-cols-2">
                           <div className="space-y-2">
                             <Label className="text-app-muted">
-                              群组 @提及模式 (groupMention)
+                              {t("configWizard.feishu.groupMention")}
                             </Label>
                             <Input
-                              placeholder="@BotName 或留空不限"
+                              placeholder={t("configWizard.feishu.groupMentionPlaceholder")}
                               value={groupMention}
                               onChange={(e) => setGroupMention(e.target.value)}
                               className="border-app-border bg-app-surface text-app-text placeholder:text-app-muted"
                             />
                             <p className="text-xs text-app-muted">
-                              群聊中需要 @什么名称才触发 Bot 响应
+                              {t("configWizard.feishu.groupMentionHint")}
                             </p>
                           </div>
                           <div className="space-y-2">
                             <Label className="text-app-muted">
-                              群组白名单 (groupAllowFrom)
+                              {t("configWizard.feishu.groupAllowFrom")}
                             </Label>
                             <Input
-                              placeholder="群组ID1, 群组ID2"
+                              placeholder={t("configWizard.feishu.groupIdsPlaceholder")}
                               value={groupAllowFrom}
                               onChange={(e) =>
                                 setGroupAllowFrom(e.target.value)
@@ -940,13 +885,13 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
                               className="border-app-border bg-app-surface text-app-text placeholder:text-app-muted"
                             />
                             <p className="text-xs text-app-muted">
-                              允许响应的群组 ID 列表，留空表示所有群组
+                              {t("configWizard.feishu.groupAllowFromHint")}
                             </p>
                           </div>
                         </div>
                         {saveError && (
                           <p className="text-sm text-red-400">
-                            保存失败：{saveError}
+                            {t("configWizard.saveFailed", { msg: saveError })}
                           </p>
                         )}
                         <div className="flex flex-col gap-4 border-t border-app-border/30 pt-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
@@ -958,7 +903,7 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
                             onClick={() => setDeleteDialogOpen(true)}
                           >
                             <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-                            删除此渠道
+                            {t("configWizard.feishu.deleteChannel")}
                           </Button>
                           <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                             <Button
@@ -982,13 +927,13 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
                                     toast.success(
                                       rows
                                         .map((r) => `${r.channel}: ${r.message}`)
-                                        .join(" · ") || "校验通过",
+                                        .join(" · ") || t("configWizard.verifyOk"),
                                     );
                                   } else {
                                     const lines = bad
                                       .map((r) => `${r.channel}: ${r.message}`)
                                       .join("\n");
-                                    toast.error("配置检查未通过", {
+                                    toast.error(t("configWizard.checkFailed"), {
                                       description: lines,
                                     });
                                   }
@@ -1000,7 +945,7 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
                               }}
                             >
                               <Play className="mr-1.5 h-3.5 w-3.5" />
-                              检查配置
+                              {t("configWizard.checkConfig")}
                             </Button>
                             <Button
                               type="button"
@@ -1010,7 +955,7 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
                               className="bg-claw-500 hover:bg-claw-600 text-white"
                             >
                               <Save className="mr-1.5 h-3.5 w-3.5" />
-                              {saving ? "保存中…" : "保存配置"}
+                              {saving ? t("configWizard.saving") : t("configWizard.saveConfig")}
                             </Button>
                           </div>
                         </div>
@@ -1039,10 +984,10 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
           <div className="border-b border-app-border/50 bg-app-surface px-6 pb-5 pt-6">
             <DialogHeader className="space-y-2 text-left">
               <DialogTitle className="text-xl font-semibold tracking-tight text-app-text">
-                添加消息渠道
+                {t("configWizard.addChannelTitle")}
               </DialogTitle>
               <DialogDescription className="text-sm leading-relaxed text-app-muted">
-                实例 {openclawInstanceId} · 每平台一条
+                {t("configWizard.addChannelSubtitle", { id: openclawInstanceId })}
               </DialogDescription>
             </DialogHeader>
           </div>
@@ -1050,37 +995,37 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
           <div className="space-y-6 px-6 py-6">
             {availableChannelTypes.length === 0 ? (
               <p className="rounded-xl border border-app-border/60 bg-app-elevated/40 px-4 py-8 text-center text-sm text-app-muted">
-                列表中的平台都已添加过。
+                {t("configWizard.allAdded")}
               </p>
             ) : (
               <>
                 <div className="space-y-2">
-                  <Label className="text-app-muted">平台</Label>
+                  <Label className="text-app-muted">{t("configWizard.platform")}</Label>
                   <Select
                     value={addType ?? undefined}
                     onValueChange={(v) => setAddType(v as ChannelTypeId)}
                     disabled={addingChannel}
                   >
                     <SelectTrigger className="w-full rounded-lg border-app-border bg-app-surface text-app-text focus:ring-claw-500 [&>svg]:text-app-muted">
-                      <SelectValue placeholder="选择要接入的平台" />
+                      <SelectValue placeholder={t("configWizard.platformPlaceholder")} />
                     </SelectTrigger>
                     <SelectContent className="border-app-border bg-app-surface">
-                      {availableChannelTypes.map((t) => (
+                      {availableChannelTypes.map((ch) => (
                         <SelectItem
-                          key={t.id}
-                          value={t.id}
+                          key={ch.id}
+                          value={ch.id}
                           className="text-app-text focus:bg-app-hover focus:text-app-text"
                         >
-                          {`${t.name} (${t.id})`}
+                          {`${channelTypeLabel(ch.id)} (${ch.id})`}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-app-muted">备注名（可选）</Label>
+                  <Label className="text-app-muted">{t("configWizard.noteOptional")}</Label>
                   <Input
-                    placeholder="在列表中显示的名称，如：工作通知、客服入口"
+                    placeholder={t("configWizard.notePlaceholder")}
                     value={addName}
                     onChange={(e) => setAddName(e.target.value)}
                     disabled={addingChannel}
@@ -1099,7 +1044,7 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
               disabled={addingChannel}
               onClick={() => setShowAddModal(false)}
             >
-              取消
+              {t("configWizard.cancel")}
             </Button>
             <Button
               type="button"
@@ -1117,7 +1062,7 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
               ) : (
                 <Plus className="mr-1.5 h-4 w-4" />
               )}
-              {addingChannel ? "正在添加…" : "添加渠道"}
+              {addingChannel ? t("configWizard.adding") : t("configWizard.addChannel")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1126,20 +1071,20 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent className="border-app-border bg-app-surface">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-app-text">删除渠道实例？</AlertDialogTitle>
+            <AlertDialogTitle className="text-app-text">{t("configWizard.deleteChannelTitle")}</AlertDialogTitle>
             <AlertDialogDescription className="text-app-muted">
-              将从当前工作区配置中移除此渠道，且不可恢复。
+              {t("configWizard.deleteChannelDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="border-app-border bg-transparent hover:bg-app-hover">
-              取消
+              {t("configWizard.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-600 text-white hover:bg-red-700"
               onClick={() => void handleDeleteInstance()}
             >
-              删除
+              {t("configWizard.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1165,6 +1110,7 @@ function isHookEnabled(config: OpenClawConfig | null, hookId: string): boolean {
 }
 
 export function HooksManager({ embedded }: { embedded?: boolean }) {
+  const { t } = useTranslation();
   const {
     openclawConfig,
     saveOpenClawConfig,
@@ -1290,7 +1236,7 @@ export function HooksManager({ embedded }: { embedded?: boolean }) {
         }
         return next;
       });
-      setSaveMsg(`已保存 ${hookName}`);
+      setSaveMsg(t("configWizard.hookSaved", { name: hookName }));
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -1303,7 +1249,7 @@ export function HooksManager({ embedded }: { embedded?: boolean }) {
       <div className="flex h-full items-center justify-center p-8">
         <Card className="w-full max-w-md bg-app-surface">
           <CardContent className="flex flex-col items-center justify-center py-16">
-            <p className="text-app-muted">加载配置中…</p>
+            <p className="text-app-muted">{t("configWizard.loadConfig")}</p>
           </CardContent>
         </Card>
       </div>
@@ -1325,29 +1271,29 @@ export function HooksManager({ embedded }: { embedded?: boolean }) {
             <div className="flex items-center gap-2.5">
               <GitMerge className="h-4 w-4 text-claw-500 shrink-0" />
               <div>
-                <p className="font-medium text-app-text">Hooks</p>
-                <p className="text-xs text-app-muted">启用/禁用内置 Hooks</p>
+                <p className="font-medium text-app-text">{t("configWizard.hooksList")}</p>
+                <p className="text-xs text-app-muted">{t("configWizard.hooksHint")}</p>
               </div>
             </div>
             <Switch
               checked={internalEnabled}
               onCheckedChange={setInternalEnabled}
-              aria-label="启用内部 Hooks"
+              aria-label={t("configWizard.internalHooks")}
             />
           </div>
         )}
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-2">
             <p className="text-xs font-medium uppercase tracking-wider text-app-muted">
-              Hooks 列表
+              {t("configWizard.hooksList")}
             </p>
             {hooksLoading && showList && (
-              <span className="text-xs text-app-muted">刷新中…</span>
+              <span className="text-xs text-app-muted">{t("configWizard.refreshing")}</span>
             )}
           </div>
           {showFullLoading ? (
             <div className="rounded-xl border border-app-border bg-app-surface px-5 py-8 text-center text-sm text-app-muted">
-              加载中…
+              {t("configWizard.loading")}
             </div>
           ) : hooksError && !showList ? (
             <div className="rounded-xl border border-app-border bg-app-surface px-5 py-8 text-center text-sm text-amber-500">
@@ -1355,7 +1301,7 @@ export function HooksManager({ embedded }: { embedded?: boolean }) {
             </div>
           ) : !showList ? (
             <div className="rounded-xl border border-app-border bg-app-surface px-5 py-8 text-center text-sm text-app-muted">
-              未发现 Hooks（工作区 / 托管 / 内置目录）
+              {t("configWizard.hooksEmpty")}
             </div>
           ) : (
             <ul className="rounded-xl border border-app-border bg-app-surface divide-y divide-app-border overflow-hidden">
@@ -1431,7 +1377,7 @@ export function HooksManager({ embedded }: { embedded?: boolean }) {
                           onClick={() => saveConfigForHook(hook.name, hook.configSchema!)}
                         >
                           <Save className="mr-1.5 h-3.5 w-3.5" />
-                          {saving ? "保存中…" : "保存"}
+                          {saving ? t("configWizard.saving") : t("configWizard.save")}
                         </Button>
                       </div>
                     </div>
@@ -1444,7 +1390,7 @@ export function HooksManager({ embedded }: { embedded?: boolean }) {
 
         <div className="space-y-2">
           {saveError && (
-            <p className="text-sm text-red-400">保存失败：{saveError}</p>
+            <p className="text-sm text-red-400">{t("configWizard.saveFailed", { msg: saveError })}</p>
           )}
           {saveMsg && (
             <p className="text-sm text-green-600 dark:text-green-400">

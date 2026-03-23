@@ -1,0 +1,9 @@
+{
+  "toast": {
+    "instanceSetupLoading": "正在初始化实例目录…",
+    "instanceReady": "实例已就绪",
+    "createInstanceLoading": "正在创建 OpenClaw 实例…",
+    "createInstanceSuccessHint": "记得在「模型配置」填写 API Key",
+    "modelConfigReminder": "记得在「模型配置」填写 API Key"
+  }
+}

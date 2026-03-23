@@ -1,11 +1,12 @@
-import { useAppStore } from "../stores/appStore";
-import { GlobalInstanceSwitcher } from "./GlobalInstanceSwitcher";
-import { cn } from "../lib/utils";
+import { useTranslation } from "react-i18next"
+import { useAppStore } from "../stores/appStore"
+import { GlobalInstanceSwitcher } from "./GlobalInstanceSwitcher"
+import { cn } from "../lib/utils"
 import {
   AGENT_CONFIG_NAV_GROUPS,
   TEAM_NAV_GROUP,
   type AgentConfigSectionId,
-} from "../constants/agentConfigNav";
+} from "../constants/agentConfigNav"
 import {
   MessageCircle,
   Bot,
@@ -20,9 +21,9 @@ import {
   Terminal,
   UserCircle,
   LayoutDashboard,
-} from "lucide-react";
+} from "lucide-react"
 
-const SIDEBAR_WIDTH = 212;
+const SIDEBAR_WIDTH = 212
 
 const SECTION_ICONS: Record<AgentConfigSectionId, React.ElementType> = {
   model: Bot,
@@ -37,20 +38,21 @@ const SECTION_ICONS: Record<AgentConfigSectionId, React.ElementType> = {
   hooks: GitMerge,
   logs: Terminal,
   advanced: Code,
-};
+}
 
 export function InstanceSidebar() {
-  const currentView = useAppStore((s) => s.currentView);
-  const agentConfigSection = useAppStore((s) => s.agentConfigSection);
-  const openclawConfig = useAppStore((s) => s.openclawConfig);
-  const agentsCount = openclawConfig?.agents?.list?.length ?? 0;
-  const setCurrentView = useAppStore((s) => s.setCurrentView);
-  const setAgentConfigSection = useAppStore((s) => s.setAgentConfigSection);
+  const { t } = useTranslation()
+  const currentView = useAppStore((s) => s.currentView)
+  const agentConfigSection = useAppStore((s) => s.agentConfigSection)
+  const openclawConfig = useAppStore((s) => s.openclawConfig)
+  const agentsCount = openclawConfig?.agents?.list?.length ?? 0
+  const setCurrentView = useAppStore((s) => s.setCurrentView)
+  const setAgentConfigSection = useAppStore((s) => s.setAgentConfigSection)
 
   const goToConfig = (section: AgentConfigSectionId) => {
-    setCurrentView("agents");
-    setAgentConfigSection(section);
-  };
+    setCurrentView("agents")
+    setAgentConfigSection(section)
+  }
 
   return (
     <aside
@@ -59,7 +61,7 @@ export function InstanceSidebar() {
         "sidebar-glass",
       )}
       style={{ width: SIDEBAR_WIDTH }}
-      aria-label="实例管理"
+      aria-label={t("sidebar.ariaInstance")}
     >
       <div className="mb-3.5 shrink-0 px-1 [&_button]:w-full [&_button]:justify-between">
         <GlobalInstanceSwitcher />
@@ -67,7 +69,7 @@ export function InstanceSidebar() {
 
       <nav
         className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-1 pb-1"
-        aria-label="当前实例"
+        aria-label={t("sidebar.ariaCurrentInstance")}
       >
         <button
           type="button"
@@ -80,7 +82,7 @@ export function InstanceSidebar() {
           )}
         >
           <MessageCircle className="h-4 w-4 shrink-0" />
-          <span className="truncate">对话</span>
+          <span className="truncate">{t("nav.chat")}</span>
         </button>
 
         <div
@@ -89,12 +91,12 @@ export function InstanceSidebar() {
         />
         <div className="flex flex-col gap-0.5">
           <p className="select-none px-3 pb-1 pt-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-app-muted opacity-[0.42] dark:opacity-[0.38]">
-            {TEAM_NAV_GROUP.group}
+            {t(`navGroups.${TEAM_NAV_GROUP.groupKey}`)}
           </p>
-          {TEAM_NAV_GROUP.items.map(({ id, label }) => {
-            const Icon = SECTION_ICONS[id];
+          {TEAM_NAV_GROUP.items.map(({ id }) => {
+            const Icon = SECTION_ICONS[id]
             const active =
-              currentView === "agents" && agentConfigSection === id;
+              currentView === "agents" && agentConfigSection === id
             return (
               <button
                 key={id}
@@ -108,32 +110,34 @@ export function InstanceSidebar() {
                 )}
               >
                 <Icon className="h-4 w-4 shrink-0" />
-                <span className="min-w-0 flex-1 truncate">{label}</span>
+                <span className="min-w-0 flex-1 truncate">
+                  {t(`navSections.${id}`)}
+                </span>
                 {id === "team_agents" && (
                   <span
                     className="shrink-0 rounded-md border border-app-border/40 bg-app-elevated/60 px-1.5 py-px text-[10px] tabular-nums text-app-muted/80 dark:border-app-border/30 dark:bg-app-elevated/40"
-                    title="角色数（agents.list）"
+                    title={t("sidebar.roleCountTitle")}
                   >
                     {agentsCount > 0 ? agentsCount : "—"}
                   </span>
                 )}
               </button>
-            );
+            )
           })}
         </div>
         {AGENT_CONFIG_NAV_GROUPS.map((g) => (
-          <div key={g.group} className="flex flex-col gap-0.5">
+          <div key={g.groupKey} className="flex flex-col gap-0.5">
             <p
               className={cn(
                 "mt-2 select-none border-t border-app-border/30 px-3 pb-1 pt-2.5 text-[10px] font-medium uppercase tracking-[0.12em] text-app-muted opacity-[0.42] dark:border-app-border/25 dark:opacity-[0.38]",
               )}
             >
-              {g.group}
+              {t(`navGroups.${g.groupKey}`)}
             </p>
-            {g.items.map(({ id, label }) => {
-              const Icon = SECTION_ICONS[id];
+            {g.items.map(({ id }) => {
+              const Icon = SECTION_ICONS[id]
               const active =
-                currentView === "agents" && agentConfigSection === id;
+                currentView === "agents" && agentConfigSection === id
               return (
                 <button
                   key={id}
@@ -147,15 +151,17 @@ export function InstanceSidebar() {
                   )}
                 >
                   <Icon className="h-4 w-4 shrink-0" />
-                  <span className="min-w-0 flex-1 truncate">{label}</span>
+                  <span className="min-w-0 flex-1 truncate">
+                    {t(`navSections.${id}`)}
+                  </span>
                 </button>
-              );
+              )
             })}
           </div>
         ))}
       </nav>
     </aside>
-  );
+  )
 }
 
-export { SIDEBAR_WIDTH };
+export { SIDEBAR_WIDTH }

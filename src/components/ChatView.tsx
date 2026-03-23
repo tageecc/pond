@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import i18n from "../i18n";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import {
@@ -106,6 +108,7 @@ function getToolIcon(toolName: string) {
 }
 
 function ToolCallBlock({ call }: { call: ToolCallPart }) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const argsPreview = call.args?.trim() || "";
   let prettyArgs = argsPreview;
@@ -216,7 +219,7 @@ function ToolCallBlock({ call }: { call: ToolCallPart }) {
             <div className="flex items-center gap-2 mb-1.5">
               <div className="h-px flex-1 bg-gradient-to-r from-app-border to-transparent" />
               <span className="text-[10px] font-medium uppercase tracking-wider text-app-muted/50">
-                参数详情
+                {t("chat.paramDetails")}
               </span>
               <div className="h-px flex-1 bg-gradient-to-l from-app-border to-transparent" />
             </div>
@@ -225,7 +228,7 @@ function ToolCallBlock({ call }: { call: ToolCallPart }) {
                 <div className="border-b border-amber-500/20 bg-amber-500/5 px-2.5 py-1.5">
                   <p className="flex items-center gap-1.5 text-[11px] text-amber-600 dark:text-amber-400">
                     <AlertCircle className="h-3 w-3" />
-                    JSON 解析失败
+                    {t("chat.jsonParseFailed")}
                   </p>
                 </div>
               )}
@@ -237,11 +240,11 @@ function ToolCallBlock({ call }: { call: ToolCallPart }) {
                 onClick={(e) => {
                   e.stopPropagation();
                   navigator.clipboard.writeText(prettyArgs);
-                  toast.success("已复制参数");
+                  toast.success(t("chat.copiedParams"));
                 }}
                 className="absolute right-1.5 top-1.5 rounded bg-app-elevated/90 px-1.5 py-0.5 text-[10px] text-app-muted opacity-0 transition-opacity hover:text-app-text group-hover:opacity-100"
               >
-                复制
+                {t("chat.copy")}
               </button>
             </div>
           </div>
@@ -258,6 +261,7 @@ function ReasoningBlock({
   reasoning: ReasoningPart;
   streaming?: boolean;
 }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(!!streaming);
   const text = reasoning.content || reasoning.summary;
   if (!text) return null;
@@ -269,9 +273,9 @@ function ReasoningBlock({
         onClick={() => setExpanded((v) => !v)}
       >
         <Brain className="h-3.5 w-3.5 shrink-0" />
-        <span>思考{streaming ? "中…" : ""}</span>
+        <span>{streaming ? t("chat.thinkingEllipsis") : t("chat.thinking")}</span>
         <span className="ml-auto text-xs font-normal text-app-muted">
-          {expanded ? "收起" : "展开"}
+          {expanded ? t("chat.collapse") : t("chat.expand")}
         </span>
       </button>
       {expanded && (
@@ -306,7 +310,9 @@ function formatMessageTime(parsedTimestamp?: string, sentAt?: string): string {
     const min = d.getMinutes().toString().padStart(2, "0");
     const now = new Date();
     const dateStr =
-      y === now.getFullYear() ? `${m}月${day}日` : `${y}年${m}月${day}日`;
+      y === now.getFullYear()
+        ? i18n.t("chat.dateSameYear", { month: m, day })
+        : i18n.t("chat.dateFull", { year: y, month: m, day });
     return `${dateStr} ${h}:${min}`;
   } catch {
     return sentAt;
@@ -321,7 +327,7 @@ function channelLabel(row: {
   const ch = (row.channel ?? "").toLowerCase();
   const name =
     ch === "feishu" || ch === "lark"
-      ? "飞书"
+      ? i18n.t("chat.sourceFeishu")
       : ch === "pond"
         ? "Pond"
         : ch === "telegram"
@@ -334,7 +340,7 @@ function channelLabel(row: {
                 ? "Slack"
                 : ch
                   ? ch
-                  : "会话";
+                  : i18n.t("chat.sourceSession");
   return row.label ? `${name} · ${row.label}` : name;
 }
 
@@ -345,11 +351,11 @@ function senderToFriendlySource(
   if (!sender?.label && !sender?.id) return null;
   const v = (sender.label ?? sender.id ?? "").toLowerCase();
   const map: Record<string, string> = {
-    cli: "终端",
-    webchat: "网页",
-    pond: "本应用",
-    feishu: "飞书",
-    lark: "飞书",
+    cli: i18n.t("chat.sourceCli"),
+    webchat: i18n.t("chat.sourceWebchat"),
+    pond: i18n.t("chat.sourcePond"),
+    feishu: i18n.t("chat.sourceFeishu"),
+    lark: i18n.t("chat.sourceLark"),
     telegram: "Telegram",
     discord: "Discord",
   };
@@ -407,6 +413,7 @@ function parseUserMessageContent(raw: string): {
 }
 
 export function ChatView() {
+  const { t } = useTranslation();
   const {
     openclawConfig,
     loadConfigs,
@@ -600,7 +607,7 @@ export function ChatView() {
         .catch((e) => {
           console.error(e);
           updateChatSession(chatStoreKey, backup);
-          toast.error("加载会话历史失败");
+          toast.error(i18n.t("chat.loadHistoryFailed"));
           throw e;
         })
         .finally(() => setTranscriptLoading(false));
@@ -692,7 +699,9 @@ export function ChatView() {
       const assistantMsg: ChatMessage = {
         id: crypto.randomUUID(),
         role: "assistant",
-        content: partial ? partial + "\n\n_（已停止生成）_" : "（已停止生成）",
+        content: partial
+          ? partial + "\n\n" + i18n.t("chat.stoppedPartial")
+          : i18n.t("chat.stoppedShort"),
         toolCalls: partialToolCalls.length > 0 ? partialToolCalls : undefined,
         reasoning: partialReasoning ?? undefined,
         executionSteps:
@@ -717,7 +726,7 @@ export function ChatView() {
     if (!text || sending) return;
     if (!canSend) {
       updateChatSession(chatStoreKey, {
-        error: "请先启动该 Agent 的 Gateway 后再发送消息",
+        error: i18n.t("chat.startGatewayFirst"),
       });
       return;
     }
@@ -741,7 +750,9 @@ export function ChatView() {
           id: crypto.randomUUID(),
           timestamp: new Date(),
           type: "message" as const,
-          content: `发送消息: ${text.slice(0, 50)}${text.length > 50 ? "..." : ""}`,
+          content: i18n.t("chat.userMessagePreview", {
+            text: `${text.slice(0, 50)}${text.length > 50 ? "..." : ""}`,
+          }),
           status: "completed" as const,
         },
       ],
@@ -784,7 +795,7 @@ export function ChatView() {
               id: crypto.randomUUID(),
               timestamp: new Date(),
               type: "tool_call",
-              content: `调用工具: ${event.item.name}`,
+              content: i18n.t("chat.toolCall", { name: event.item.name }),
               status: "running",
               metadata: {
                 toolName: event.item.name,
@@ -826,7 +837,7 @@ export function ChatView() {
                 id: crypto.randomUUID(),
                 timestamp: new Date(),
                 type: "thinking" as const,
-                content: "正在思考...",
+                content: i18n.t("chat.thinkingContent"),
                 status: "running" as const,
               },
             ];
@@ -848,7 +859,7 @@ export function ChatView() {
                 id: crypto.randomUUID(),
                 timestamp: new Date(),
                 type: "completion",
-                content: "执行出错",
+                content: i18n.t("chat.executionError"),
                 status: "failed",
                 metadata: { error: event.message },
               },
@@ -909,7 +920,7 @@ export function ChatView() {
       });
     } catch (e) {
       invokeError = e instanceof Error ? e.message : String(e);
-      console.error("[ws_chat_send] 错误:", invokeError);
+      console.error("[ws_chat_send] error:", invokeError);
     }
 
     for (const unsub of unlistenersRef.current) unsub();
@@ -943,7 +954,7 @@ export function ChatView() {
       updateAgentExecutionState(pondInstanceId, "error");
     } else if (!hasAnyContent && !final.error) {
       updateChatSession(chatStoreKey, {
-        error: "未收到回复内容。请检查 Gateway 是否正在运行。",
+        error: i18n.t("chat.noReplyContent"),
         executionState: "error",
         streamingContent: "",
         streamingToolCalls: [],
@@ -965,17 +976,21 @@ export function ChatView() {
         id: crypto.randomUUID(),
         timestamp: new Date(),
         type: "completion",
-        content: `执行完成（${executionTime ? (executionTime / 1000).toFixed(1) : "0"}秒）`,
+        content: i18n.t("chat.executionDone", {
+          seconds: executionTime ? (executionTime / 1000).toFixed(1) : "0",
+        }),
         status: "completed",
         metadata: {
-          toolResult: `生成内容: ${accumulated.slice(0, 100)}${accumulated.length > 100 ? "..." : ""}`,
+          toolResult: i18n.t("chat.toolResultPreview", {
+            text: `${accumulated.slice(0, 100)}${accumulated.length > 100 ? "..." : ""}`,
+          }),
         },
       };
       const roundSteps = [...final.executionSteps, completionStep];
       const assistantMsg: ChatMessage = {
         id: crypto.randomUUID(),
         role: "assistant",
-        content: accumulated || (hasAnyContent ? "" : "（无回复内容）"),
+        content: accumulated || (hasAnyContent ? "" : i18n.t("chat.emptyReply")),
         toolCalls: finalToolCalls.length > 0 ? finalToolCalls : undefined,
         reasoning: finalReasoning ?? undefined,
         executionTime,
@@ -994,9 +1009,14 @@ export function ChatView() {
       });
 
       if (executionTime && executionTime > 2000) {
-        toast.success(`执行完成（${(executionTime / 1000).toFixed(1)}秒）`, {
-          duration: 3000,
-        });
+        toast.success(
+          i18n.t("chat.executionDoneToast", {
+            seconds: (executionTime / 1000).toFixed(1),
+          }),
+          {
+            duration: 3000,
+          },
+        );
       }
       setTimeout(() => {
         updateChatSession(chatStoreKey, { executionState: "idle" });
@@ -1021,7 +1041,7 @@ export function ChatView() {
   if (openclawConfig === null) {
     return (
       <div className="flex h-full items-center justify-center p-8">
-        <p className="text-app-muted">加载配置中…</p>
+        <p className="text-app-muted">{t("chat.loadingConfig")}</p>
       </div>
     );
   }
@@ -1037,8 +1057,15 @@ export function ChatView() {
             <span className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
               {agentGwStatus === "starting"
-                ? `Gateway 启动中（${displayName} · ${chatRoleId} · 端口 ${effectivePort}）`
-                : `Gateway 未运行（${displayName} · ${chatRoleId}）`}
+                ? t("chat.gatewayStarting", {
+                    name: displayName,
+                    role: chatRoleId,
+                    port: effectivePort,
+                  })
+                : t("chat.gatewayStopped", {
+                    name: displayName,
+                    role: chatRoleId,
+                  })}
             </span>
             <div className="flex shrink-0 gap-2">
               <Button
@@ -1054,7 +1081,7 @@ export function ChatView() {
                   } catch (e) {
                     updateChatSession(chatStoreKey, {
                       error:
-                        "启动 Gateway 失败: " +
+                        i18n.t("chat.startGatewayFailed") +
                         (e instanceof Error ? e.message : String(e)),
                     });
                   } finally {
@@ -1065,7 +1092,7 @@ export function ChatView() {
                 {gatewayStarting || agentGwStatus === "starting" ? (
                   <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                 ) : null}
-                启动 Gateway
+                {t("chat.startGateway")}
               </Button>
             </div>
           </div>
@@ -1087,9 +1114,13 @@ export function ChatView() {
           <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
             <p
               className="min-w-0 flex-1 truncate text-sm font-medium text-app-text"
-              title={multiRole ? `${displayName}，各角色会话独立` : undefined}
+              title={
+                multiRole
+                  ? t("chat.chatTitleMultiRole", { name: displayName })
+                  : undefined
+              }
             >
-              与「{displayName}」对话
+              {t("chat.chatWith", { name: displayName })}
               {!multiRole && (
                 <span className="ml-2 font-mono text-xs font-normal text-app-muted">
                   {chatRoleId}
@@ -1101,7 +1132,7 @@ export function ChatView() {
                 <div
                   className="inline-flex max-w-full flex-wrap rounded-lg border border-app-border/40 bg-app-elevated/40 p-0.5 dark:bg-app-elevated/25"
                   role="tablist"
-                  aria-label={`${displayName} 下的对话角色`}
+                  aria-label={t("chat.chatRolesAria", { name: displayName })}
                 >
                   {(agentsListForRoles.length > 0
                     ? agentsListForRoles
@@ -1120,13 +1151,13 @@ export function ChatView() {
                         disabled={sending}
                         title={
                           isLeader
-                            ? "团队 Leader"
-                            : `切换到 ${id}（会话独立）`
+                            ? t("chat.teamLeader")
+                            : t("chat.switchToRole", { id })
                         }
                         onClick={() => {
                           if (id === chatRoleId) return;
                           setChatRoleId(id);
-                          toast.message(`已切换到「${id}」`, {
+                          toast.message(t("chat.switchedTo", { id }), {
                             duration: 2200,
                           });
                         }}
@@ -1173,21 +1204,21 @@ export function ChatView() {
               </div>
               <p className="mt-5 text-center text-lg font-medium text-app-text">
                 {running
-                  ? "在下方输入消息即可开始"
+                  ? t("chat.hintStartBelow")
                   : agentGwStatus === "starting"
-                    ? "Gateway 正在启动，请稍候…"
-                    : "需要先启动 Gateway"}
+                    ? t("chat.hintGatewayStarting")
+                    : t("chat.hintNeedGateway")}
               </p>
               {running && multiRole && (
                 <p className="mt-1.5 text-center text-sm text-app-muted">
-                  其他角色在顶栏右侧切换
+                  {t("chat.hintOtherRoles")}
                 </p>
               )}
               {!running && (
                 <div className="mt-4 flex flex-col items-center gap-3">
                   {agentGwStatus !== "starting" && (
                     <p className="text-sm text-app-muted">
-                      启动后即可与此实例对话
+                      {t("chat.hintAfterStart")}
                     </p>
                   )}
                   {agentGwStatus !== "starting" && (
@@ -1202,7 +1233,7 @@ export function ChatView() {
                         } catch (e) {
                           updateChatSession(chatStoreKey, {
                             error:
-                              "启动失败: " +
+                              i18n.t("chat.startFailedPrefix") +
                               (e instanceof Error ? e.message : String(e)),
                           });
                         } finally {
@@ -1215,7 +1246,7 @@ export function ChatView() {
                       ) : (
                         <Play className="h-4 w-4" />
                       )}
-                      启动 Gateway（端口 {effectivePort}）
+                      {t("chat.startGatewayOnPort", { port: effectivePort })}
                     </Button>
                   )}
                   {agentGwStatus === "starting" && (
@@ -1319,7 +1350,11 @@ export function ChatView() {
                                   </span>
                                 )}
                               {userFriendlySource && (
-                                <span>来自 {userFriendlySource}</span>
+                                <span>
+                                  {t("chat.fromSource", {
+                                    source: userFriendlySource,
+                                  })}
+                                </span>
                               )}
                             </span>
                             <button
@@ -1330,10 +1365,10 @@ export function ChatView() {
                                 const text = userParsed!.displayText;
                                 navigator.clipboard
                                   .writeText(text)
-                                  .then(() => toast.success("已复制到剪贴板"))
-                                  .catch(() => toast.error("复制失败"));
+                                  .then(() => toast.success(t("chat.copied")))
+                                  .catch(() => toast.error(t("chat.copyFailed")));
                               }}
-                              title="复制"
+                              title={t("chat.copy")}
                             >
                               <Copy className="h-3 w-3" />
                             </button>
@@ -1354,7 +1389,9 @@ export function ChatView() {
                               )}
                               {m.executionTime !== undefined && (
                                 <span>
-                                  执行 {(m.executionTime / 1000).toFixed(2)}秒
+                                  {t("chat.executedIn", {
+                                    seconds: (m.executionTime / 1000).toFixed(2),
+                                  })}
                                 </span>
                               )}
                               {m.executionTime !== undefined &&
@@ -1364,7 +1401,11 @@ export function ChatView() {
                                     <span className="text-app-border shrink-0">
                                       ·
                                     </span>
-                                    <span>{m.toolCalls.length} 个工具调用</span>
+                                    <span>
+                                      {t("chat.toolCallsCount", {
+                                        count: m.toolCalls.length,
+                                      })}
+                                    </span>
                                   </>
                                 )}
                               {m.executionSteps &&
@@ -1376,7 +1417,9 @@ export function ChatView() {
                                     <button
                                       type="button"
                                       className="relative inline-flex h-6 w-6 shrink-0 items-center justify-center rounded text-app-muted hover:bg-app-hover hover:text-app-text"
-                                      title={`执行步骤（${m.executionSteps.length}）`}
+                                      title={t("chat.executionStepsTitle", {
+                                        count: m.executionSteps.length,
+                                      })}
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         openTimelineFrozen(m.executionSteps!);
@@ -1400,10 +1443,10 @@ export function ChatView() {
                                 const text = m.content ?? "";
                                 navigator.clipboard
                                   .writeText(text)
-                                  .then(() => toast.success("已复制到剪贴板"))
-                                  .catch(() => toast.error("复制失败"));
+                                  .then(() => toast.success(t("chat.copied")))
+                                  .catch(() => toast.error(t("chat.copyFailed")));
                               }}
-                              title="复制"
+                              title={t("chat.copy")}
                             >
                               <Copy className="h-3 w-3" />
                             </button>
@@ -1463,9 +1506,10 @@ export function ChatView() {
                           )}
                         />
                         <span>
-                          {executionState === "thinking" && "思考中"}
-                          {executionState === "executing_tool" && "执行工具中"}
-                          {executionState === "idle" && "等待中"}
+                          {executionState === "thinking" && t("chat.stateThinking")}
+                          {executionState === "executing_tool" &&
+                            t("chat.stateExecutingTool")}
+                          {executionState === "idle" && t("chat.stateIdle")}
                         </span>
                       </div>
                       {executionStartTime && (
@@ -1476,14 +1520,18 @@ export function ChatView() {
                               (Date.now() - executionStartTime) /
                               1000
                             ).toFixed(1)}
-                            秒
+                            {t("chat.seconds")}
                           </span>
                         </>
                       )}
                       {streamingToolCalls.length > 0 && (
                         <>
                           <span className="text-app-border">·</span>
-                          <span>{streamingToolCalls.length} 个工具调用</span>
+                          <span>
+                            {t("chat.streamingToolCalls", {
+                              count: streamingToolCalls.length,
+                            })}
+                          </span>
                         </>
                       )}
                       {executionSteps.length > 0 && (
@@ -1492,7 +1540,9 @@ export function ChatView() {
                           <button
                             type="button"
                             className="relative inline-flex h-6 w-6 shrink-0 items-center justify-center rounded text-app-muted hover:bg-app-hover hover:text-app-text"
-                            title={`执行步骤（${executionSteps.length}）`}
+                            title={t("chat.executionStepsTitle", {
+                              count: executionSteps.length,
+                            })}
                             onClick={openTimelineLive}
                           >
                             <History className="h-3.5 w-3.5" />
@@ -1534,7 +1584,7 @@ export function ChatView() {
                           useAppStore.getState().chatByInstance[chatStoreKey]
                             ?.messages ?? [];
                         if (msgs.length === 0) {
-                          toast.info("该会话暂无本地历史记录，可在此继续对话");
+                          toast.info(t("chat.noLocalHistory"));
                         }
                       })
                       .catch(() => {});
@@ -1543,20 +1593,20 @@ export function ChatView() {
                 >
                   <SelectTrigger
                     className="h-8 w-fit min-w-0 max-w-[min(100%,14rem)] shrink-0 border-0 bg-transparent px-2 text-xs shadow-none hover:bg-app-hover focus:ring-0"
-                    title="当前会话"
+                    title={t("chat.currentSession")}
                   >
                     {transcriptLoading ? (
                       <span className="flex items-center gap-1.5 text-app-muted">
                         <Loader2 className="h-3 w-3 animate-spin" />
-                        加载中…
+                        {t("chat.loading")}
                       </span>
                     ) : (
-                      <SelectValue placeholder="会话">
+                      <SelectValue placeholder={t("chat.sessionPlaceholder")}>
                         {selectedGatewayRow
                           ? channelLabel(selectedGatewayRow)
                           : chatState.sessionKey
-                            ? "新会话"
-                            : "会话"}
+                            ? t("chat.newSession")
+                            : t("chat.session")}
                       </SelectValue>
                     )}
                   </SelectTrigger>
@@ -1603,7 +1653,7 @@ export function ChatView() {
                             )}
                           >
                             {s.channel === "feishu" || s.channel === "lark"
-                              ? "飞书"
+                              ? t("chat.sourceFeishu")
                               : s.channel === "pond"
                                 ? "Pond"
                                 : s.channel === "telegram"
@@ -1614,7 +1664,9 @@ export function ChatView() {
                                       ? "Web"
                                       : (s.channel ?? "?")}
                           </span>
-                          <span className="truncate">{s.label || "会话"}</span>
+                          <span className="truncate">
+                            {s.label || t("chat.session")}
+                          </span>
                         </span>
                       </SelectItem>
                     ))}
@@ -1626,12 +1678,12 @@ export function ChatView() {
                   className="h-8 w-8 shrink-0 text-app-muted hover:text-app-text"
                   onClick={startNewConversation}
                   disabled={sending}
-                  title="新会话"
+                  title={t("chat.newSessionTitle")}
                 >
                   <PlusSquare className="h-4 w-4" />
                 </Button>
                 <span className="ml-auto hidden text-[11px] text-app-muted md:inline">
-                  Enter 发送 · Shift+Enter 换行
+                  {t("chat.sendHint")}
                 </span>
               </div>
             ) : null}
@@ -1642,8 +1694,10 @@ export function ChatView() {
               )}
             >
             <textarea
-              placeholder={running ? "输入消息…" : "请先启动 Gateway"}
-              title="Enter 发送，Shift+Enter 换行"
+              placeholder={
+                running ? t("chat.placeholderRunning") : t("chat.placeholderStopped")
+              }
+              title={t("chat.inputTitle")}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
@@ -1665,7 +1719,7 @@ export function ChatView() {
                 variant="outline"
                 className="h-10 w-10 shrink-0 self-end rounded-lg border-app-border text-destructive hover:bg-destructive/10 hover:text-destructive"
                 onClick={handleStop}
-                title="停止生成"
+                title={t("chat.stopGeneration")}
               >
                 <Square className="h-4 w-4" />
               </Button>
@@ -1675,7 +1729,7 @@ export function ChatView() {
                 className="h-10 w-10 shrink-0 self-end rounded-lg bg-claw-500 hover:bg-claw-600 text-white"
                 onClick={handleSend}
                 disabled={!running || !input.trim()}
-                title="发送"
+                title={t("chat.send")}
               >
                 <Send className="h-4 w-4" />
               </Button>
@@ -1694,10 +1748,8 @@ export function ChatView() {
       >
         <DialogContent className="flex max-h-[85vh] max-w-xl flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
           <DialogHeader className="space-y-1.5 px-6 pt-6 pr-14 text-left">
-            <DialogTitle>执行时间线</DialogTitle>
-            <DialogDescription>
-              本轮按时间顺序展示；可展开查看工具参数与结果。
-            </DialogDescription>
+            <DialogTitle>{t("chat.timelineTitle")}</DialogTitle>
+            <DialogDescription>{t("chat.timelineDesc")}</DialogDescription>
           </DialogHeader>
           <div className="flex min-h-0 flex-1 flex-col px-6 pb-6 pt-2">
             <ExecutionTimeline

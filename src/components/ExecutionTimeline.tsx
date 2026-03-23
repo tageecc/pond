@@ -1,5 +1,7 @@
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 import { Clock, CheckCircle2, XCircle, Loader2, MessageSquare, Wrench, Brain, ChevronDown, ChevronUp } from "lucide-react"
+import type { TFunction } from "i18next"
 import { cn } from "../lib/utils"
 import { Button } from "./ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
@@ -79,21 +81,8 @@ function getStepColor(type: ExecutionStepType, status: ExecutionStepStatus) {
   }
 }
 
-function getStepLabel(type: ExecutionStepType) {
-  switch (type) {
-    case "message":
-      return "消息"
-    case "tool_call":
-      return "工具调用"
-    case "thinking":
-      return "思考"
-    case "approval":
-      return "等待审批"
-    case "completion":
-      return "完成"
-    default:
-      return "未知"
-  }
+function getStepLabel(t: TFunction, type: ExecutionStepType) {
+  return t(`executionTimeline.stepTypes.${type}`)
 }
 
 function formatDuration(ms: number): string {
@@ -104,9 +93,10 @@ function formatDuration(ms: number): string {
   return `${minutes}m ${seconds}s`
 }
 
-function formatTimestamp(date: Date | string): string {
+function formatTimestamp(date: Date | string, locale: string): string {
   const d = date instanceof Date ? date : new Date(date)
-  return d.toLocaleTimeString("zh-CN", {
+  const loc = locale.startsWith("zh") ? "zh-CN" : "en-US"
+  return d.toLocaleTimeString(loc, {
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
@@ -114,7 +104,14 @@ function formatTimestamp(date: Date | string): string {
   })
 }
 
-function StepItem({ step, isLast }: { step: ExecutionStep; isLast: boolean }) {
+function StepItem({
+  step,
+  isLast,
+}: {
+  step: ExecutionStep
+  isLast: boolean
+}) {
+  const { t, i18n } = useTranslation()
   const [expanded, setExpanded] = useState(false)
   const hasMetadata = step.metadata && (
     step.metadata.toolName || 
@@ -149,10 +146,10 @@ function StepItem({ step, isLast }: { step: ExecutionStep; isLast: boolean }) {
             "font-medium",
             getStepColor(step.type, step.status)
           )}>
-            {getStepLabel(step.type)}
+            {getStepLabel(t, step.type)}
           </span>
           <span className="text-[11px] text-app-muted">
-            {formatTimestamp(step.timestamp)}
+            {formatTimestamp(step.timestamp, i18n.language)}
           </span>
           {step.duration !== undefined && (
             <>
@@ -178,20 +175,20 @@ function StepItem({ step, isLast }: { step: ExecutionStep; isLast: boolean }) {
               onClick={() => setExpanded(!expanded)}
             >
               {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-              {expanded ? "收起详情" : "查看详情"}
+              {expanded ? t("executionTimeline.collapseDetails") : t("executionTimeline.expandDetails")}
             </Button>
 
             {expanded && (
               <div className="mt-2 space-y-2 rounded-lg border border-app-border bg-app-elevated/50 p-3 text-xs">
                 {step.metadata?.toolName && (
                   <div>
-                    <span className="font-medium text-app-muted">工具名称：</span>
+                    <span className="font-medium text-app-muted">{t("executionTimeline.toolName")}</span>
                     <span className="font-mono text-app-text">{step.metadata.toolName}</span>
                   </div>
                 )}
                 {step.metadata?.toolArgs && (
                   <div>
-                    <span className="font-medium text-app-muted">参数：</span>
+                    <span className="font-medium text-app-muted">{t("executionTimeline.args")}</span>
                     <pre className="mt-1 overflow-x-auto rounded bg-app-bg p-2 font-mono text-[11px] text-app-text">
                       {step.metadata.toolArgs}
                     </pre>
@@ -199,7 +196,7 @@ function StepItem({ step, isLast }: { step: ExecutionStep; isLast: boolean }) {
                 )}
                 {step.metadata?.toolResult && (
                   <div>
-                    <span className="font-medium text-app-muted">结果：</span>
+                    <span className="font-medium text-app-muted">{t("executionTimeline.result")}</span>
                     <pre className="mt-1 max-h-40 overflow-auto rounded bg-app-bg p-2 font-mono text-[11px] text-app-text">
                       {step.metadata.toolResult}
                     </pre>
@@ -207,7 +204,7 @@ function StepItem({ step, isLast }: { step: ExecutionStep; isLast: boolean }) {
                 )}
                 {step.metadata?.error && (
                   <div>
-                    <span className="font-medium text-red-500">错误：</span>
+                    <span className="font-medium text-red-500">{t("executionTimeline.error")}</span>
                     <pre className="mt-1 overflow-x-auto rounded bg-red-500/5 p-2 font-mono text-[11px] text-red-500">
                       {step.metadata.error}
                     </pre>
@@ -231,42 +228,50 @@ function TimelineStatsBar({
   isExecuting?: boolean
   showHeading?: boolean
 }) {
+  const { t } = useTranslation()
   const totalDuration = steps.reduce((sum, step) => sum + (step.duration || 0), 0)
   const completedSteps = steps.filter((s) => s.status === "completed").length
   const failedSteps = steps.filter((s) => s.status === "failed").length
 
   const stats = (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-app-muted">
-        {isExecuting && (
-          <div className="flex items-center gap-1.5 text-blue-500">
-            <Loader2 className="h-3 w-3 animate-spin" />
-            <span>执行中</span>
-          </div>
-        )}
-        <span>
-          {completedSteps}/{steps.length} 步骤
+      {isExecuting && (
+        <div className="flex items-center gap-1.5 text-blue-500">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          <span>{t("executionTimeline.running")}</span>
+        </div>
+      )}
+      <span>
+        {t("executionTimeline.stepsProgress", {
+          completed: completedSteps,
+          total: steps.length,
+        })}
+      </span>
+      {failedSteps > 0 && (
+        <span className="text-red-500">
+          {t("executionTimeline.errorsCount", { n: failedSteps })}
         </span>
-        {failedSteps > 0 && <span className="text-red-500">{failedSteps} 个错误</span>}
-        {totalDuration > 0 && (
-          <>
-            <span className="text-app-border">·</span>
-            <span>总计 {formatDuration(totalDuration)}</span>
-          </>
-        )}
+      )}
+      {totalDuration > 0 && (
+        <>
+          <span className="text-app-border">·</span>
+          <span>
+            {t("executionTimeline.totalDuration", {
+              duration: formatDuration(totalDuration),
+            })}
+          </span>
+        </>
+      )}
     </div>
   )
 
   if (!showHeading) {
-    return (
-      <div className="border-b border-app-border/40 pb-3">
-        {stats}
-      </div>
-    )
+    return <div className="border-b border-app-border/40 pb-3">{stats}</div>
   }
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-app-border/40 pb-3">
-      <span className="text-sm font-medium text-app-text">执行时间线</span>
+      <span className="text-sm font-medium text-app-text">{t("executionTimeline.title")}</span>
       {stats}
     </div>
   )
@@ -278,6 +283,8 @@ export function ExecutionTimeline({
   className,
   embedded,
 }: ExecutionTimelineProps) {
+  const { t } = useTranslation()
+
   if (steps.length === 0) {
     if (embedded) {
       return null
@@ -286,10 +293,8 @@ export function ExecutionTimeline({
       <Card className={cn("bg-app-surface", className)}>
         <CardContent className="flex flex-col items-center justify-center py-12 text-center">
           <Clock className="h-8 w-8 text-app-muted opacity-40" />
-          <p className="mt-3 text-sm text-app-muted">暂无执行记录</p>
-          <p className="mt-1 text-xs text-app-muted/60">
-            Agent 执行时会显示详细的步骤时间线
-          </p>
+          <p className="mt-3 text-sm text-app-muted">{t("executionTimeline.emptyTitle")}</p>
+          <p className="mt-1 text-xs text-app-muted/60">{t("executionTimeline.emptyHint")}</p>
         </CardContent>
       </Card>
     )
@@ -322,22 +327,35 @@ export function ExecutionTimeline({
     <Card className={cn("bg-app-surface", className)}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium text-app-text">执行时间线</CardTitle>
+          <CardTitle className="text-sm font-medium text-app-text">
+            {t("executionTimeline.title")}
+          </CardTitle>
           <div className="flex items-center gap-3 text-xs text-app-muted">
             {isExecuting && (
               <div className="flex items-center gap-1.5 text-blue-500">
                 <Loader2 className="h-3 w-3 animate-spin" />
-                <span>执行中</span>
+                <span>{t("executionTimeline.running")}</span>
               </div>
             )}
             <span>
-              {completedSteps}/{steps.length} 步骤
+              {t("executionTimeline.stepsProgress", {
+                completed: completedSteps,
+                total: steps.length,
+              })}
             </span>
-            {failedSteps > 0 && <span className="text-red-500">{failedSteps} 个错误</span>}
+            {failedSteps > 0 && (
+              <span className="text-red-500">
+                {t("executionTimeline.errorsCount", { n: failedSteps })}
+              </span>
+            )}
             {totalDuration > 0 && (
               <>
                 <span className="text-app-border">·</span>
-                <span>总计 {formatDuration(totalDuration)}</span>
+                <span>
+                  {t("executionTimeline.totalDuration", {
+                    duration: formatDuration(totalDuration),
+                  })}
+                </span>
               </>
             )}
           </div>

@@ -1,0 +1,20 @@
+{
+  "channelTypes": {
+    "whatsapp": "WhatsApp",
+    "telegram": "Telegram",
+    "discord": "Discord",
+    "slack": "Slack",
+    "imessage": "iMessage",
+    "signal": "Signal",
+    "msteams": "MS Teams",
+    "googlechat": "Google Chat",
+    "mattermost": "Mattermost",
+    "matrix": "Matrix",
+    "irc": "IRC",
+    "feishu": "Feishu",
+    "line": "LINE",
+    "nostr": "Nostr",
+    "twitch": "Twitch",
+    "bluebubbles": "BlueBubbles"
+  }
+}

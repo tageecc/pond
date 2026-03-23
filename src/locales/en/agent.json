@@ -1,0 +1,37 @@
+{
+  "agent": {
+    "workspaceFile": {
+      "AGENTS_md": "Instructions & memory",
+      "SOUL_md": "Persona, boundaries, tone",
+      "TOOLS_md": "Tool usage & conventions",
+      "IDENTITY_md": "Name, style, emoji",
+      "USER_md": "User profile & address",
+      "BOOT_md": "Startup checklist",
+      "HEARTBEAT_md": "Heartbeat task list",
+      "BOOTSTRAP_md": "First-run ritual"
+    },
+    "workspaceFallback": "Workspace file",
+    "toolProfile": {
+      "full": {
+        "label": "Full — unrestricted",
+        "desc": "All tools available"
+      },
+      "coding": {
+        "label": "Coding",
+        "desc": "Filesystem + runtime + session + memory"
+      },
+      "messaging": {
+        "label": "Messaging",
+        "desc": "Session and messaging tools only"
+      },
+      "minimal": {
+        "label": "Minimal",
+        "desc": "Status queries only"
+      }
+    },
+    "chromeExtension": {
+      "hint": "Chrome mode requires the OpenClaw Browser Relay extension. After installing, click the extension icon on the target tab to attach.",
+      "install": "Install"
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "modelIdField": {
+    "customPlaceholder": "Model ID",
+    "searchPlaceholder": "Model ID (code), searchable",
+    "expandList": "Expand model list",
+    "hint": "↑↓ select · Enter confirm · type any model ID in the field",
+    "empty": "No matches; closing keeps your input as model ID",
+    "meta": {
+      "pricing": "Context {{ctx}} · ${{input}}/${{output}} /M",
+      "cacheSuffix": " · cache ${{rate}}/M"
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "executionTimeline": {
+    "stepTypes": {
+      "message": "Message",
+      "tool_call": "Tool call",
+      "thinking": "Thinking",
+      "approval": "Awaiting approval",
+      "completion": "Done"
+    },
+    "unknown": "Unknown",
+    "collapseDetails": "Hide details",
+    "expandDetails": "View details",
+    "toolName": "Tool:",
+    "args": "Arguments:",
+    "result": "Result:",
+    "error": "Error:",
+    "running": "Running",
+    "stepsProgress": "{{completed}}/{{total}} steps",
+    "errorsCount": "{{n}} errors",
+    "totalDuration": "Total {{duration}}",
+    "title": "Execution timeline",
+    "emptyTitle": "No execution steps yet",
+    "emptyHint": "A detailed timeline appears when the agent runs."
+  }
+}

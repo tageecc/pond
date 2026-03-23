@@ -1,0 +1,25 @@
+{
+  "notifications": {
+    "wsHealthWarning": "Agent health check issue",
+    "wsHealthDesc": "Check Agent status",
+    "wsTickError": "Agent heartbeat issue",
+    "wsTickDesc": "Gateway may be unresponsive",
+    "unknownTool": "Unknown tool",
+    "needConfirm": "Confirmation required",
+    "approvalNeeded": "Approval: {{tool}}",
+    "viewDetails": "View details",
+    "approved": "Approved: {{tool}}",
+    "approvedDesc": "Agent will continue",
+    "rejected": "Rejected: {{tool}}",
+    "rejectedDesc": "Agent cancelled this action",
+    "toolFallback": "tool",
+    "agentStarted": "Agent started",
+    "agentRunningOnPort": "“{{name}}” Gateway on port {{port}}",
+    "agentStartFailed": "Agent failed to start",
+    "agentStartFailedDesc": "“{{name}}”: {{message}}",
+    "unknownError": "Unknown error",
+    "agentStopped": "Agent stopped",
+    "agentStoppedDesc": "“{{name}}” Gateway closed",
+    "gatewayError": "Gateway error"
+  }
+}

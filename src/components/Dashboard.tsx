@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { useAppStore } from "../stores/appStore"
 import { invoke } from "@tauri-apps/api/core"
 import {
@@ -41,6 +42,7 @@ const CHART_COLOR_CPU = "hsl(var(--chart-1))"
 const CHART_COLOR_RAM = "hsl(var(--chart-2))"
 
 export function Dashboard() {
+  const { t } = useTranslation()
   const {
     agentGateways,
     gatewayError,
@@ -120,7 +122,7 @@ export function Dashboard() {
       setGatewayError(null)
       await startAgentGateway(agentId)
       const name = getAgentDisplayName(agentId, useAppStore.getState().instanceDisplayNames ?? {})
-      toast.success(`「${name}」Gateway 已启动`)
+      toast.success(t("dashboard.toastGatewayStarted", { name }))
     } catch (e) {
       setGatewayError(e instanceof Error ? e.message : String(e))
       toast.error(e instanceof Error ? e.message : String(e))
@@ -132,7 +134,7 @@ export function Dashboard() {
     try {
       await stopAgentGateway(agentId)
       const name = getAgentDisplayName(agentId, useAppStore.getState().instanceDisplayNames ?? {})
-      toast.success(`「${name}」Gateway 已停止`)
+      toast.success(t("dashboard.toastGatewayStopped", { name }))
     } catch (e) {
       setGatewayError(e instanceof Error ? e.message : String(e))
       toast.error(e instanceof Error ? e.message : String(e))
@@ -146,7 +148,7 @@ export function Dashboard() {
     try {
       await restartAgentGateway(agentId)
       const name = getAgentDisplayName(agentId, useAppStore.getState().instanceDisplayNames ?? {})
-      toast.success(`「${name}」Gateway 已重启`)
+      toast.success(t("dashboard.toastGatewayRestarted", { name }))
     } catch (e) {
       setGatewayError(e instanceof Error ? e.message : String(e))
       toast.error(e instanceof Error ? e.message : String(e))
@@ -168,7 +170,7 @@ export function Dashboard() {
         } catch (_) {}
       }
     }
-    if (started > 0) toast.success(`已启动 ${started} 个 Gateway`)
+    if (started > 0) toast.success(t("dashboard.toastStartedN", { n: started }))
   }
   const handleStopAll = async () => {
     await useAppStore.getState().loadAllGatewayStatuses()
@@ -182,7 +184,7 @@ export function Dashboard() {
         } catch (_) {}
       }
     }
-    if (stopped > 0) toast.success(`已停止 ${stopped} 个 Gateway`)
+    if (stopped > 0) toast.success(t("dashboard.toastStoppedN", { n: stopped }))
   }
 
   const instanceIds = useAppStore((s) => s.instanceIds)
@@ -203,8 +205,8 @@ export function Dashboard() {
     <TooltipProvider delayDuration={200}>
     <ContentLayout>
         <PageHeader
-          title="概览"
-          subtitle={`管理和监控所有 OpenClaw 实例 · 参考汇率 1 USD = ${exchangeRate} CNY`}
+          title={t("dashboard.title")}
+          subtitle={t("dashboard.subtitle", { rate: exchangeRate })}
           actions={
             <Button
               variant="ghost"
@@ -217,12 +219,12 @@ export function Dashboard() {
                   fetchTodaySpend()
                   fetchTokenStats()
                 } catch (e) {
-                  console.warn("[Dashboard] 刷新使用数据失败:", e)
+                  console.warn("[Dashboard] refresh usage failed:", e)
                 }
               }}
             >
               <RefreshCw className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">刷新</span>
+              <span className="hidden sm:inline">{t("dashboard.refresh")}</span>
             </Button>
           }
         />
@@ -230,7 +232,7 @@ export function Dashboard() {
         {gatewayError && (
           <div className="flex shrink-0 items-center justify-between gap-3 rounded-xl border border-destructive/20 bg-destructive/5 py-3 pl-4 pr-3 text-sm text-destructive">
             <span>{gatewayError}</span>
-            <Button variant="ghost" size="sm" className="h-7 text-destructive hover:text-destructive" onClick={() => setGatewayError(null)}>关闭</Button>
+            <Button variant="ghost" size="sm" className="h-7 text-destructive hover:text-destructive" onClick={() => setGatewayError(null)}>{t("dashboard.close")}</Button>
           </div>
         )}
 
@@ -274,7 +276,7 @@ export function Dashboard() {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[11px] text-app-muted sm:text-xs">
-                  {systemInfo ? `${(systemInfo.memory_used_mb / 1024).toFixed(1)}/${(systemInfo.memory_total_mb / 1024).toFixed(0)}G` : "内存"}
+                  {systemInfo ? `${(systemInfo.memory_used_mb / 1024).toFixed(1)}/${(systemInfo.memory_total_mb / 1024).toFixed(0)}G` : t("dashboard.memory")}
                 </p>
                 <p className="truncate text-base font-semibold tabular-nums text-app-text sm:text-lg">
                   {systemInfo != null ? `${memPercent.toFixed(0)}%` : "—"}
@@ -306,11 +308,11 @@ export function Dashboard() {
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <p className="truncate text-[11px] text-app-muted sm:text-xs">今日消费</p>
+                  <p className="truncate text-[11px] text-app-muted sm:text-xs">{t("dashboard.todaySpend")}</p>
                   <button
                     onClick={toggleCurrency}
                     className="text-[10px] px-1.5 py-0.5 rounded bg-app-hover hover:bg-app-hover-strong text-app-muted hover:text-app-text transition-colors"
-                    title="切换货币单位"
+                    title={t("dashboard.toggleCurrency")}
                   >
                     {currency}
                   </button>
@@ -330,7 +332,7 @@ export function Dashboard() {
                     <Hash className="h-4 w-4 text-emerald-600 dark:text-emerald-400 sm:h-5 sm:w-5" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[11px] text-app-muted sm:text-xs">Token 用量</p>
+                    <p className="truncate text-[11px] text-app-muted sm:text-xs">{t("dashboard.tokenUsage")}</p>
                     <p className="truncate text-base font-semibold tabular-nums text-app-text sm:text-lg">
                       {prettyTokens(totalTokens)}
                     </p>
@@ -341,7 +343,7 @@ export function Dashboard() {
             <TooltipContent side="bottom" className="max-w-xs space-y-1 p-3">
               {tokenStats && Object.keys(tokenStats.agents).length > 0 ? (
                 <>
-                  <p className="mb-1.5 text-[11px] font-medium text-zinc-300">各 Agent Token 用量</p>
+                  <p className="mb-1.5 text-[11px] font-medium text-zinc-300">{t("dashboard.tokenByAgent")}</p>
                   {Object.entries(tokenStats.agents).map(([aid, t]) => (
                     <div key={aid} className="flex items-center justify-between gap-4 text-[11px]">
                       <span className="text-zinc-400 truncate">{getAgentDisplayName(aid, displayNames)}</span>
@@ -352,7 +354,7 @@ export function Dashboard() {
                   ))}
                 </>
               ) : (
-                <p className="text-[11px] text-zinc-400">暂无 Token 使用记录</p>
+                <p className="text-[11px] text-zinc-400">{t("dashboard.noTokenRecords")}</p>
               )}
             </TooltipContent>
           </Tooltip>
@@ -362,12 +364,12 @@ export function Dashboard() {
         <Card className="shrink-0 bg-app-surface">
           <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 space-y-0 px-4 pb-3 sm:px-6">
             <div className="flex items-center gap-2 sm:gap-3">
-              <CardTitle className="text-sm font-medium text-app-text">OpenClaw 实例</CardTitle>
+              <CardTitle className="text-sm font-medium text-app-text">{t("dashboard.instancesTitle")}</CardTitle>
               <span className={cn(
                 "rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums",
                 runningGwCount > 0 ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" : "bg-app-elevated text-app-muted"
               )}>
-                {runningGwCount}/{totalAgents} 运行中
+                {t("dashboard.runningCount", { running: runningGwCount, total: totalAgents })}
               </span>
             </div>
             <div className="flex items-center gap-1.5">
@@ -379,7 +381,7 @@ export function Dashboard() {
                   onClick={handleStartAll}
                 >
                   {anyStarting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3" />}
-                  全部启动
+                  {t("dashboard.startAll")}
                 </Button>
               )}
               {runningGwCount > 0 && (
@@ -390,7 +392,7 @@ export function Dashboard() {
                   onClick={handleStopAll}
                 >
                   <Square className="h-3 w-3" />
-                  全部停止
+                  {t("dashboard.stopAll")}
                 </Button>
               )}
             </div>
@@ -420,13 +422,13 @@ export function Dashboard() {
                   
                   switch (gwExecState) {
                     case "thinking":
-                      return { label: "思考中", color: "text-blue-500", bgColor: "bg-blue-500/10" }
+                      return { label: t("dashboard.execThinking"), color: "text-blue-500", bgColor: "bg-blue-500/10" }
                     case "executing_tool":
-                      return { label: "执行中", color: "text-amber-500", bgColor: "bg-amber-500/10" }
+                      return { label: t("dashboard.execRunning"), color: "text-amber-500", bgColor: "bg-amber-500/10" }
                     case "done":
-                      return { label: "完成", color: "text-emerald-500", bgColor: "bg-emerald-500/10" }
+                      return { label: t("dashboard.execDone"), color: "text-emerald-500", bgColor: "bg-emerald-500/10" }
                     case "error":
-                      return { label: "错误", color: "text-red-500", bgColor: "bg-red-500/10" }
+                      return { label: t("dashboard.execError"), color: "text-red-500", bgColor: "bg-red-500/10" }
                     default:
                       return null
                   }
@@ -449,7 +451,7 @@ export function Dashboard() {
                       type="button"
                       className="min-w-0 flex-1 text-left cursor-pointer hover:opacity-80 transition-opacity"
                       onClick={() => setCurrentView("agents", id)}
-                      title="点击查看 Agent 设置"
+                      title={t("dashboard.openAgentSettings")}
                     >
                       <div className="flex items-center gap-1.5 sm:gap-2">
                         <span className="truncate text-xs font-semibold text-app-text sm:text-sm">{name}</span>
@@ -459,7 +461,7 @@ export function Dashboard() {
                             : gwStarting ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
                             : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
                         )}>
-                          {gwRunning ? "运行中" : gwStarting ? "启动中" : "已停止"}
+                          {gwRunning ? t("dashboard.statusRunning") : gwStarting ? t("dashboard.statusStarting") : t("dashboard.statusStopped")}
                         </span>
                         {gwRunning && execStateInfo && (
                           <span className={cn(
@@ -476,7 +478,7 @@ export function Dashboard() {
                         )}
                       </div>
                       <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-app-muted sm:gap-2 sm:text-[11px]">
-                        <span>端口 <span className="font-mono">{gwPort}</span></span>
+                        <span>{t("dashboard.port")} <span className="font-mono">{gwPort}</span></span>
                         {gwRunning && gwUptime != null && (
                           <>
                             <span className="text-app-border">·</span>
@@ -496,7 +498,7 @@ export function Dashboard() {
                                 variant="ghost"
                                 className="h-7 w-7 text-red-400 hover:bg-red-500/10 hover:text-red-500"
                                 disabled={gwStopping}
-                                title="停止"
+                                title={t("dashboard.stop")}
                               >
                                 {gwStopping
                                   ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -504,10 +506,10 @@ export function Dashboard() {
                               </Button>
                             </PopoverTrigger>
                             <PopoverContent side="bottom" align="end" className="w-auto p-3">
-                              <p className="mb-2 text-xs text-app-text">确定停止「{name}」的 Gateway？</p>
+                              <p className="mb-2 text-xs text-app-text">{t("dashboard.stopConfirm", { name })}</p>
                               <div className="flex gap-2">
                                 <PopoverClose asChild>
-                                  <Button size="sm" variant="ghost" className="h-7 text-xs text-app-muted">取消</Button>
+                                  <Button size="sm" variant="ghost" className="h-7 text-xs text-app-muted">{t("dashboard.cancel")}</Button>
                                 </PopoverClose>
                                 <PopoverClose asChild>
                                   <Button
@@ -515,7 +517,7 @@ export function Dashboard() {
                                     className="h-7 bg-red-600 text-xs text-white hover:bg-red-700 border-0"
                                     onClick={() => handleAgentStop(key)}
                                   >
-                                    确认停止
+                                    {t("dashboard.confirmStop")}
                                   </Button>
                                 </PopoverClose>
                               </div>
@@ -528,7 +530,7 @@ export function Dashboard() {
                             className="h-7 w-7 text-amber-500 hover:bg-amber-500/10 hover:text-amber-600"
                             onClick={() => handleAgentRestart(key)}
                             disabled={gwRestarting}
-                            title="重启"
+                            title={t("dashboard.restart")}
                           >
                             {gwRestarting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCw className="h-3.5 w-3.5" />}
                           </Button>
@@ -541,7 +543,7 @@ export function Dashboard() {
                           disabled={gwStarting}
                         >
                           {gwStarting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3" />}
-                          <span className="hidden sm:inline">{gwStarting ? "启动中" : "启动"}</span>
+                          <span className="hidden sm:inline">{gwStarting ? t("dashboard.statusStarting") : t("dashboard.start")}</span>
                         </Button>
                       )}
                     </div>
@@ -557,14 +559,14 @@ export function Dashboard() {
           {/* Cron jobs */}
           <Card className="bg-app-surface">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-app-muted">定时任务</CardTitle>
+              <CardTitle className="text-sm font-medium text-app-muted">{t("dashboard.cronTitle")}</CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
               {cronJobs.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-8 gap-1.5 opacity-40">
                   <CalendarOff className="h-6 w-6 text-app-muted" strokeWidth={1.5} />
-                  <span className="text-xs text-app-muted">暂无定时任务</span>
-                  <span className="text-[10px] text-app-muted/60">Agent 对话中创建的定时任务会显示在这里</span>
+                  <span className="text-xs text-app-muted">{t("dashboard.noCron")}</span>
+                  <span className="text-[10px] text-app-muted/60">{t("dashboard.cronHint")}</span>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -584,7 +586,7 @@ export function Dashboard() {
                             agentId === "default" ? "bg-claw-500" : "bg-blue-500"
                           )} />
                           <span className="text-xs font-medium text-app-muted">{agentName}</span>
-                          <span className="text-[10px] text-app-muted/50">{jobs.length} 项</span>
+                          <span className="text-[10px] text-app-muted/50">{t("dashboard.cronItems", { count: jobs.length })}</span>
                         </div>
                         <ul className="space-y-1.5 pl-4 border-l-2 border-app-border/40">
                           {jobs.map((job) => (
@@ -601,7 +603,7 @@ export function Dashboard() {
                                 <p className="text-xs text-app-muted mt-0.5 truncate pl-3.5">{job.description}</p>
                               )}
                               {job.enabled && job.nextRunAt && (
-                                <p className="text-[11px] text-app-muted/60 mt-0.5 pl-3.5">下次运行：{job.nextRunAt}</p>
+                                <p className="text-[11px] text-app-muted/60 mt-0.5 pl-3.5">{t("dashboard.cronNextRun", { time: job.nextRunAt })}</p>
                               )}
                             </li>
                           ))}
@@ -617,11 +619,11 @@ export function Dashboard() {
           {/* Active sessions */}
           <Card className="bg-app-surface">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-app-muted">进行中的会话</CardTitle>
+              <CardTitle className="text-sm font-medium text-app-muted">{t("dashboard.sessionsTitle")}</CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
               {chatSessions.length === 0 ? (
-                <p className="py-4 text-center text-sm text-app-muted">暂无会话记录</p>
+                <p className="py-4 text-center text-sm text-app-muted">{t("dashboard.noSessions")}</p>
               ) : (
                 <ul className="space-y-1.5">
                   {chatSessions.slice(0, 8).map((s) => {
@@ -638,7 +640,7 @@ export function Dashboard() {
                             <div className="flex items-center gap-1.5">
                               <span className="text-sm font-medium text-app-text truncate">{displayName}</span>
                               <span className="rounded bg-app-elevated px-1.5 py-0.5 text-[10px] tabular-nums text-app-muted shrink-0">
-                                {s.messageCount} 条
+                                {t("dashboard.messagesCount", { count: s.messageCount })}
                               </span>
                             </div>
                             {s.lastPreview && (

@@ -1,0 +1,6 @@
+{
+  "instanceSwitcher": {
+    "placeholder": "Select instance",
+    "createNew": "New OpenClaw instance"
+  }
+}

@@ -1,31 +1,40 @@
 import { useMemo, useState, useRef, useCallback, useEffect } from "react"
+import { useTranslation } from "react-i18next"
 import { ChevronDown } from "lucide-react"
 import type { ModelInfo } from "../constants/models"
 import { getModelsByProvider } from "../constants/models"
+import { getModelCatalogDescription } from "../lib/modelCatalogDescriptions"
 import { Input } from "./ui/input"
 import { Popover, PopoverAnchor, PopoverContent } from "./ui/popover"
 import { cn } from "../lib/utils"
+import type { TFunction } from "i18next"
 
-function metaLine(m: ModelInfo): string {
+function metaLine(m: ModelInfo, t: TFunction, catalogDesc: string): string {
   if (m.contextWindow === 0 && m.cost.input === 0 && m.cost.output === 0) {
-    return m.description ?? ""
+    return catalogDesc
   }
   const ctx =
     m.contextWindow >= 1_000_000
       ? `${(m.contextWindow / 1_000_000).toFixed(1)}M`
       : `${Math.round(m.contextWindow / 1000)}k`
   const c = m.cost
-  const cache = c.cacheRead != null ? ` · 缓存 $${c.cacheRead}/M` : ""
-  return `上下文 ${ctx} · $${c.input}/$${c.output} /M${cache}`
+  const base = t("modelIdField.meta.pricing", {
+    ctx,
+    input: c.input,
+    output: c.output,
+  })
+  const cache =
+    c.cacheRead != null ? t("modelIdField.meta.cacheSuffix", { rate: c.cacheRead }) : ""
+  return base + cache
 }
 
-function matchesQuery(m: ModelInfo, q: string): boolean {
+function matchesQuery(m: ModelInfo, q: string, catalogDesc: string): boolean {
   if (!q) return true
   const s = q.toLowerCase()
   return (
     m.id.toLowerCase().includes(s) ||
     m.name.toLowerCase().includes(s) ||
-    (m.description?.toLowerCase().includes(s) ?? false)
+    catalogDesc.toLowerCase().includes(s)
   )
 }
 
@@ -44,6 +53,7 @@ export function ModelIdField({
   size?: "sm" | "md"
   triggerClassName?: string
 }) {
+  const { t, i18n } = useTranslation()
   const catalog = useMemo(() => getModelsByProvider(provider), [provider])
 
   const [open, setOpen] = useState(false)
@@ -57,8 +67,10 @@ export function ModelIdField({
 
   const filtered = useMemo(() => {
     const q = query.trim()
-    return catalog.filter((m) => matchesQuery(m, q))
-  }, [catalog, query])
+    return catalog.filter((m) =>
+      matchesQuery(m, q, getModelCatalogDescription(i18n, m.id))
+    )
+  }, [catalog, query, i18n])
 
   useEffect(() => {
     if (!open) return
@@ -134,7 +146,7 @@ export function ModelIdField({
   if (provider === "custom" || catalog.length === 0) {
     return (
       <Input
-        placeholder="模型 ID"
+        placeholder={t("modelIdField.customPlaceholder")}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
@@ -162,7 +174,7 @@ export function ModelIdField({
             spellCheck={false}
             disabled={disabled}
             value={open ? query : value}
-            placeholder="模型 ID（code），可搜索"
+            placeholder={t("modelIdField.searchPlaceholder")}
             onChange={(e) => {
               const t = e.target.value
               setQuery(t)
@@ -196,7 +208,7 @@ export function ModelIdField({
                 requestAnimationFrame(() => inputRef.current?.focus())
               }
             }}
-            aria-label="展开模型列表"
+            aria-label={t("modelIdField.expandList")}
           >
             <ChevronDown
               className={cn("h-4 w-4 shrink-0 transition-transform", open && "rotate-180")}
@@ -217,7 +229,7 @@ export function ModelIdField({
         )}
       >
         <div className="border-b border-app-border/80 px-3 py-1.5 text-xs text-app-muted">
-          ↑↓ 选择 · Enter 确认 · 可直接在输入框填写任意模型 ID
+          {t("modelIdField.hint")}
         </div>
         <div
           ref={listRef}
@@ -226,12 +238,12 @@ export function ModelIdField({
         >
           {filtered.length === 0 ? (
             <div className="rounded-xl px-3 py-8 text-center text-sm text-app-muted">
-              无匹配模型，关闭后保留当前输入作为模型 ID
+              {t("modelIdField.empty")}
             </div>
           ) : (
             filtered.map((m, idx) => {
               const highlighted = idx === highlightIndex
-              const meta = metaLine(m)
+              const meta = metaLine(m, t, getModelCatalogDescription(i18n, m.id))
               return (
                 <button
                   key={m.id}

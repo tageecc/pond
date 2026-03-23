@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react"
+import { useTranslation } from "react-i18next"
 import { invoke } from "@tauri-apps/api/core"
 import { useAppStore } from "../stores/appStore"
 import { Button } from "./ui/button"
@@ -96,7 +97,9 @@ function ModelCardIcon({ providerId, size = 40 }: { providerId?: string; size?: 
 }
 
 import { PROVIDERS, getProvider } from "../constants/providers"
+import { providerLabel } from "../lib/providerLabel"
 import { ModelIdField } from "./ModelIdField"
+import type { TFunction } from "i18next"
 
 const OPENCLAW_PROVIDERS_DOC = "https://docs.openclaw.ai/zh-CN/concepts/model-providers"
 
@@ -107,17 +110,24 @@ function isModelConfigured(m: LLMModelConfig | Record<string, unknown>): boolean
   return false
 }
 
-function getModelDisplayName(m: LLMModelConfig | Record<string, unknown>, _modelId: string): string {
+function getModelDisplayName(
+  m: LLMModelConfig | Record<string, unknown>,
+  _modelId: string,
+  t: TFunction,
+): string {
   const name = (m as LLMModelConfig).name
   if (name && String(name).trim()) return String(name).trim()
-  const provider = (m as LLMModelConfig).provider
-  const providerName = PROVIDERS.find((p) => p.id === provider)?.name ?? provider ?? "未设置"
+  const provider = (m as LLMModelConfig).provider as string | undefined
+  const providerName = provider
+    ? providerLabel(t, provider)
+    : t("agentView.providerUnset")
   const model = (m as LLMModelConfig).model
   if (model && String(model).trim()) return `${providerName} · ${model}`
   return providerName
 }
 
 export function AIConfig() {
+  const { t } = useTranslation()
   const { openclawConfig, loadConfigs, saveOpenClawConfig } = useAppStore()
   const selectedInstanceId = useAppStore((s) => s.selectedInstanceId)
   const instanceIds = useAppStore((s) => s.instanceIds)
@@ -146,13 +156,13 @@ export function AIConfig() {
       <div className="flex h-full items-center justify-center p-8">
         <Card className="w-full max-w-md bg-app-surface">
           <CardContent className="flex flex-col items-center justify-center py-16">
-            <p className="text-app-muted">加载配置中…</p>
+            <p className="text-app-muted">{t("common.loadingConfig")}</p>
             <Button
               variant="outline"
               className="mt-4 border-app-border text-app-muted hover:bg-app-hover"
               onClick={() => loadConfigs()}
             >
-              重试
+              {t("common.retry")}
             </Button>
           </CardContent>
         </Card>
@@ -216,16 +226,16 @@ export function AIConfig() {
   const handleSave = async () => {
     if (!openclawConfig || !selectedId) return
     if (!model.trim()) {
-      setSaveError("请填写模型 ID")
+      setSaveError(t("agentView.model.fillModelId"))
       return
     }
     if (provider === "custom" && !baseURL.trim()) {
-      setSaveError("自定义模型必须填写 Base URL")
+      setSaveError(t("agentView.model.customNeedsBaseUrl"))
       return
     }
     const keyVal = apiKey.trim()
     if (keyVal && (keyVal.length > 500 || /[^\x20-\x7E]/.test(keyVal))) {
-      setSaveError("API Key 格式不正确：请粘贴厂商提供的 Key（纯英文字符），不要粘贴其他内容")
+      setSaveError(t("agentView.model.apiKeyInvalidHint"))
       return
     }
     setSaving(true)
@@ -251,7 +261,7 @@ export function AIConfig() {
     const { agents: nextAgents, models: nextModelsShape } = flatViewToAgentsModels(nextView, openclawConfig?.agents, openclawConfig?.models)
     try {
       await saveOpenClawConfig({ ...openclawConfig, agents: nextAgents, models: nextModelsShape } as OpenClawConfig, pondInstanceId)
-      setSaveMsg("已保存")
+      setSaveMsg(t("agentView.model.saved"))
       setTimeout(() => setSaveMsg(null), 2000)
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : String(e))
@@ -266,7 +276,7 @@ export function AIConfig() {
     const { agents: nextAgents, models: nextModels } = flatViewToAgentsModels(nextView, openclawConfig?.agents, openclawConfig?.models)
     try {
       await saveOpenClawConfig({ ...openclawConfig, agents: nextAgents, models: nextModels } as OpenClawConfig, pondInstanceId)
-      setSaveMsg("已设为默认模型")
+      setSaveMsg(t("agentView.model.setDefault"))
       setTimeout(() => setSaveMsg(null), 2000)
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : String(e))
@@ -295,11 +305,11 @@ export function AIConfig() {
 
   const handleTest = async () => {
     if (!apiKey.trim()) {
-      setTestMsg("请先填写 API Key 再测试")
+      setTestMsg(t("agentView.model.testNeedKey"))
       return
     }
     if (provider === "custom" && !baseURL.trim()) {
-      setTestMsg("自定义模型必须填写 Base URL")
+      setTestMsg(t("agentView.model.customNeedsBaseUrl"))
       return
     }
     setTesting(true)
@@ -330,8 +340,8 @@ export function AIConfig() {
       <div className="mx-auto w-full max-w-2xl space-y-8 px-6 py-10">
         <header className="flex flex-row items-start justify-between gap-4">
           <div className="flex flex-col gap-1 min-w-0">
-            <h1 className="text-xl font-semibold tracking-tight text-app-text">模型配置</h1>
-            <p className="text-sm text-app-muted">添加模型并填写 API Key，未分配模型的 Agent 将使用默认模型</p>
+            <h1 className="text-xl font-semibold tracking-tight text-app-text">{t("agentView.model.pageTitle")}</h1>
+            <p className="text-sm text-app-muted">{t("agentView.model.pageSubtitle")}</p>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -340,12 +350,14 @@ export function AIConfig() {
                 className="shrink-0 gap-2 bg-claw-500 hover:bg-claw-600 text-white shadow-sm rounded-xl pl-4 pr-3"
               >
                 <Plus className="h-4 w-4" />
-                添加模型
+                {t("agentView.action.addModel")}
                 <ChevronDown className="h-4 w-4 opacity-80" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 rounded-xl">
-              <DropdownMenuLabel className="text-xs font-medium text-app-muted">选择提供商</DropdownMenuLabel>
+              <DropdownMenuLabel className="text-xs font-medium text-app-muted">
+                {t("agentView.model.chooseProvider")}
+              </DropdownMenuLabel>
               {PROVIDERS.map((p) => (
                 <DropdownMenuItem
                   key={p.id}
@@ -355,7 +367,7 @@ export function AIConfig() {
                   }}
                   className="cursor-pointer rounded-lg"
                 >
-                  {p.name}
+                  {providerLabel(t, p.id)}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
@@ -368,19 +380,21 @@ export function AIConfig() {
               <Bot className="h-10 w-10 text-claw-400" />
             </div>
             <div className="space-y-1">
-              <p className="font-medium text-app-text">暂无模型</p>
-              <p className="text-sm text-app-muted">添加后填写 API Key 即可使用</p>
+              <p className="font-medium text-app-text">{t("agentView.model.noneTitle")}</p>
+              <p className="text-sm text-app-muted">{t("agentView.model.noneHint")}</p>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button className="gap-2 bg-claw-500 hover:bg-claw-600 text-white rounded-xl">
                   <Plus className="h-4 w-4" />
-                  添加第一个模型
+                  {t("agentView.action.addFirstModel")}
                   <ChevronDown className="h-4 w-4 opacity-80" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="center" className="w-56 rounded-xl">
-                <DropdownMenuLabel className="text-xs font-medium text-app-muted">选择提供商</DropdownMenuLabel>
+                <DropdownMenuLabel className="text-xs font-medium text-app-muted">
+                  {t("agentView.model.chooseProvider")}
+                </DropdownMenuLabel>
                 {PROVIDERS.map((p) => (
                   <DropdownMenuItem
                     key={p.id}
@@ -390,7 +404,7 @@ export function AIConfig() {
                     }}
                     className="cursor-pointer rounded-lg"
                   >
-                    {p.name}
+                    {providerLabel(t, p.id)}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
@@ -402,7 +416,7 @@ export function AIConfig() {
               const configured = isModelConfigured(raw)
               const selected = selectedId === id
               const isDefault = defaultModelId === id
-              const displayName = getModelDisplayName(raw, id)
+              const displayName = getModelDisplayName(raw, id, t)
               return (
                 <div
                   key={id}
@@ -429,16 +443,18 @@ export function AIConfig() {
                         {isDefault && (
                           <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-claw-500/15 px-2 py-0.5 text-xs text-claw-400">
                             <Star className="h-3 w-3 fill-current" />
-                            默认
+                            {t("agentView.model.default")}
                           </span>
                         )}
                       </div>
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-app-muted">
                         <span className="rounded-full border border-app-border bg-app-elevated/80 px-2 py-0.5 text-app-muted">
-                          {getProvider((raw as LLMModelConfig).provider as string)?.name ?? (raw as LLMModelConfig).provider ?? "—"}
+                          {(raw as LLMModelConfig).provider
+                            ? providerLabel(t, String((raw as LLMModelConfig).provider))
+                            : "—"}
                         </span>
                         <span className={configured ? "text-emerald-500/90" : "text-amber-500/90"}>
-                          {configured ? "已配置" : "未配置 Key"}
+                          {configured ? t("agentView.model.configured") : t("agentView.model.noKey")}
                         </span>
                       </div>
                     </div>
@@ -460,7 +476,7 @@ export function AIConfig() {
                               onClick={openKeyUrl}
                               className="inline-flex items-center gap-1 text-xs text-claw-400 hover:text-claw-300 hover:underline"
                             >
-                              获取 Key
+                              {t("agentView.action.getKey")}
                               <ExternalLink className="h-3 w-3" />
                             </button>
                           </div>
@@ -484,7 +500,7 @@ export function AIConfig() {
                           </div>
                         )}
                         <div className="space-y-1.5">
-                          <Label className="text-xs font-medium text-app-muted">模型 ID</Label>
+                          <Label className="text-xs font-medium text-app-muted">{t("agentView.model.modelId")}</Label>
                           <ModelIdField provider={provider} value={model} onChange={setModel} disabled={saving} />
                         </div>
                         {saveError && (
@@ -504,7 +520,7 @@ export function AIConfig() {
                               ) : (
                                 <Save className="h-4 w-4" />
                               )}
-                              {saving ? "保存中…" : "保存"}
+                              {saving ? t("common.saving") : t("common.save")}
                             </Button>
                             <Button
                               type="button"
@@ -519,7 +535,7 @@ export function AIConfig() {
                               ) : (
                                 <TestTube className="h-4 w-4" />
                               )}
-                              测试连接
+                              {t("agentView.action.testConnection")}
                             </Button>
                             {(saveMsg || testMsg) && (
                               <span className="order-3 text-sm text-app-muted" role="status">
@@ -537,7 +553,7 @@ export function AIConfig() {
                                 onClick={handleSetDefault}
                               >
                                 <Star className="mr-1.5 h-3.5 w-3.5" />
-                                设为默认
+                                {t("agentView.action.setDefault")}
                               </Button>
                             )}
                             <AlertDialog>
@@ -550,19 +566,17 @@ export function AIConfig() {
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-                                  删除
+                                  {t("common.delete")}
                                 </Button>
                               </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
-                                <AlertDialogTitle>确定删除该模型？</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  删除后，使用此模型的 Agent 将改为使用默认模型。此操作不可撤销。
-                                </AlertDialogDescription>
+                                <AlertDialogTitle>{t("agentView.model.deleteTitle")}</AlertDialogTitle>
+                                <AlertDialogDescription>{t("agentView.model.deleteDesc")}</AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel onClick={(e) => e.stopPropagation()}>
-                                  取消
+                                  {t("common.cancel")}
                                 </AlertDialogCancel>
                                 <AlertDialogAction
                                   variant="destructive"
@@ -571,7 +585,7 @@ export function AIConfig() {
                                     handleDeleteModel(id)
                                   }}
                                 >
-                                  确定删除
+                                  {t("agentView.confirmDelete")}
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>

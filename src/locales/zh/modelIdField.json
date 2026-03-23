@@ -1,0 +1,13 @@
+{
+  "modelIdField": {
+    "customPlaceholder": "模型 ID",
+    "searchPlaceholder": "模型 ID（code），可搜索",
+    "expandList": "展开模型列表",
+    "hint": "↑↓ 选择 · Enter 确认 · 可直接在输入框填写任意模型 ID",
+    "empty": "无匹配模型，关闭后保留当前输入作为模型 ID",
+    "meta": {
+      "pricing": "上下文 {{ctx}} · ${{input}}/${{output}} /M",
+      "cacheSuffix": " · 缓存 ${{rate}}/M"
+    }
+  }
+}

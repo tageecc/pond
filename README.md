@@ -4,7 +4,7 @@
 
 ---
 
-**OpenClaw runs on disk. Pond runs the control plane.**
+**A desktop tool for multi-instance OpenClaw.**
 
 [![GitHub Release](https://img.shields.io/github/v/release/tageecc/pond)](https://github.com/tageecc/pond/releases)
 [![License](https://img.shields.io/github/license/tageecc/pond)](https://github.com/tageecc/pond/blob/main/LICENSE)
@@ -50,7 +50,7 @@ If you use OpenClaw seriously, you already split **profiles** (`~/.openclaw` vs 
 
 ## Downloads
 
-Installers are published on **[GitHub Releases](https://github.com/tageecc/pond/releases)**. Each release includes **two macOS DMGs** (Apple Silicon and Intel), plus **Windows MSI** and **Linux AppImage** (x64). CI runs when a maintainer pushes a **`v*` tag**; drafts are published after review.
+Download installers from **[GitHub Releases](https://github.com/tageecc/pond/releases)**: **two macOS DMGs** (Apple Silicon and Intel), **Windows MSI**, and **Linux AppImage** (x64).
 
 **macOS:** Download the DMG that matches your CPU (**Apple Silicon** vs **Intel**). Unsigned builds may be blocked by Gatekeeper—**Control-click** the app, choose **Open**, then confirm once (or allow in **System Settings → Privacy & Security**).
 

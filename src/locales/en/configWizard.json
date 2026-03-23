@@ -1,0 +1,150 @@
+{
+  "configWizard": {
+    "channelSteps": {
+      "whatsapp": [
+        "1. Run: openclaw channels login --channel whatsapp",
+        "2. In allowFrom add allowed phone numbers (E.164, e.g. +86138...)"
+      ],
+      "telegram": [
+        "1. In @BotFather send /newbot to get a Bot Token",
+        "2. Use @userinfobot to get your User ID (for allowFrom)",
+        "3. Or CLI: openclaw channels add --channel telegram --token <token>"
+      ],
+      "discord": [
+        "1. Create an app in the Discord developer portal and get a Bot Token",
+        "2. Enable Message Content Intent and invite the bot to your server"
+      ],
+      "slack": [
+        "1. Create an app in Slack API",
+        "2. Configure OAuth and the Bot Token"
+      ],
+      "imessage": [
+        "1. Requires macOS and the imsg CLI bridge",
+        "2. Fill allowed Apple ID or phone number"
+      ],
+      "signal": [
+        "1. Install signal-cli and register/link your number",
+        "2. Configure allowFrom list"
+      ],
+      "msteams": [
+        "1. Register an app in Azure portal and create the Bot",
+        "2. Configure Bot Framework credentials"
+      ],
+      "googlechat": [
+        "1. Create a Chat API app in Google Cloud Console",
+        "2. Configure Service Account JSON"
+      ],
+      "mattermost": [
+        "1. Create a Bot account in Mattermost",
+        "2. Get Bot Token and server URL"
+      ],
+      "matrix": [
+        "1. Create a Matrix bot account",
+        "2. Get Access Token and Homeserver URL"
+      ],
+      "irc": [
+        "1. Configure IRC server address and channel",
+        "2. Set bot nickname and auth"
+      ],
+      "feishu": [],
+      "line": [
+        "1. Create a Messaging API Channel in LINE Developers",
+        "2. Get Channel Access Token"
+      ],
+      "nostr": [
+        "1. Generate Nostr key pair (nsec/npub)",
+        "2. Configure relay list"
+      ],
+      "twitch": [
+        "1. Register an app in Twitch developer portal",
+        "2. Get OAuth Token and channel name"
+      ],
+      "bluebubbles": [
+        "1. Install BlueBubbles Server on macOS",
+        "2. Configure API URL and password"
+      ]
+    },
+    "instanceNamePlaceholder": "e.g. support {{channel}}",
+    "pickChannelFirst": "Select a channel type first",
+    "channelExists": "\"{{name}}\" already exists; only one entry per platform.",
+    "channelAdded": "Channel added; enter credentials and save",
+    "bindingsSaved": "Routing saved",
+    "saveRoute": "Save routing",
+    "saving": "Saving…",
+    "noChannelsTitle": "No messaging channels yet",
+    "addChannelCta": "Choose and add a channel",
+    "configured": "Configured",
+    "needsCredentials": "Credentials incomplete",
+    "instanceName": "Instance name",
+    "defaultRole": "Default role",
+    "defaultAccountId": "Default account ID",
+    "accountIdPlaceholder": "For multi-account, e.g. default",
+    "loadErrorPrefix": "Save failed:",
+    "loadConfig": "Loading settings…",
+    "retry": "Retry",
+    "instanceLabel": "{{count}} channels · {{current}}",
+    "instanceLabelSingle": "Instance {{id}}",
+    "addChannelDisabled": "All platforms are already added",
+    "addChannel": "Add channel",
+    "savingBindings": "Saving…",
+    "notConnected": "Not connected to messaging channels",
+    "pickAndAdd": "Choose and add a channel",
+    "platform": "Platform",
+    "platformPlaceholder": "Choose a platform",
+    "noteOptional": "Label (optional)",
+    "notePlaceholder": "Shown in the list, e.g. work alerts, support",
+    "cancel": "Cancel",
+    "adding": "Adding…",
+    "deleteChannelTitle": "Remove this channel instance?",
+    "deleteChannelDesc": "This removes the channel from the workspace config. Cannot be undone.",
+    "delete": "Delete",
+    "addChannelTitle": "Add messaging channel",
+    "addChannelSubtitle": "Instance {{id}} · one per platform",
+    "allAdded": "Every platform in the list is already added.",
+    "saveConfig": "Save configuration",
+    "hooksLoadFailed": "Could not load Hooks",
+    "hooksEmpty": "No Hooks found (workspace / managed / bundled)",
+    "hooksList": "Hooks",
+    "refreshing": "Refreshing…",
+    "loading": "Loading…",
+    "internalHooks": "Enable internal Hooks",
+    "hooksHint": "Enable or disable bundled Hooks",
+    "save": "Save",
+    "saveFailed": "Save failed: {{msg}}",
+    "channelConfigSaved": "Channel settings saved",
+    "channelDeleted": "Channel instance removed",
+    "checkConfig": "Validate",
+    "checkFailed": "Validation failed",
+    "verifyOk": "OK",
+    "hide": "Hide",
+    "show": "Show",
+    "hookSaved": "Saved {{name}}",
+    "feishu": {
+      "appIdPlaceholder": "cli_xxx",
+      "appSecretPlaceholder": "From Feishu Open Platform",
+      "domain": "Domain",
+      "feishuCn": "Feishu (China)",
+      "larkIntl": "Lark (International)",
+      "larkHint": "Use Lark for international tenants",
+      "docsLink": "Feishu setup",
+      "botTokenPlaceholder": "Bot Token",
+      "userIdPlaceholder": "User ID",
+      "allowFromLabel": "allowFrom whitelist (optional, comma-separated)",
+      "dmPolicy": "DM policy (dmPolicy)",
+      "pairing": "Pairing",
+      "allowlist": "Allowlist",
+      "open": "Open",
+      "disabled": "Disabled",
+      "groupPolicy": "Group policy (groupPolicy)",
+      "groupMention": "Group @ mention (groupMention)",
+      "groupMentionPlaceholder": "@BotName or leave empty",
+      "groupMentionHint": "Mention text required for the bot in groups",
+      "groupAllowFrom": "Group allowlist (groupAllowFrom)",
+      "groupIdsPlaceholder": "groupId1, groupId2",
+      "groupAllowFromHint": "Allowed group IDs; empty means all groups",
+      "deleteChannel": "Remove this channel",
+      "botNameOptional": "Bot display name (optional)"
+    },
+    "allowFromPlaceholder": "+8613800138000, tg:123456789"
+  }
+}

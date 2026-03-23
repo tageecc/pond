@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"
 import { useAppStore } from "../stores/appStore"
 import {
   onTauriTitleBarDragMouseDown,
@@ -11,23 +12,24 @@ import { TitleBarGateway } from "./TitleBarGateway"
 const TITLE_BAR_HEIGHT = TITLE_BAR_DRAG_HEIGHT
 const LEFT_INSET = TITLE_BAR_LEFT_INSET
 
-const TOP_NAV = [
-  { id: "dashboard" as const, label: "概览", icon: LayoutDashboard },
-  { id: "analytics" as const, label: "数据分析", icon: BarChart3 },
-  { id: "agents" as const, label: "实例管理", icon: Settings2 },
-] as const
+const TOP_NAV_IDS = ["dashboard", "analytics", "agents"] as const
+const TOP_NAV_ICONS = {
+  dashboard: LayoutDashboard,
+  analytics: BarChart3,
+  agents: Settings2,
+} as const
 
-type NavId = (typeof TOP_NAV)[number]["id"]
+type NavId = (typeof TOP_NAV_IDS)[number]
 
 function viewToTabValue(view: string): NavId {
   return view === "chat" || view === "agents" ? "agents" : (view as NavId)
 }
 
 export function AppTitleBar() {
+  const { t } = useTranslation()
   const currentView = useAppStore((s) => s.currentView)
   const setCurrentView = useAppStore((s) => s.setCurrentView)
   const tabValue = viewToTabValue(currentView)
-  /** Show gateway chip only on instance-related views (not dashboard/analytics) */
   const showTitleBarGateway =
     currentView === "chat" || currentView === "agents"
 
@@ -45,12 +47,16 @@ export function AppTitleBar() {
 
       <Tabs value={tabValue} onValueChange={(v) => setCurrentView(v as NavId)} className="flex shrink-0 pointer-events-auto titlebar-no-drag">
         <TabsList className="!bg-transparent shadow-none">
-          {TOP_NAV.map(({ id, label, icon: Icon }) => (
-            <TabsTrigger key={id} value={id} title={label} className="gap-2">
-              <Icon className="h-4 w-4 shrink-0" />
-              <span>{label}</span>
-            </TabsTrigger>
-          ))}
+          {TOP_NAV_IDS.map((id) => {
+            const Icon = TOP_NAV_ICONS[id]
+            const label = t(`nav.${id}`)
+            return (
+              <TabsTrigger key={id} value={id} title={label} className="gap-2">
+                <Icon className="h-4 w-4 shrink-0" />
+                <span>{label}</span>
+              </TabsTrigger>
+            )
+          })}
         </TabsList>
       </Tabs>
 

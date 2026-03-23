@@ -2,7 +2,11 @@ mod commands;
 mod utils;
 mod models_pricing;
 
-use commands::{gateway, channel_cli, config, team_meta, team_tasks, workspace, skills, diagnostics, spend, cron_jobs, tailscale, chat, ws_gateway};
+#[allow(dead_code)]
+const _: &str = env!("TAURI_ICON_STAMP");
+
+use commands::{gateway, channel_cli, config, team_meta, team_tasks, workspace, skills, diagnostics, spend, cron_jobs, tailscale, chat, ws_gateway, tray_menu};
+use std::sync::Mutex;
 use tauri::{Manager, menu::{Menu, MenuItem}, tray::{TrayIconBuilder, TrayIconEvent}};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -38,7 +42,7 @@ pub fn run() {
             let icon = app.default_window_icon()
                 .cloned()
                 .expect("Tray 需要窗口图标，请在 tauri.conf.json bundle.icon 中配置");
-            let _tray = TrayIconBuilder::new()
+            let tray = TrayIconBuilder::new()
                 .icon(icon)
                 .menu(&menu)
                 .on_menu_event(|app, event| {
@@ -96,7 +100,9 @@ pub fn run() {
                     }
                 })
                 .build(app)?;
-            
+
+            app.manage(tray_menu::TrayIconHandle(Mutex::new(Some(tray))));
+
             Ok(())
         })
         .on_window_event(|window, event| {
@@ -223,6 +229,7 @@ pub fn run() {
             tailscale::restart_tailscale,
             // Chat sessions (OpenClaw transcript as source)
             chat::load_session_transcript,
+            tray_menu::set_tray_menu_labels,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

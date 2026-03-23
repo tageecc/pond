@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { useAppStore } from "../stores/appStore"
 import { invoke } from "@tauri-apps/api/core"
 import { ContentLayout } from "./ContentLayout"
@@ -70,6 +71,7 @@ function toRingData(
 }
 
 export function Analytics() {
+  const { t } = useTranslation()
   const {
     todaySpend,
     tokenStats,
@@ -149,8 +151,8 @@ export function Analytics() {
   return (
     <ContentLayout>
       <PageHeader
-        title="数据分析"
-        subtitle={`Token 与成本统计（来自 OpenClaw 会话） · 参考汇率 1 USD = ${exchangeRate} CNY`}
+        title={t("analytics.title")}
+        subtitle={t("analytics.subtitle", { rate: exchangeRate })}
         actions={
           <>
             <Select value={timeRange} onValueChange={setTimeRange}>
@@ -158,9 +160,9 @@ export function Analytics() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="7d">近 7 天</SelectItem>
-                <SelectItem value="30d">近 30 天</SelectItem>
-                <SelectItem value="90d">近 90 天</SelectItem>
+                <SelectItem value="7d">{t("analytics.range7d")}</SelectItem>
+                <SelectItem value="30d">{t("analytics.range30d")}</SelectItem>
+                <SelectItem value="90d">{t("analytics.range90d")}</SelectItem>
               </SelectContent>
             </Select>
             <button
@@ -179,7 +181,7 @@ export function Analytics() {
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.3, delay: 0 }}>
             <Card className="bg-app-surface h-full">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-app-muted">今日消费</CardTitle>
+                <CardTitle className="text-sm font-medium text-app-muted">{t("analytics.todaySpend")}</CardTitle>
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10">
                   <DollarSign className="h-4 w-4 text-amber-500" />
                 </div>
@@ -188,7 +190,7 @@ export function Analytics() {
                 <div className="text-2xl font-bold text-app-text tabular-nums">
                   {todaySpend != null ? formatCurrency(todaySpend.todayUsd) : "—"}
                 </div>
-                <p className="text-xs text-app-muted mt-1 truncate" title="今日累计（USD 同步自会话）">今日累计</p>
+                <p className="text-xs text-app-muted mt-1 truncate" title={t("analytics.todayTotal")}>{t("analytics.todayTotal")}</p>
               </CardContent>
             </Card>
           </motion.div>
@@ -196,7 +198,7 @@ export function Analytics() {
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.3, delay: 0.05 }}>
             <Card className="bg-app-surface h-full">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-app-muted">总 Token</CardTitle>
+                <CardTitle className="text-sm font-medium text-app-muted">{t("analytics.totalTokens")}</CardTitle>
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10">
                   <Hash className="h-4 w-4 text-emerald-500" />
                 </div>
@@ -205,7 +207,7 @@ export function Analytics() {
                 <div className="text-2xl font-bold text-app-text tabular-nums">
                   {prettyTokens(totalTokens)}
                 </div>
-                <p className="text-xs text-app-muted mt-1 truncate" title="Input+Output 累计所有 Agent">Input+Output 累计</p>
+                <p className="text-xs text-app-muted mt-1 truncate" title={t("analytics.ioTotal")}>{t("analytics.ioTotal")}</p>
               </CardContent>
             </Card>
           </motion.div>
@@ -213,7 +215,7 @@ export function Analytics() {
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.3, delay: 0.1 }}>
             <Card className="bg-app-surface h-full">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-app-muted">活跃 Agent</CardTitle>
+                <CardTitle className="text-sm font-medium text-app-muted">{t("analytics.activeAgents")}</CardTitle>
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
                   <Users className="h-4 w-4 text-blue-500" />
                 </div>
@@ -222,7 +224,7 @@ export function Analytics() {
                 <div className="text-2xl font-bold text-app-text tabular-nums">
                   {tokenStats?.agents ? Object.keys(tokenStats.agents).length : 0}
                 </div>
-                <p className="text-xs text-app-muted mt-1 truncate">已产生用量</p>
+                <p className="text-xs text-app-muted mt-1 truncate">{t("analytics.withUsage")}</p>
               </CardContent>
             </Card>
           </motion.div>
@@ -230,7 +232,7 @@ export function Analytics() {
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.3, delay: 0.15 }}>
             <Card className="bg-app-surface h-full">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-app-muted">会话消息</CardTitle>
+                <CardTitle className="text-sm font-medium text-app-muted">{t("analytics.sessionMessages")}</CardTitle>
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10">
                   <MessageSquare className="h-4 w-4 text-violet-500" />
                 </div>
@@ -239,7 +241,7 @@ export function Analytics() {
                 <div className="text-2xl font-bold text-app-text tabular-nums">
                   {(chatSessions ?? []).reduce((n, s) => n + (s.messageCount ?? 0), 0)}
                 </div>
-                <p className="text-xs text-app-muted mt-1 truncate" title="当前会话消息总条数">当前会话总条数</p>
+                <p className="text-xs text-app-muted mt-1 truncate" title={t("analytics.sessionMsgTotal")}>{t("analytics.sessionMsgTotal")}</p>
               </CardContent>
             </Card>
           </motion.div>
@@ -255,10 +257,10 @@ export function Analytics() {
             <CardHeader className="flex flex-row items-center justify-between gap-2">
               <div>
                 <CardTitle className="text-base font-semibold text-app-text">
-                  成本趋势
+                  {t("analytics.costTrend")}
                 </CardTitle>
                 <p className="text-sm text-app-muted mt-0.5">
-                  每日消费（{currency}）· 数据来自 spend 记录与今日累计
+                  {t("analytics.costTrendDesc", { currency })}
                 </p>
               </div>
               {loadingCharts && (
@@ -268,8 +270,8 @@ export function Analytics() {
             <CardContent className="pt-0 pb-6">
               {costChartData.length === 0 && !loadingCharts ? (
                 <div className="flex flex-col items-center justify-center py-12 text-app-muted">
-                  <p className="text-sm">暂无按日消费数据</p>
-                  <p className="text-xs mt-1">使用 Agent 并同步会话后会出现趋势</p>
+                  <p className="text-sm">{t("analytics.noDailyCost")}</p>
+                  <p className="text-xs mt-1">{t("analytics.noDailyCostHint")}</p>
                 </div>
               ) : costChartData.length > 0 ? (
                 <LineChart
@@ -288,7 +290,7 @@ export function Analytics() {
                     rows={(point) => [
                       {
                         color: "hsl(38, 92%, 50%)",
-                        label: "消费",
+                        label: t("analytics.spendLabel"),
                         value: formatCurrency((point.value as number) ?? 0),
                       },
                     ]}
@@ -309,10 +311,10 @@ export function Analytics() {
             <CardHeader className="flex flex-row items-center justify-between gap-2">
               <div>
                 <CardTitle className="text-base font-semibold text-app-text">
-                  Token 用量趋势
+                  {t("analytics.tokenTrend")}
                 </CardTitle>
                 <p className="text-sm text-app-muted mt-0.5">
-                  按日累计，每 Agent 一条线
+                  {t("analytics.tokenTrendDesc")}
                 </p>
               </div>
               {loadingCharts && (
@@ -322,8 +324,8 @@ export function Analytics() {
             <CardContent className="pt-0 pb-6">
               {tokenTrendData.length === 0 && !loadingCharts ? (
                 <div className="flex flex-col items-center justify-center py-12 text-app-muted">
-                  <p className="text-sm">暂无按日 Token 数据</p>
-                  <p className="text-xs mt-1">使用 Agent 并产生会话后会出现趋势</p>
+                  <p className="text-sm">{t("analytics.noDailyToken")}</p>
+                  <p className="text-xs mt-1">{t("analytics.noDailyTokenHint")}</p>
                 </div>
               ) : tokenTrendData.length > 0 ? (
                 <LineChart
@@ -370,9 +372,9 @@ export function Analytics() {
             <Card className="bg-app-surface overflow-hidden flex-1 flex flex-col">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base font-semibold text-app-text">
-                  按 Agent 分类用量
+                  {t("analytics.byAgent")}
                 </CardTitle>
-                <p className="text-sm text-app-muted">Token 占比（累计）</p>
+                <p className="text-sm text-app-muted">{t("analytics.tokenShare")}</p>
               </CardHeader>
               <CardContent className="pt-0 pb-4 flex-1 flex items-center justify-center min-h-[260px]">
                 {ringData.length > 0 ? (
@@ -388,15 +390,15 @@ export function Analytics() {
                         <Ring key={idx} index={idx} />
                       ))}
                       <RingCenter
-                        defaultLabel="总使用"
+                        defaultLabel={t("analytics.totalUse")}
                         formatOptions={{ notation: "standard" }}
                       />
                     </RingChart>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center text-app-muted text-sm">
-                    <p>暂无 Agent 使用数据</p>
-                    <p className="text-xs mt-1">同步会话后显示</p>
+                    <p>{t("analytics.noAgentData")}</p>
+                    <p className="text-xs mt-1">{t("analytics.noAgentDataHint")}</p>
                   </div>
                 )}
               </CardContent>
@@ -413,13 +415,13 @@ export function Analytics() {
             <Card className="bg-app-surface overflow-hidden flex-1 flex flex-col">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base font-semibold text-app-text">
-                  Input vs Output
+                  {t("analytics.inputVsOutput")}
                 </CardTitle>
                 <p className="text-sm text-app-muted">
-                  按 Agent 对比（累计）
+                  {t("analytics.byAgentCompare")}
                   {totalTokens > 0 && (
                     <span className="ml-1.5 text-app-muted/80">
-                      · 总量 Input {inputPct}% / Output {outputPct}%
+                      {t("analytics.ioSplit", { inputPct, outputPct })}
                     </span>
                   )}
                 </p>
@@ -445,12 +447,12 @@ export function Analytics() {
                       rows={(point) => [
                         {
                           color: "hsl(217, 91%, 60%)",
-                          label: "Input",
+                          label: t("analytics.input"),
                           value: prettyTokens((point.input as number) ?? 0),
                         },
                         {
                           color: "hsl(142, 76%, 36%)",
-                          label: "Output",
+                          label: t("analytics.output"),
                           value: prettyTokens((point.output as number) ?? 0),
                         },
                       ]}
@@ -458,8 +460,8 @@ export function Analytics() {
                   </BarChart>
                 ) : (
                   <div className="flex flex-col items-center justify-center text-app-muted h-full text-sm">
-                    <p>暂无数据</p>
-                    <p className="text-xs mt-1">同步会话后显示</p>
+                    <p>{t("analytics.noData")}</p>
+                    <p className="text-xs mt-1">{t("analytics.noDataHint")}</p>
                   </div>
                 )}
               </CardContent>

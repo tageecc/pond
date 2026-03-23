@@ -1,0 +1,7 @@
+{
+  "sidebar": {
+    "ariaInstance": "实例管理",
+    "ariaCurrentInstance": "当前实例",
+    "roleCountTitle": "角色数（agents.list）"
+  }
+}

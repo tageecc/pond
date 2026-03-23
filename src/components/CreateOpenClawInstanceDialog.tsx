@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 import { useAppStore } from "../stores/appStore"
 import {
   Dialog,
@@ -17,6 +18,7 @@ export function CreateOpenClawInstanceDialog({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
+  const { t } = useTranslation()
   const createOpenClawInstance = useAppStore((s) => s.createOpenClawInstance)
   const [pending, setPending] = useState(false)
 
@@ -36,10 +38,12 @@ export function CreateOpenClawInstanceDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="border-app-border bg-app-surface sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>新建 OpenClaw 实例</DialogTitle>
+          <DialogTitle>{t("createInstance.title")}</DialogTitle>
           <DialogDescription className="text-app-muted">
-            将新建独立数据目录 <span className="font-mono text-app-text/80">~/.openclaw-&lt;短 id&gt;</span>
-            ，与主实例 <span className="font-mono text-app-text/80">~/.openclaw</span>（default）隔离。
+            {t("createInstance.description", {
+              short: t("createInstance.short"),
+              default: t("createInstance.defaultPath"),
+            })}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-2">
@@ -50,7 +54,7 @@ export function CreateOpenClawInstanceDialog({
             disabled={pending}
             onClick={() => onOpenChange(false)}
           >
-            取消
+            {t("common.cancel")}
           </Button>
           <Button
             type="button"
@@ -58,7 +62,7 @@ export function CreateOpenClawInstanceDialog({
             disabled={pending}
             onClick={() => void submit()}
           >
-            {pending ? "创建中…" : "创建"}
+            {pending ? t("createInstance.creating") : t("createInstance.create")}
           </Button>
         </DialogFooter>
       </DialogContent>

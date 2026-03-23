@@ -1,8 +1,10 @@
 import { create } from 'zustand'
 import { invoke } from '@tauri-apps/api/core'
 import { toast } from 'sonner'
+import i18n from '../i18n'
 import { listen, type UnlistenFn } from '@tauri-apps/api/event'
 import { loadAppConfig, saveAppConfig, sortInstanceIdsByIdOrder, type AppConfig } from "../lib/appStore"
+import { detectSystemLocale, type AppLocale } from "../lib/locale"
 import type { 
   GatewayStatus, 
   AgentGatewayPayload,
@@ -111,6 +113,8 @@ interface AppState {
   teamSpaceTab: TeamSpaceTabId
   pendingAgentId: string | null
   preferencesOpen: boolean
+  /** UI language (synced with i18n + app.json) */
+  locale: AppLocale
 
   // Onboarding when no config; auto-import if ~/.openclaw exists
   needsOnboarding: boolean
@@ -165,6 +169,7 @@ interface AppState {
   setAgentConfigSection: (section: AppState['agentConfigSection']) => void
   setTeamSpaceTab: (tab: TeamSpaceTabId) => void
   setPreferencesOpen: (open: boolean) => void
+  setLocale: (lng: AppLocale) => Promise<void>
 
   /** Import ~/.openclaw into Pond and reload */
   importSystemOpenClaw: () => Promise<void>
@@ -208,6 +213,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   preferencesOpen: false,
   needsOnboarding: false,
   onboardingChecked: false,
+  locale: detectSystemLocale(),
 
   // Actions
   setGatewayError: (error) => set({ gatewayError: error }),
@@ -249,6 +255,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         selectedInstanceId: selectedId,
         instanceDisplayNames: names,
         openclawConfig,
+        locale: appConfig.locale ?? get().locale,
       })
       await get().loadSkills()
     } catch (error) {
@@ -483,12 +490,12 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       const parsed = JSON.parse(json) as unknown
       if (!Array.isArray(parsed)) {
-        throw new Error('transcript 应为消息数组')
+        throw new Error('transcript must be an array of messages')
       }
       messages = parsed as ChatMessage[]
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
-      throw new Error(`解析会话历史失败: ${msg}`)
+      throw new Error(`Failed to parse session history: ${msg}`)
     }
     set((s) => ({
       chatByInstance: {
@@ -648,6 +655,15 @@ export const useAppStore = create<AppState>((set, get) => ({
   setTeamSpaceTab: (tab) => set({ teamSpaceTab: tab }),
   setPreferencesOpen: (open) => set({ preferencesOpen: open }),
 
+  setLocale: async (lng) => {
+    set({ locale: lng })
+    await saveAppConfig({ locale: lng })
+    const { setAppLocale } = await import("../i18n")
+    setAppLocale(lng)
+    const { syncNativeMenus } = await import("../lib/syncNativeMenus")
+    await syncNativeMenus()
+  },
+
   importSystemOpenClaw: async () => {
     try {
       // 1. Import system OpenClaw into Pond-managed instances
@@ -673,10 +689,10 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   ensureInstanceSetup: async (agentId: string) => {
     const toastId = `instance-setup-${agentId}`
-    toast.loading('正在初始化实例目录…', { id: toastId })
+    toast.loading(i18n.t('toast.instanceSetupLoading'), { id: toastId })
     try {
       await invoke('run_openclaw_agents_add', { agentId })
-      toast.success('实例已就绪', { id: toastId })
+      toast.success(i18n.t('toast.instanceReady'), { id: toastId })
     } catch (e) {
       toast.dismiss(toastId)
       throw e
@@ -689,14 +705,14 @@ export const useAppStore = create<AppState>((set, get) => ({
       id = Math.random().toString(36).slice(2, 7)
     }
     const toastId = `create-instance-${id}`
-    toast.loading('正在创建 OpenClaw 实例…', { id: toastId })
+    toast.loading(i18n.t('toast.createInstanceLoading'), { id: toastId })
     try {
       await invoke('run_openclaw_agents_add', { agentId: id })
       await get().loadConfigs()
       await get().switchInstance(id)
-      toast.success('实例已就绪', {
+      toast.success(i18n.t('toast.instanceReady'), {
         id: toastId,
-        description: '记得在「模型配置」填写 API Key',
+        description: i18n.t('toast.createInstanceSuccessHint'),
       })
     } catch (e) {
       toast.dismiss(toastId)
@@ -742,7 +758,14 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   initialize: async () => {
     const appCfg = await loadAppConfig().catch((): undefined => undefined)
-    if (appCfg) set({ currentView: appCfg.currentView })
+    if (appCfg) {
+      set({
+        currentView: appCfg.currentView,
+        ...(appCfg.locale === "zh" || appCfg.locale === "en"
+          ? { locale: appCfg.locale }
+          : {}),
+      })
+    }
     await get().loadConfigs(appCfg)
 
     const hasConfiguredModel = (): boolean => hasConfiguredModelFromConfig(get().openclawConfig)

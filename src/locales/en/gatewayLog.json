@@ -1,0 +1,14 @@
+{
+  "gatewayLog": {
+    "title": "Gateway log",
+    "clear": "Clear",
+    "clearTitle": "Clears this view only; does not delete log files on disk.",
+    "live": "Live tail",
+    "liveTitle": "Tail the current instance Gateway log file",
+    "autoScroll": "Auto-scroll",
+    "autoScrollTitle": "Scroll to bottom when new lines arrive",
+    "hintPaused": "Turn on Live tail to stream this instance; Auto-scroll follows new lines.",
+    "hintConnecting": "Connecting to this instance's Gateway log file…",
+    "hintIdle": "No lines yet; new writes appear here (Clear only affects this buffer)."
+  }
+}

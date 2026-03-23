@@ -4,7 +4,7 @@
 
 ---
 
-**OpenClaw 跑在磁盘上，Pond 是你的控制面。**
+**面向多实例的 OpenClaw 桌面工具。**
 
 [![GitHub Release](https://img.shields.io/github/v/release/tageecc/pond)](https://github.com/tageecc/pond/releases)
 [![License](https://img.shields.io/github/license/tageecc/pond)](https://github.com/tageecc/pond/blob/main/LICENSE)
@@ -24,7 +24,7 @@
 
 **Pond 是 [OpenClaw](https://docs.openclaw.ai) 的桌面控制面**：当你从「一个 bot」升级到 **多智能体**、**多实例** 时，不必在多个终端和零散配置里来回切换——**团队管理、Gateway、对话、概览与数据分析** 都在一个原生窗口里完成。
 
-OpenClaw 跑在磁盘上；Pond 负责 **实例边界、进程与团队协作面**：同一台机器上多套 `~/.openclaw` 与 `~/.openclaw-{id}`，各自 Gateway、配置与团队数据范围清晰可管理。
+OpenClaw 的配置和数据都在本机目录里；Pond 负责 **实例边界、进程与团队协作**：同一台机器上多套 `~/.openclaw` 与 `~/.openclaw-{id}`，各自 Gateway、配置与团队数据范围清晰可管理。
 
 [GitHub Releases](https://github.com/tageecc/pond/releases) · [贡献指南](./CONTRIBUTING.md) · [English](./README.md)
 
@@ -34,7 +34,7 @@ OpenClaw 跑在磁盘上；Pond 负责 **实例边界、进程与团队协作面
 
 ## 下载安装包
 
-正式安装包在 **[GitHub Releases](https://github.com/tageecc/pond/releases)**。每个版本包含 **两份 macOS DMG**（Apple Silicon 与 Intel x86_64），以及 **Windows MSI**、**Linux AppImage**（x64）。维护者推送 **`v*`** 标签后由 CI 构建上传（多为草稿，核对后再发布）。
+可在 **[GitHub Releases](https://github.com/tageecc/pond/releases)** 获取安装包：**两份 macOS DMG**（Apple Silicon 与 Intel x86_64）、**Windows MSI**、**Linux AppImage**（x64）。
 
 **macOS：** 按芯片选择对应 DMG（**M 系列** 选 aarch64/arm64；**Intel Mac** 选 x86_64）。未签名时首次可能被拦截，请 **Control-点按** 应用选 **打开**，或在 **系统设置 → 隐私与安全性** 中允许。
 

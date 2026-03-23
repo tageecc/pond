@@ -1,0 +1,25 @@
+{
+  "notifications": {
+    "wsHealthWarning": "Agent 健康检查异常",
+    "wsHealthDesc": "请检查 Agent 运行状态",
+    "wsTickError": "Agent 心跳异常",
+    "wsTickDesc": "网关可能无响应",
+    "unknownTool": "未知工具",
+    "needConfirm": "需要您的确认",
+    "approvalNeeded": "需要审批：{{tool}}",
+    "viewDetails": "查看详情",
+    "approved": "已批准：{{tool}}",
+    "approvedDesc": "Agent 将继续执行",
+    "rejected": "已拒绝：{{tool}}",
+    "rejectedDesc": "Agent 已取消该操作",
+    "toolFallback": "工具",
+    "agentStarted": "Agent 已启动",
+    "agentRunningOnPort": "「{{name}}」Gateway 运行在端口 {{port}}",
+    "agentStartFailed": "Agent 启动失败",
+    "agentStartFailedDesc": "「{{name}}」: {{message}}",
+    "unknownError": "未知错误",
+    "agentStopped": "Agent 已停止",
+    "agentStoppedDesc": "「{{name}}」Gateway 已关闭",
+    "gatewayError": "Gateway 错误"
+  }
+}

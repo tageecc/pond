@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
+import { useTranslation } from "react-i18next"
 import { invoke } from "@tauri-apps/api/core"
 import { openUrl } from "@tauri-apps/plugin-opener"
 import { toast } from "sonner"
@@ -101,34 +102,18 @@ import { resolveTeamLeaderAgentId, TEAM_LEADER_AGENT_ID } from "../lib/teamLeade
 import { getAgentIds } from "../lib/openclawAgentsModels"
 import { agentsModelsToFlatView, flatViewToAgentsModels } from "../lib/openclawAgentsModels"
 import { PROVIDERS, getProvider } from "../constants/providers"
+import { providerLabel } from "../lib/providerLabel"
 import { ModelIdField } from "./ModelIdField"
 import { CreateOpenClawInstanceDialog } from "./CreateOpenClawInstanceDialog"
 import { InstanceGatewayLogPanel } from "./InstanceGatewayLogPanel"
 import { ChannelManager, getInternalHooksFromConfig, HooksManager } from "./ConfigWizard"
 import type { HooksInternalConfig } from "../types"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip"
-/** OpenClaw workspace guide files (see https://docs.openclaw.ai/concepts/agent-workspace) */
-const WORKSPACE_FILE_LABELS: Record<string, string> = {
-  "AGENTS.md": "操作指令与记忆",
-  "SOUL.md": "人设、边界、语气",
-  "TOOLS.md": "工具说明与约定",
-  "IDENTITY.md": "名称、风格、表情",
-  "USER.md": "用户档案与称呼",
-  "BOOT.md": "启动检查清单",
-  "HEARTBEAT.md": "心跳任务清单",
-  "BOOTSTRAP.md": "首次运行仪式",
-}
-
-const TOOL_PROFILES = [
-  { value: "full", label: "Full - 无限制", desc: "所有工具均可用" },
-  { value: "coding", label: "Coding - 编程场景", desc: "文件系统 + 运行时 + 会话 + 记忆" },
-  { value: "messaging", label: "Messaging - 纯消息", desc: "仅会话和消息工具" },
-  { value: "minimal", label: "Minimal - 最小化", desc: "仅状态查询工具" },
-]
 
 const CHROME_EXT_STORE_URL = "https://chromewebstore.google.com/detail/openclaw-browser-relay/nglingapjinhecnfejdcpihlpneeadjp"
 
 function ChromeExtensionGuide() {
+  const { t } = useTranslation()
   const openStore = async () => {
     try {
       await openUrl(CHROME_EXT_STORE_URL)
@@ -140,17 +125,34 @@ function ChromeExtensionGuide() {
   return (
     <div className="rounded-lg border border-app-border bg-app-elevated/40 px-3 py-2.5 flex items-center justify-between gap-3">
       <p className="text-sm text-app-text">
-        Chrome 模式需安装 OpenClaw Browser Relay 扩展，安装后在目标标签页点击扩展图标即可附加控制。
+        {t("agent.chromeExtension.hint")}
       </p>
       <Button size="sm" className="bg-claw-500 hover:bg-claw-600 text-white shrink-0" onClick={openStore}>
         <ExternalLink className="h-3.5 w-3.5 mr-1" />
-        去安装
+        {t("agent.chromeExtension.install")}
       </Button>
     </div>
   )
 }
 
 export function AgentView() {
+  const { t } = useTranslation()
+  const toolProfiles = useMemo(
+    () =>
+      (["full", "coding", "messaging", "minimal"] as const).map((value) => ({
+        value,
+        label: t(`agent.toolProfile.${value}.label`),
+        desc: t(`agent.toolProfile.${value}.desc`),
+      })),
+    [t],
+  )
+  const workspaceFileLabel = (name: string) => {
+    const slug = name.replace(/\./g, "_")
+    const key = `agent.workspaceFile.${slug}`
+    const text = t(key)
+    return text === key ? t("agent.workspaceFallback") : text
+  }
+
   const {
     openclawConfig,
     loadConfigs,
@@ -319,11 +321,11 @@ export function AgentView() {
     let claimed = 0
     let done = 0
     let failed = 0
-    for (const t of teamTasks) {
-      if (t.status === "open") open += 1
-      else if (t.status === "claimed") claimed += 1
-      else if (t.status === "done") done += 1
-      else if (t.status === "failed") failed += 1
+    for (const task of teamTasks) {
+      if (task.status === "open") open += 1
+      else if (task.status === "claimed") claimed += 1
+      else if (task.status === "done") done += 1
+      else if (task.status === "failed") failed += 1
     }
     const total = open + claimed + done + failed
     const stats = {
@@ -335,7 +337,7 @@ export function AgentView() {
       progressPct: total > 0 ? Math.round((done / total) * 100) : 0,
     }
     const filtered =
-      teamTodoFilter === "all" ? teamTasks : teamTasks.filter((t) => t.status === teamTodoFilter)
+      teamTodoFilter === "all" ? teamTasks : teamTasks.filter((task) => task.status === teamTodoFilter)
     const sortedTasks = [...filtered].sort(
       (a, b) =>
         (statusOrder[a.status] ?? 9) - (statusOrder[b.status] ?? 9) || b.updatedAtMs - a.updatedAtMs
@@ -368,7 +370,7 @@ export function AgentView() {
       JSON.parse(rawConfig) // validate
       await invoke("save_agent_raw_config", { agentId: selectedId, rawJson: rawConfig })
       await loadInstanceConfig(selectedId)
-      setSaveMsg("实例配置已保存")
+      setSaveMsg(t("agentView.toast.saveInstanceConfig"))
       setTimeout(() => setSaveMsg(null), 2000)
     } catch (e) {
       setRawConfigError(e instanceof Error ? e.message : String(e))
@@ -701,7 +703,7 @@ export function AgentView() {
     if (!selectedId || teamDashboardLoading || !newTeamTaskTitle.trim()) return
     const list = openclawConfig?.agents?.list ?? []
     if (!list.length) {
-      toast.error("请先添加至少一个角色")
+      toast.error(t("agentView.toast.needOneRole"))
       return
     }
     const assignedToAgentId =
@@ -709,7 +711,7 @@ export function AgentView() {
         ? null
         : (teamRoleAgentId.trim() || list[0]?.id || "").trim() || null
     if (newTeamTaskAssignMode === "assigned" && !assignedToAgentId) {
-      toast.error("请选择指派人")
+      toast.error(t("agentView.toast.pickAssignee"))
       return
     }
     try {
@@ -720,7 +722,7 @@ export function AgentView() {
       })
       setNewTeamTaskTitle("")
       await loadTeamDashboard()
-      toast.success("已添加任务")
+      toast.success(t("agentView.toast.taskAdded"))
     } catch (err) {
       toast.error(err instanceof Error ? err.message : String(err))
     }
@@ -743,11 +745,11 @@ export function AgentView() {
     if (!selectedId) return
     const agentsList = openclawConfig?.agents?.list ?? []
     if (!agentsList.length) {
-      toast.error("请先在「团队 → 角色列表」中添加至少一个角色")
+      toast.error(t("agentView.toast.teamNeedRoles"))
       return
     }
     if (!teamLeaderAgentId) {
-      toast.error("请先在角色列表中添加 id 为 main 的角色作为 Team Leader")
+      toast.error(t("agentView.toast.needMainLeader"))
       return
     }
     setTeamSaving(true)
@@ -764,10 +766,10 @@ export function AgentView() {
       await invoke("save_team_meta", { instanceId: selectedId, meta })
       setTeamFetchError(null)
       setTeamSpaceInitialized(true)
-      toast.success("团队空间已开启")
+      toast.success(t("agentView.toast.teamSpaceEnabled"))
       void loadTeamDashboard()
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "开启失败")
+      toast.error(e instanceof Error ? e.message : t("agentView.toast.enableFailed"))
     } finally {
       setTeamSaving(false)
     }
@@ -848,13 +850,13 @@ export function AgentView() {
       <div className="flex h-full items-center justify-center p-8">
         <Card className="w-full max-w-md bg-app-surface">
           <CardContent className="flex flex-col items-center justify-center py-16">
-            <p className="text-app-muted">加载配置中…</p>
+<p className="text-app-muted">{t("agentView.loadingConfig")}</p>
             <Button
               variant="outline"
               className="mt-4 border-app-border text-app-muted hover:bg-app-hover"
               onClick={() => loadConfigs()}
             >
-              重试
+              {t("agentView.retry")}
             </Button>
           </CardContent>
         </Card>
@@ -865,8 +867,8 @@ export function AgentView() {
   const getModelDisplayName = (m: LLMModelConfig | Record<string, unknown>, _id: string) => {
     const name = (m as LLMModelConfig).name
     if (name && String(name).trim()) return String(name).trim()
-    const provider = (m as LLMModelConfig).provider
-    const providerName = PROVIDERS.find((p) => p.id === provider)?.name ?? provider ?? "未设置"
+    const provider = (m as LLMModelConfig).provider as string | undefined
+    const providerName = provider ? providerLabel(t, provider) : t("agentView.providerUnset")
     const model = (m as LLMModelConfig).model
     if (model && String(model).trim()) return `${providerName} · ${model}`
     return providerName
@@ -879,7 +881,7 @@ export function AgentView() {
   const modelSelectOptions =
     modelList.length > 0
       ? modelList.map(({ id, raw }) => ({ value: id, label: getModelDisplayName(raw, id) }))
-      : [{ value: defaultModelId || "openai", label: `默认 (${defaultModelId || "openai"}，可先在「模型」中配置)` }]
+      : [{ value: defaultModelId || "openai", label: t("agentView.model.defaultOptionLabel", { id: defaultModelId || "openai" }) }]
 
   const persistRoleAgentsList = async (newList: NonNullable<OpenClawAgentsShape["list"]>) => {
     if (!selectedId) return
@@ -916,11 +918,11 @@ export function AgentView() {
       } catch {
         /* Ignore when team space off or sync failed */
       }
-      toast.success("角色列表已更新", {
+      toast.success(t("agentView.toast.rolesListUpdated"), {
         description:
-          "已按 OpenClaw 规范将 agents.list[].model 写为 provider/modelId；须重启 Gateway 后生效。",
+          t("agentView.toast.rolesListUpdatedDesc"),
         action: {
-          label: "重启 Gateway",
+          label: t("agentView.toast.restartGateway"),
           onClick: () => {
             void restartAgentGateway(selectedId).catch((err) =>
               toast.error(err instanceof Error ? err.message : String(err))
@@ -945,12 +947,12 @@ export function AgentView() {
   const handleConfirmAddRole = async () => {
     const id = newRoleIdInput.trim()
     if (!isValidOpenClawAgentId(id)) {
-      toast.error("Agent ID 须为字母开头，仅含字母、数字、连字符、下划线，最多 63 位")
+      toast.error(t("agentView.toast.agentIdInvalid"))
       return
     }
     const list = [...(openclawConfig.agents?.list ?? [])]
     if (list.some((a) => a.id === id)) {
-      toast.error("该 ID 已存在")
+      toast.error(t("agentView.toastask.idExists"))
       return
     }
     const modelKey = newRoleModelKey || defaultModelId || modelSelectOptions[0]?.value || "openai"
@@ -1016,16 +1018,16 @@ export function AgentView() {
   const handleSaveModel = async () => {
     if (!openclawConfig || !modelSelectedId || !selectedId) return
     if (!modelModel.trim()) {
-      setModelSaveError("请填写模型 ID")
+      setModelSaveError(t("agentView.model.fillModelId"))
       return
     }
     if (modelProvider === "custom" && !modelBaseURL.trim()) {
-      setModelSaveError("自定义模型必须填写 Base URL")
+      setModelSaveError(t("agentView.model.customNeedsBaseUrl"))
       return
     }
     const keyVal = modelApiKey.trim()
     if (keyVal && (keyVal.length > 500 || /[^\x20-\x7E]/.test(keyVal))) {
-      setModelSaveError("API Key 格式不正确")
+      setModelSaveError(t("agentView.model.apiKeyInvalid"))
       return
     }
     setModelSaving(true)
@@ -1050,7 +1052,7 @@ export function AgentView() {
     const { agents: nextAgents, models: nextModelsShape } = flatViewToAgentsModels(nextView, openclawConfig?.agents, openclawConfig?.models)
     try {
       await saveOpenClawConfig({ ...openclawConfig, agents: nextAgents, models: nextModelsShape } as OpenClawConfig, selectedId)
-      setModelSaveMsg("已保存")
+      setModelSaveMsg(t("agentView.model.saved"))
       setTimeout(() => setModelSaveMsg(null), 2000)
     } catch (e) {
       setModelSaveError(e instanceof Error ? e.message : String(e))
@@ -1065,7 +1067,7 @@ export function AgentView() {
     const { agents: nextAgents, models: nextModels } = flatViewToAgentsModels(nextView, openclawConfig?.agents, openclawConfig?.models)
     try {
       await saveOpenClawConfig({ ...openclawConfig, agents: nextAgents, models: nextModels } as OpenClawConfig, selectedId)
-      setModelSaveMsg("已设为默认模型")
+      setModelSaveMsg(t("agentView.model.setDefault"))
       setTimeout(() => setModelSaveMsg(null), 2000)
     } catch (e) {
       setModelSaveError(e instanceof Error ? e.message : String(e))
@@ -1094,11 +1096,11 @@ export function AgentView() {
 
   const handleTestModel = async () => {
     if (!modelApiKey.trim()) {
-      setModelTestMsg("请先填写 API Key 再测试")
+      setModelTestMsg(t("agentView.model.testNeedKey"))
       return
     }
     if (modelProvider === "custom" && !modelBaseURL.trim()) {
-      setModelTestMsg("自定义模型必须填写 Base URL")
+      setModelTestMsg(t("agentView.model.customNeedsBaseUrl"))
       return
     }
     setModelTesting(true)
@@ -1134,9 +1136,9 @@ export function AgentView() {
       await loadConfigs()
       refreshDiscoveredAgents()
       switchInstance(discovered.id).catch(() => {})
-      toast.success(`已导入 Agent「${discovered.name}」`)
+      toast.success(t("agentView.toast.importAgent", { name: discovered.name }))
     } catch (e) {
-      toast.error(`导入失败: ${e instanceof Error ? e.message : String(e)}`)
+      toast.error(t("agentView.toast.importFailed", { msg: e instanceof Error ? e.message : String(e) }))
     }
     setImporting(false)
   }
@@ -1154,7 +1156,7 @@ export function AgentView() {
       })
       await loadSkills()
       await loadConfigs()
-      setSaveMsg("技能已更新")
+      setSaveMsg(t("agentView.skills.updated"))
       setTimeout(() => setSaveMsg(null), 2000)
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : String(e))
@@ -1168,11 +1170,11 @@ export function AgentView() {
     const raw = skillInstallInput.trim()
     if (!selectedId) return
     if (!raw) {
-      toast.error("请输入技能链接或 ID")
+      toast.error(t("agentView.skills.enterLinkOrId"))
       return
     }
     setInstallingSkill(true)
-    toast.info("正在通过 Agent 安装，请稍候…（约 1–2 分钟）", { duration: 3000 })
+    toast.info(t("agentView.skills.installingViaAgent"), { duration: 3000 })
     try {
       const result = await invoke<{ skill_id?: string; message: string }>("install_skill_via_agent", {
         skillInput: raw,
@@ -1181,7 +1183,7 @@ export function AgentView() {
       await loadSkills()
       await loadConfigs()
       setSkillInstallInput("")
-      toast.success(result?.message ?? "技能已安装")
+      toast.success(result?.message ?? t("agentView.skills.installed"))
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
       toast.error(msg.length > 120 ? `${msg.slice(0, 120)}…` : msg)
@@ -1215,15 +1217,15 @@ export function AgentView() {
         setSaving(false)
         useAppStore.setState({ needsOnboarding: true, onboardingChecked: true })
         setTimeout(() => {
-          toast.success(`已删除实例「${deletedName}」`)
-          toast.info("已删除所有实例，正在返回引导界面...")
+          toast.success(t("agentView.toast.instanceDeleted", { name: deletedName }))
+          toast.info(t("agentView.instance.deletedAllOnboarding"))
         }, 100)
         return
       }
       
       // Other instances remain: reload and switch
       await loadConfigs()
-      toast.success(`已删除实例「${deletedName}」`)
+      toast.success(t("agentView.toast.instanceDeleted", { name: deletedName }))
       refreshDiscoveredAgents()
       setConfirmDelete(false)
       
@@ -1238,7 +1240,7 @@ export function AgentView() {
     } catch (e) {
       const errorMsg = e instanceof Error ? e.message : String(e)
       setSaveError(errorMsg)
-      toast.error(`删除失败: ${errorMsg}`)
+      toast.error(t("agentView.toast.deleteInstanceFailed", { msg: errorMsg }))
     } finally {
       setSaving(false)
     }
@@ -1252,14 +1254,14 @@ export function AgentView() {
 
   const handleUninstallSkill = async (skillId: string) => {
     if (!selectedId) return
-    if (!window.confirm(`确定要卸载技能「${skillId}」吗？将从所有实例中删除该技能目录，且无法恢复。`)) return
+    if (!window.confirm(t("agentView.skills.uninstallConfirm", { id: skillId }))) return
     setUninstallingSkillId(skillId)
     try {
       await invoke("uninstall_skill", { skillId })
       await loadSkills()
       await loadConfigs()
       setSelectedSkillIds((prev) => prev.filter((s) => s !== skillId))
-      toast.success(`已卸载技能「${skillId}」`)
+      toast.success(t("agentView.toast.skillUninstalled", { id: skillId }))
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e))
     } finally {
@@ -1289,19 +1291,19 @@ export function AgentView() {
             <div className="rounded-2xl bg-app-elevated p-8">
               <Users className="mx-auto h-14 w-14 text-app-muted/50" />
             </div>
-            <p className="mt-6 text-sm font-medium text-app-text">请使用侧栏顶部实例切换器选择或添加实例</p>
-            <p className="mt-1 text-xs text-app-muted">当前实例由全局切换器统一管理，此处仅编辑选中实例的配置</p>
+<p className="mt-6 text-sm font-medium text-app-text">{t("agentView.empty.noInstance")}</p>
+            <p className="mt-1 text-xs text-app-muted">{t("agentView.empty.instanceHint")}</p>
             <Button
               size="sm"
               className="mt-4 gap-1.5 bg-claw-500 hover:bg-claw-600 text-white"
               onClick={openAddModal}
             >
               <Download className="h-4 w-4" />
-              创建 claw 实例
+{t("agentView.action.createClawInstance")}
             </Button>
             {discoveredAgents.length > 0 && (
               <div className="mt-6 w-full max-w-sm rounded-xl border border-app-border bg-app-surface/50 p-4 text-left">
-                <p className="text-xs font-medium text-app-muted mb-2">发现系统实例</p>
+<p className="text-xs font-medium text-app-muted mb-2">{t("agentView.discover.systemInstance")}</p>
                 <div className="space-y-2">
                   {discoveredAgents.map((d) => (
                   <div
@@ -1321,7 +1323,7 @@ export function AgentView() {
                         onClick={() => handleImportAgent(d)}
                       >
                         <Plus className="h-3.5 w-3.5 mr-1" />
-                        导入
+{t("agentView.action.import")}
                       </Button>
                   </div>
                 ))}
@@ -1356,7 +1358,7 @@ export function AgentView() {
                         <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="flex items-center gap-2">
                           <Bot className="h-4 w-4 text-claw-500" />
-                            <CardTitle className="text-sm font-medium text-app-text">模型配置</CardTitle>
+                            <CardTitle className="text-sm font-medium text-app-text">{t("agentView.section.modelConfig")}</CardTitle>
                         </div>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -1365,19 +1367,19 @@ export function AgentView() {
                                 className="gap-1.5 rounded-lg bg-claw-500 hover:bg-claw-600 text-white shadow-sm"
                               >
                                 <Plus className="h-3.5 w-3.5" />
-                                添加模型
+{t("agentView.action.addModel")}
                                 <ChevronDown className="h-3.5 w-3.5 opacity-80" />
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-52 rounded-xl">
-                              <DropdownMenuLabel className="text-xs font-medium text-app-muted">选择提供商</DropdownMenuLabel>
+                              <DropdownMenuLabel className="text-xs font-medium text-app-muted">{t("agentView.selectProvider")}</DropdownMenuLabel>
                               {PROVIDERS.map((p) => (
                                 <DropdownMenuItem
                                   key={p.id}
                                   onSelect={() => { setModelSaveError(null); handleAddModel(p.id) }}
                                   className="cursor-pointer rounded-lg"
                                 >
-                                  {p.name}
+                                  {providerLabel(t, p.id)}
                                 </DropdownMenuItem>
                               ))}
                             </DropdownMenuContent>
@@ -1391,26 +1393,26 @@ export function AgentView() {
                               <Bot className="h-7 w-7 text-claw-400" />
                             </div>
                             <div>
-                              <p className="text-sm font-medium text-app-text">暂无模型</p>
-                              <p className="mt-1 text-xs text-app-muted">添加后填写 API Key 即可使用</p>
+                              <p className="text-sm font-medium text-app-text">{t("agentView.model.noneTitle")}</p>
+                              <p className="mt-1 text-xs text-app-muted">{t("agentView.model.noneHint")}</p>
                           </div>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button size="sm" className="gap-1.5 rounded-lg bg-claw-500 hover:bg-claw-600 text-white">
                                   <Plus className="h-3.5 w-3.5" />
-                                  添加第一个模型
+{t("agentView.action.addFirstModel")}
                                   <ChevronDown className="h-3.5 w-3.5 opacity-80" />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="center" className="w-52 rounded-xl">
-                                <DropdownMenuLabel className="text-xs font-medium text-app-muted">选择提供商</DropdownMenuLabel>
+                                <DropdownMenuLabel className="text-xs font-medium text-app-muted">{t("agentView.selectProvider")}</DropdownMenuLabel>
                                 {PROVIDERS.map((p) => (
                                   <DropdownMenuItem
                                     key={p.id}
                                     onSelect={() => { setModelSaveError(null); handleAddModel(p.id) }}
                                     className="cursor-pointer rounded-lg"
                                   >
-                                    {p.name}
+                                    {providerLabel(t, p.id)}
                                   </DropdownMenuItem>
                                 ))}
                               </DropdownMenuContent>
@@ -1452,21 +1454,23 @@ export function AgentView() {
                                         {isDefault && (
                                           <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-claw-500/15 px-2 py-0.5 text-[10px] text-claw-400">
                                             <Star className="h-3 w-3 fill-current" />
-                                            默认
+{t("agentView.model.default")}
                                           </span>
                                         )}
                                         {isCurrent && (
                                           <span className="shrink-0 rounded-full bg-claw-500/20 px-2 py-0.5 text-[10px] font-medium text-claw-600 dark:text-claw-400">
-                                            当前使用
+{t("agentView.model.inUse")}
                                           </span>
                                             )}
                                           </div>
                                       <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-app-muted">
                                         <span className="rounded border border-app-border bg-app-surface px-1.5 py-0.5">
-                                          {getProvider((raw as LLMModelConfig).provider as string)?.name ?? (raw as LLMModelConfig).provider ?? "—"}
+                                          {(raw as LLMModelConfig).provider
+                                            ? providerLabel(t, String((raw as LLMModelConfig).provider))
+                                            : "—"}
                                         </span>
                                         <span className={configured ? "text-emerald-500/90" : "text-amber-500/90"}>
-                                          {configured ? "已配置" : "未配置 Key"}
+                                          {configured ? t("agentView.model.configured") : t("agentView.model.noKey")}
                                         </span>
                                           </div>
                                         </div>
@@ -1488,7 +1492,7 @@ export function AgentView() {
                                               onClick={openModelKeyUrl}
                                               className="inline-flex items-center gap-1 text-xs text-claw-400 hover:text-claw-300 hover:underline"
                                             >
-                                              获取 Key
+{t("agentView.action.getKey")}
                                               <ExternalLink className="h-3 w-3" />
                                             </button>
                                   </div>
@@ -1512,7 +1516,7 @@ export function AgentView() {
                                 </div>
                               )}
                                         <div className="space-y-1.5">
-                                          <Label className="text-xs font-medium text-app-muted">模型 ID</Label>
+                                          <Label className="text-xs font-medium text-app-muted">{t("agentView.model.modelId")}</Label>
                                           <ModelIdField
                                             provider={modelProvider}
                                             value={modelModel}
@@ -1533,7 +1537,7 @@ export function AgentView() {
                                             className="gap-1.5 rounded-lg bg-claw-500 hover:bg-claw-600 text-white"
                                           >
                                             {modelSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                                            {modelSaving ? "保存中…" : "保存"}
+                                            {modelSaving ? t("agentView.saving") : t("agentView.save")}
                                           </Button>
                                           <Button
                                             type="button"
@@ -1544,7 +1548,7 @@ export function AgentView() {
                                             disabled={modelTesting}
                                           >
                                             {modelTesting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <TestTube className="h-3.5 w-3.5" />}
-                                            测试连接
+{t("agentView.action.testConnection")}
                                           </Button>
                                           {(modelSaveMsg || modelTestMsg) && (
                                             <span className="text-sm text-app-muted" role="status">
@@ -1562,7 +1566,7 @@ export function AgentView() {
                                               onClick={handleSetDefaultModel}
                                             >
                                               <Star className="h-3.5 w-3.5" />
-                                              设为默认
+{t("agentView.action.setDefault")}
                             </Button>
                                           )}
                                           <AlertDialog>
@@ -1575,19 +1579,19 @@ export function AgentView() {
                                                 onClick={(e) => e.stopPropagation()}
                                               >
                                                 <Trash2 className="h-3.5 w-3.5" />
-                                                删除
+{t("agentView.delete")}
                                               </Button>
                                             </AlertDialogTrigger>
                                             <AlertDialogContent>
                                               <AlertDialogHeader>
-                                                <AlertDialogTitle>确定删除该模型？</AlertDialogTitle>
+                                                <AlertDialogTitle>{t("agentView.model.deleteTitle")}</AlertDialogTitle>
                                                 <AlertDialogDescription>
-                                                  删除后，使用此模型的实例将改为使用默认模型。此操作不可撤销。
+{t("agentView.model.deleteDesc")}
                                                 </AlertDialogDescription>
                                               </AlertDialogHeader>
                                               <AlertDialogFooter>
                                                 <AlertDialogCancel onClick={(e) => e.stopPropagation()}>
-                                                  取消
+{t("common.cancel")}
                                                 </AlertDialogCancel>
                                                 <AlertDialogAction
                                                   variant="destructive"
@@ -1596,7 +1600,7 @@ export function AgentView() {
                                                     handleDeleteModel(id)
                                                   }}
                                                 >
-                                                  确定删除
+{t("agentView.confirmDelete")}
                                                 </AlertDialogAction>
                                               </AlertDialogFooter>
                                             </AlertDialogContent>
@@ -1621,32 +1625,31 @@ export function AgentView() {
                       <CardHeader className="pb-3">
                         <div className="flex items-center gap-2">
                           <Clock className="h-4 w-4 text-claw-500" />
-                          <CardTitle className="text-sm font-medium text-app-text">会话管理</CardTitle>
+                          <CardTitle className="text-sm font-medium text-app-text">{t("agentView.section.session")}</CardTitle>
                         </div>
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <div className="flex flex-col gap-3 rounded-lg border border-app-border bg-app-elevated/40 p-3 sm:flex-row sm:items-center sm:justify-between">
                           <div className="min-w-0 space-y-1">
                             <div className="flex items-center gap-1">
-                              <Label className="text-xs font-medium text-app-text">跨渠道长期续聊</Label>
+                              <Label className="text-xs font-medium text-app-text">{t("agentView.session.longContinuity")}</Label>
                               <TooltipProvider delayDuration={300}>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <button
                                       type="button"
                                       className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-app-muted hover:bg-app-hover hover:text-app-text"
-                                      aria-label="配置说明"
+                                      aria-label={t("agentView.session.configHelpAria")}
                                     >
                                       <Info className="h-3.5 w-3.5" />
                                     </button>
                                   </TooltipTrigger>
                                   <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
                                     <p>
-                                      保存时写入 OpenClaw：<span className="font-mono">session.dmScope=main</span>（多渠道私聊走同一会话键）、
-                                      <span className="font-mono">session.reset.mode=off</span>（关闭空闲与定时自动换新 session）。
+                                      {t("agentView.session.saveNote")}
                                     </p>
                                     <p className="mt-2">
-                                      多人同时使用同一 Agent 会共用上下文；对话过长时仍可能触发模型侧的压缩或截断。
+                                      {t("agentView.session.warning")}
                                     </p>
                                   </TooltipContent>
                                 </Tooltip>
@@ -1676,7 +1679,7 @@ export function AgentView() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-xs text-app-muted">DM 会话作用域</Label>
+                          <Label className="text-xs text-app-muted">{t("agentView.session.dmScope")}</Label>
                           <Select
                             value={agentSession.dmScope}
                             disabled={sessionUnifiedContinuity}
@@ -1686,15 +1689,15 @@ export function AgentView() {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="main">main（跨端/多渠道同一会话键）</SelectItem>
-                              <SelectItem value="per-peer">per-peer（按发送者隔离）</SelectItem>
-                              <SelectItem value="per-channel-peer">per-channel-peer（按渠道+发送者）</SelectItem>
-                              <SelectItem value="per-account-channel-peer">per-account-channel-peer（完全隔离）</SelectItem>
+                              <SelectItem value="main">{t("agentView.session.dm.main")}</SelectItem>
+                              <SelectItem value="per-peer">{t("agentView.session.dm.perPeer")}</SelectItem>
+                              <SelectItem value="per-channel-peer">{t("agentView.session.dm.perChannelPeer")}</SelectItem>
+                              <SelectItem value="per-account-channel-peer">{t("agentView.session.dm.full")}</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-xs text-app-muted">自动重置模式</Label>
+                          <Label className="text-xs text-app-muted">{t("agentView.session.resetMode")}</Label>
                           <Select
                             value={agentSession.resetMode}
                             disabled={sessionUnifiedContinuity}
@@ -1709,16 +1712,16 @@ export function AgentView() {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="off">默认（不写 reset，含官方空闲过期等）</SelectItem>
-                              <SelectItem value="never">显式关闭轮换（session.reset.mode=off）</SelectItem>
-                              <SelectItem value="daily">每日重置</SelectItem>
-                              <SelectItem value="idle">空闲后重置</SelectItem>
+                              <SelectItem value="off">{t("agentView.session.reset.off")}</SelectItem>
+                              <SelectItem value="never">{t("agentView.session.reset.never")}</SelectItem>
+                              <SelectItem value="daily">{t("agentView.session.reset.daily")}</SelectItem>
+                              <SelectItem value="idle">{t("agentView.session.reset.idle")}</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
                         {agentSession.resetMode === "daily" && (
                           <div className="space-y-2">
-                            <Label className="text-xs text-app-muted">重置时刻（小时）</Label>
+                            <Label className="text-xs text-app-muted">{t("agentView.session.resetHour")}</Label>
                             <Input
                               type="number"
                               min={0}
@@ -1731,7 +1734,7 @@ export function AgentView() {
                         )}
                         {agentSession.resetMode === "idle" && (
                           <div className="space-y-2">
-                            <Label className="text-xs text-app-muted">空闲超时（分钟）</Label>
+                            <Label className="text-xs text-app-muted">{t("agentView.session.idleMinutes")}</Label>
                             <Input
                               type="number"
                               min={1}
@@ -1761,11 +1764,11 @@ export function AgentView() {
                                 ...(reset !== undefined ? { reset } : { reset: undefined }),
                               },
                             })
-                            if (success) toast.success("会话配置已保存")
+                            if (success) toast.success(t("agentView.session.saved"))
                           }}
                         >
                           <Save className="mr-2 h-4 w-4" />
-                          保存会话配置
+{t("agentView.action.saveSession")}
                         </Button>
                       </CardContent>
                     </Card>
@@ -1775,7 +1778,7 @@ export function AgentView() {
                       <CardHeader className="pb-3">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div>
-                            <CardTitle className="text-sm font-medium text-app-text">历史会话</CardTitle>
+                            <CardTitle className="text-sm font-medium text-app-text">{t("agentView.section.historySessions")}</CardTitle>
                           </div>
                           <Button
                             size="sm"
@@ -1784,7 +1787,7 @@ export function AgentView() {
                             onClick={() => fetchChatSessions()}
                           >
                             <Download className="h-3.5 w-3.5" />
-                            刷新
+{t("agentView.action.refresh")}
                           </Button>
                         </div>
                       </CardHeader>
@@ -1796,7 +1799,7 @@ export function AgentView() {
                           if (list.length === 0) {
                             return (
                               <p className="py-6 text-center text-sm text-app-muted">
-                                当前实例暂无对话记录，在「对话」中与 Agent 交流后会在此显示
+{t("agentView.history.noChats")}
                               </p>
                             )
                           }
@@ -1808,9 +1811,9 @@ export function AgentView() {
                                     <MessageCircle className="h-4 w-4 shrink-0 text-claw-500" />
                                     <div className="min-w-0 flex-1">
                                       <div className="flex items-center gap-2">
-                                        <span className="text-sm font-medium text-app-text">当前会话</span>
+<span className="text-sm font-medium text-app-text">{t("agentView.history.current")}</span>
                                         <span className="rounded bg-app-surface px-1.5 py-0.5 text-xs tabular-nums text-app-muted">
-                                          {s.messageCount} 条
+{t("agentView.history.messages", { count: s.messageCount })}
                                         </span>
                                       </div>
                                       {s.lastPreview && (
@@ -1824,7 +1827,7 @@ export function AgentView() {
                                         setCurrentView("chat", selectedId ?? null)
                                       }
                                     >
-                                      在对话中打开
+{t("agentView.action.openInChat")}
                                     </Button>
                                   </div>
                                 </li>
@@ -1845,13 +1848,13 @@ export function AgentView() {
                           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-claw-500/10 text-claw-600 dark:text-claw-400">
                             <UserCircle className="h-4 w-4" />
                           </span>
-                          角色列表
+{t("agentView.section.roles")}
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="border-t border-app-border/50 px-4 pb-6 pt-4 sm:px-6">
                         <section className="space-y-4">
                           <div className="flex flex-wrap items-center justify-between gap-3">
-                            <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-app-muted">成员与模型</h3>
+<h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-app-muted">{t("agentView.section.membersModels")}</h3>
                             <Button
                               type="button"
                               size="sm"
@@ -1861,7 +1864,7 @@ export function AgentView() {
                               onClick={openAddRoleDialog}
                             >
                               <Plus className="h-3.5 w-3.5" />
-                              添加角色
+{t("agentView.action.addRole")}
                             </Button>
                           </div>
 
@@ -1874,7 +1877,7 @@ export function AgentView() {
                                     <Users className="h-7 w-7 opacity-70" />
                                   </div>
                                   <div className="px-4">
-                                    <p className="text-sm font-medium text-app-text">尚未添加角色</p>
+                                    <p className="text-sm font-medium text-app-text">{t("agentView.roles.none")}</p>
                                   </div>
                                   <Button
                                     type="button"
@@ -1885,7 +1888,7 @@ export function AgentView() {
                                     onClick={openAddRoleDialog}
                                   >
                                     <Plus className="h-3.5 w-3.5" />
-                                    添加首个角色
+{t("agentView.action.addFirstRole")}
                                   </Button>
                                 </div>
                               )
@@ -1922,17 +1925,17 @@ export function AgentView() {
                                                   ? "border-claw-500/40 bg-claw-500/10 text-claw-800 shadow-sm dark:text-claw-200"
                                                   : "border-app-border/60 bg-app-surface/40 text-app-muted",
                                               )}
-                                          title={isLeader ? `Team Leader 固定为 id「${TEAM_LEADER_AGENT_ID}」` : undefined}
+                                          title={isLeader ? t("agentView.leader.titleFixed", { id: TEAM_LEADER_AGENT_ID }) : undefined}
                                             >
                                               <Crown className={cn("h-3.5 w-3.5", isLeader ? "text-claw-600 dark:text-claw-400" : "opacity-40")} />
-                                              {isLeader ? "Team Leader" : "成员"}
+                                              {isLeader ? "Team Leader" : t("agentView.role.member")}
                                             </span>
                                             <div className="min-w-0 flex-1">
                                               <Input
                                                 className="h-9 w-full rounded-lg border-app-border/80 bg-app-surface text-sm font-semibold text-app-text shadow-none placeholder:font-mono placeholder:text-app-muted"
                                                 placeholder={agent.id}
                                                 disabled={teamFetchLoading}
-                                                title={`界面展示名称；未填写时与角色 ID「${agent.id}」相同。保存配置仍使用下方技术 ID。`}
+                                                title={t("agentView.role.displayNameTitle", { id: agent.id })}
                                                 value={member?.display_name ?? ""}
                                                 onChange={(e) => {
                                                   const display_name = e.target.value.trim() || undefined
@@ -1944,7 +1947,7 @@ export function AgentView() {
                                                     ],
                                                   }))
                                                 }}
-                                                aria-label={`角色显示名，默认同 ${agent.id}`}
+                                                aria-label={t("agentView.role.displayNameAria", { id: agent.id })}
                                               />
                                             </div>
                                           </div>
@@ -1960,7 +1963,7 @@ export function AgentView() {
                                               }}
                                             >
                                               <FileText className="h-3.5 w-3.5" />
-                                              工作区
+{t("agentView.action.workspace")}
                                             </Button>
                                             <Tooltip>
                                               <TooltipTrigger asChild>
@@ -1972,14 +1975,14 @@ export function AgentView() {
                                                     className="h-9 w-9 shrink-0 rounded-lg border-app-border/80 text-app-muted hover:border-destructive/40 hover:bg-destructive/[0.06] hover:text-destructive"
                                                     disabled={roleListSaving || agentsList.length <= 1}
                                                     onClick={() => setDeleteRoleId(agent.id)}
-                                                    aria-label={`删除角色 ${agent.id}`}
+                                                    aria-label={t("agentView.role.deleteAria", { id: agent.id })}
                                                   >
                                                     <Trash2 className="h-4 w-4" />
                                                   </Button>
                                                 </span>
                                               </TooltipTrigger>
                                               <TooltipContent side="bottom" className="max-w-xs text-xs">
-                                                {agentsList.length <= 1 ? "至少保留一个角色" : "从 agents.list 移除此角色"}
+                                                {agentsList.length <= 1 ? t("agentView.role.keepOne") : t("agentView.role.removeFromList")}
                                               </TooltipContent>
                                             </Tooltip>
                                           </div>
@@ -1987,14 +1990,14 @@ export function AgentView() {
 
                                         <div className="space-y-3 px-4 py-2.5">
                                         <div className="space-y-1.5">
-                                          <Label className="text-xs font-medium text-app-text">绑定模型</Label>
+                                          <Label className="text-xs font-medium text-app-text">{t("agentView.addRole.bindModel")}</Label>
                                           <Select
                                             value={modelVal}
                                             disabled={roleListSaving}
                                             onValueChange={(v) => void handleRoleModelChange(agent.id, v)}
                                           >
                                             <SelectTrigger className="h-10 w-full rounded-lg border-app-border/80 bg-app-surface text-sm shadow-none">
-                                              <SelectValue placeholder="选择模型" />
+                                              <SelectValue placeholder={t("agentView.role.pickModel")} />
                                             </SelectTrigger>
                                             <SelectContent>
                                               {modelSelectOptions.map((opt) => (
@@ -2007,10 +2010,10 @@ export function AgentView() {
                                         </div>
 
                                         <div className="space-y-1.5">
-                                            <Label className="text-xs text-app-muted">角色说明</Label>
+                                            <Label className="text-xs text-app-muted">{t("agentView.role.roleDescLabel")}</Label>
                                             <Input
                                               className="h-10 rounded-lg border-app-border/80 bg-app-surface text-sm shadow-none"
-                                              placeholder="职责简述（可选）"
+                                              placeholder={t("agentView.role.descPlaceholder")}
                                               disabled={teamFetchLoading}
                                               value={member?.role ?? ""}
                                               onChange={(e) => {
@@ -2038,7 +2041,7 @@ export function AgentView() {
                         {teamFetchLoading && (
                           <div className="mt-4 flex items-center gap-2 rounded-lg border border-app-border/60 bg-app-elevated/30 px-3 py-2 text-xs text-app-muted">
                             <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0 text-claw-500" />
-                            正在同步 Pond 团队信息…
+{t("agentView.team.syncing")}
                           </div>
                         )}
                       </CardContent>
@@ -2053,14 +2056,14 @@ export function AgentView() {
                               <LayoutDashboard className="h-4 w-4" />
                             </span>
                             <div>
-                              <CardTitle className="text-base font-semibold text-app-text">团队空间</CardTitle>
+                              <CardTitle className="text-base font-semibold text-app-text">{t("agentView.section.teamSpace")}</CardTitle>
                             </div>
                           </div>
                           <div className="flex w-full flex-wrap gap-1 rounded-xl border border-app-border/60 bg-app-elevated/40 p-1 lg:w-auto">
                             {([
-                              { id: "overview" as const, label: "概览" },
-                              { id: "docs" as const, label: "文档" },
-                              { id: "tasks" as const, label: "任务台" },
+                              { id: "overview" as const, label: t("agentView.teamTab.overview") },
+                              { id: "docs" as const, label: t("agentView.teamTab.docs") },
+                              { id: "tasks" as const, label: t("agentView.teamTab.tasks") },
                             ] as const).map(({ id, label }) => (
                               <button
                                 key={id}
@@ -2095,7 +2098,7 @@ export function AgentView() {
                         {teamSpaceInitialized === null && (
                           <div className="flex min-h-[200px] flex-col items-center justify-center gap-3 py-8">
                             <Loader2 className="h-8 w-8 animate-spin text-claw-500" />
-                            <p className="text-sm text-app-muted">正在检查团队空间…</p>
+                            <p className="text-sm text-app-muted">{t("agentView.team.checking")}</p>
                           </div>
                         )}
                         {teamSpaceInitialized === false && (
@@ -2109,14 +2112,14 @@ export function AgentView() {
                               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-claw-500/15 text-claw-600 dark:text-claw-400">
                                 <Sparkles className="h-7 w-7" />
                               </div>
-                              <h3 className="mt-4 text-lg font-semibold text-app-text">尚未开启团队空间</h3>
+                              <h3 className="mt-4 text-lg font-semibold text-app-text">{t("agentView.team.notEnabledTitle")}</h3>
                               <div className="mx-auto mt-6 max-w-sm text-left">
                                 <Label htmlFor="team-name-onboard" className="text-xs text-app-muted">
-                                  团队名称（可选）
+{t("agentView.team.nameOptional")}
                                 </Label>
                                 <Input
                                   id="team-name-onboard"
-                                  placeholder="请输入团队名称"
+                                  placeholder={t("agentView.team.namePlaceholder")}
                                   value={teamEditMeta.team_name ?? ""}
                                   onChange={(e) =>
                                     setTeamEditMeta((m) => ({ ...m, team_name: e.target.value.trim() || undefined }))
@@ -2131,11 +2134,11 @@ export function AgentView() {
                                 onClick={() => void enableTeamSpace()}
                               >
                                 {teamSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                                开启团队空间
+{t("agentView.action.enableTeamSpace")}
                               </Button>
                               {!(openclawConfig?.agents?.list?.length) ? (
                                 <p className="mt-4 text-xs text-amber-600 dark:text-amber-400">
-                                  请先在「团队 → 角色列表」添加至少一个角色后再开启。
+{t("agentView.team.enableNeedRoles")}
                                 </p>
                               ) : null}
                             </div>
@@ -2145,10 +2148,10 @@ export function AgentView() {
                           <div className="space-y-5">
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                               <div className="min-w-0 flex-1 space-y-1.5 sm:max-w-xs">
-                                <Label htmlFor="team-name-pond" className="text-xs text-app-muted">团队名称</Label>
+                                <Label htmlFor="team-name-pond" className="text-xs text-app-muted">{t("agentView.label.teamName")}</Label>
                                 <Input
                                   id="team-name-pond"
-                                  placeholder="请输入团队名称"
+                                  placeholder={t("agentView.team.namePlaceholder")}
                                   disabled={teamFetchLoading}
                                   value={teamEditMeta.team_name ?? ""}
                                   onChange={(e) => setTeamEditMeta((m) => ({ ...m, team_name: e.target.value.trim() || undefined }))}
@@ -2167,7 +2170,7 @@ export function AgentView() {
                                   onClick={async () => {
                                     const agentsList = openclawConfig?.agents?.list ?? []
                                     if (!teamLeaderAgentId) {
-                                      toast.error("请先在角色列表中添加 id 为 main 的角色作为 Team Leader")
+                                      toast.error(t("agentView.toast.needMainLeader"))
                                       return
                                     }
                                     setTeamSaving(true)
@@ -2183,36 +2186,36 @@ export function AgentView() {
                                       }
                                       await invoke("save_team_meta", { instanceId: selectedId, meta })
                                       setTeamFetchError(null)
-                                      toast.success("团队信息已保存")
+                                      toast.success(t("agentView.toast.teamInfoSaved"))
                                     } catch {
-                                      toast.error("保存失败")
+                                      toast.error(t("agentView.toast.saveFailed"))
                                     } finally {
                                       setTeamSaving(false)
                                     }
                                   }}
                                 >
                                   {teamSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                                  保存
+{t("agentView.save")}
                                 </Button>
                               </div>
                             </div>
                             <div className="grid gap-3 sm:grid-cols-3">
                               <div className="rounded-xl border border-app-border/70 bg-app-elevated/30 px-4 py-3">
-                                <p className="text-[10px] font-semibold uppercase tracking-wide text-app-muted">角色数</p>
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-app-muted">{t("agentView.team.roleCount")}</p>
                                 <p className="mt-1 text-xl font-semibold tabular-nums text-app-text">{openclawConfig?.agents?.list?.length ?? 0}</p>
                               </div>
                               <div className="rounded-xl border border-app-border/70 bg-app-elevated/30 px-4 py-3">
                                 <p className="text-[10px] font-semibold uppercase tracking-wide text-app-muted">Team Leader</p>
                                 <p className="mt-1 truncate font-mono text-sm text-app-text" title={teamLeaderAgentId ?? ""}>
-                                  {teamLeaderAgentId ?? "未指定"}
+                                  {teamLeaderAgentId ?? t("agentView.team.leaderUnset")}
                                 </p>
                               </div>
                               <div className="rounded-xl border border-app-border/70 bg-app-elevated/30 px-4 py-3">
-                                <p className="text-[10px] font-semibold uppercase tracking-wide text-app-muted">团队任务</p>
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-app-muted">{t("agentView.team.tasksLabel")}</p>
                                 <p className="mt-1 text-xl font-semibold tabular-nums text-app-text">{teamTaskStats.total}</p>
                                 <p className="mt-0.5 text-[11px] text-app-muted">
-                                  已完成 {teamTaskStats.done}
-                                  {teamTaskStats.failed > 0 ? ` · 需协调 ${teamTaskStats.failed}` : ""}
+                                  {t("agentView.team.tasksDone", { done: teamTaskStats.done })}
+                                  {teamTaskStats.failed > 0 ? t("agentView.team.tasksNeedCoord", { n: teamTaskStats.failed }) : ""}
                                 </p>
                                 <Button
                                   type="button"
@@ -2221,13 +2224,13 @@ export function AgentView() {
                                   className="mt-2 h-7 w-full px-0 text-xs text-claw-600 hover:text-claw-700 dark:text-claw-400"
                                   onClick={() => setTeamSpaceTab("tasks")}
                                 >
-                                  打开任务台
+{t("agentView.action.openTasks")}
                                 </Button>
                               </div>
                             </div>
                             <div className="rounded-xl border border-app-border/60 bg-app-elevated/25 px-4 py-3">
                               <div className="mb-2 flex items-center justify-between gap-2">
-                                <p className="text-xs font-semibold text-app-text">近期任务</p>
+                                <p className="text-xs font-semibold text-app-text">{t("agentView.team.recentTasks")}</p>
                                 <Button
                                   type="button"
                                   variant="ghost"
@@ -2235,43 +2238,43 @@ export function AgentView() {
                                   className="h-7 shrink-0 px-2 text-xs text-claw-600 dark:text-claw-400"
                                   onClick={() => setTeamSpaceTab("tasks")}
                                 >
-                                  查看全部
+{t("agentView.action.viewAll")}
                                 </Button>
                               </div>
                               {teamDashboardLoading && teamTasks.length === 0 ? (
                                 <Loader2 className="h-5 w-5 animate-spin text-app-muted" />
                               ) : teamTasks.length === 0 ? (
-                                <p className="text-xs text-app-muted">暂无任务；在任务台中添加。</p>
+                                <p className="text-xs text-app-muted">{t("agentView.team.noTasks")}</p>
                               ) : (
                                 <ul className="space-y-2">
                                   {teamTasks
                                     .slice()
                                     .sort((a, b) => b.updatedAtMs - a.updatedAtMs)
                                     .slice(0, 6)
-                                    .map((t) => (
+                                    .map((task) => (
                                       <li
-                                        key={t.id}
+                                        key={task.id}
                                         className="flex items-start justify-between gap-2 rounded-lg border border-app-border/40 bg-app-surface/50 px-2.5 py-1.5 text-xs"
                                       >
-                                        <span className="min-w-0 flex-1 truncate font-medium text-app-text">{t.title}</span>
+                                        <span className="min-w-0 flex-1 truncate font-medium text-app-text">{task.title}</span>
                                         <span
                                           className={cn(
                                             "shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium",
-                                            t.status === "open" && "bg-amber-500/15 text-amber-800 dark:text-amber-200",
-                                            t.status === "claimed" && "bg-sky-500/15 text-sky-800 dark:text-sky-200",
-                                            t.status === "failed" && "bg-rose-500/15 text-rose-800 dark:text-rose-200",
-                                            t.status === "done" && "bg-emerald-500/15 text-emerald-800 dark:text-emerald-200",
+                                            task.status === "open" && "bg-amber-500/15 text-amber-800 dark:text-amber-200",
+                                            task.status === "claimed" && "bg-sky-500/15 text-sky-800 dark:text-sky-200",
+                                            task.status === "failed" && "bg-rose-500/15 text-rose-800 dark:text-rose-200",
+                                            task.status === "done" && "bg-emerald-500/15 text-emerald-800 dark:text-emerald-200",
                                           )}
                                         >
-                                          {t.status === "open"
-                                            ? "待领取"
-                                            : t.status === "claimed"
-                                              ? "进行中"
-                                              : t.status === "failed"
-                                                ? "失败"
-                                                : t.status === "done"
-                                                  ? "已完成"
-                                                  : t.status}
+                                          {task.status === "open"
+                                            ? t("agentView.task.modeOpen")
+                                            : task.status === "claimed"
+                                              ? t("agentView.task.claimed")
+                                              : task.status === "failed"
+                                                ? t("agentView.task.failed")
+                                                : task.status === "done"
+                                                  ? t("agentView.task.done")
+                                                  : task.status}
                                         </span>
                                       </li>
                                     ))}
@@ -2285,15 +2288,13 @@ export function AgentView() {
                         {teamSpaceTab === "docs" && (
                         <div className="space-y-4 text-sm leading-relaxed text-app-muted">
                           <p>
-                            <span className="font-medium text-app-text">pond-team</span>：开启团队空间后写入当前实例{" "}
-                            <code className="rounded bg-app-elevated px-1 py-0.5 text-xs font-mono">skills/pond-team/SKILL.md</code>，供角色按协作约定使用。
+                            {t("agentView.team.dashboardHint")}
                           </p>
                           <p>
-                            心跳轻量上下文开启时，仅向心跳注入{" "}
-                            <code className="rounded bg-app-elevated px-1 py-0.5 text-xs font-mono">HEARTBEAT.md</code>（见「心跳与定时」）。
+                            {t("agentView.team.heartbeatInject")}
                           </p>
                           <p>
-                            OpenClaw 多 Agent 与路由见官方文档：{" "}
+                            {t("agentView.team.openclawDoc")}{" "}
                             <a
                               href="https://docs.openclaw.ai/concepts/multi-agent"
                               target="_blank"
@@ -2317,9 +2318,9 @@ export function AgentView() {
                                 <ListTodo className="h-5 w-5" />
                               </span>
                               <div className="min-w-0">
-                                <h3 className="text-sm font-semibold text-app-text">团队任务台</h3>
+                                <h3 className="text-sm font-semibold text-app-text">{t("agentView.task.boardTitle")}</h3>
                                 <p className="text-[11px] leading-relaxed text-app-muted">
-                                  成员会话活跃度与任务状态同屏；完成度随「已完成」任务更新。
+{t("agentView.task.boardSubtitle")}
                                 </p>
                               </div>
                             </div>
@@ -2332,17 +2333,17 @@ export function AgentView() {
                               disabled={teamDashboardLoading || !selectedId}
                             >
                               {teamDashboardLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCw className="h-3.5 w-3.5" />}
-                              同步
+{t("agentView.action.sync")}
                             </Button>
                           </div>
 
                           {/* Member activity */}
                           <div className="border-b border-app-border/40 px-4 py-3">
-                            <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-app-muted">成员动态</p>
+                            <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-app-muted">{t("agentView.activity.title")}</p>
                             {!selectedId ? (
-                              <p className="text-xs text-app-muted">选择实例后显示</p>
+                              <p className="text-xs text-app-muted">{t("agentView.activity.selectInstance")}</p>
                             ) : getEffectiveGatewayInfo(selectedId).agentGatewayStatus !== "running" ? (
-                              <p className="text-xs text-app-muted">启动 Gateway 后可查看各角色会话活跃度</p>
+                              <p className="text-xs text-app-muted">{t("agentView.activity.startGateway")}</p>
                             ) : teamActivityError ? (
                               <p className="text-xs text-amber-600 dark:text-amber-400">{teamActivityError}</p>
                             ) : teamDashboardLoading && teamActivity.length === 0 ? (
@@ -2364,7 +2365,7 @@ export function AgentView() {
                                       )}
                                       title={
                                         row.sessionCount
-                                          ? `${row.sessionCount} 个主会话 · ID ${row.agentId}`
+                                          ? t("agentView.activity.sessionLine", { n: row.sessionCount, id: row.agentId })
                                           : `ID ${row.agentId}`
                                       }
                                     >
@@ -2391,7 +2392,7 @@ export function AgentView() {
                                           row.status === "active" ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300" : "text-app-muted",
                                         )}
                                       >
-                                        {row.status === "active" ? "活跃" : "空闲"}
+                                        {row.status === "active" ? t("agentView.activity.active") : t("agentView.activity.idle")}
                                       </span>
                                     </div>
                                   )
@@ -2403,15 +2404,15 @@ export function AgentView() {
                           <div className="flex flex-col gap-3 border-b border-app-border/30 bg-app-elevated/25 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                             <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                               <span className="mr-1 shrink-0 text-[10px] font-semibold uppercase tracking-[0.12em] text-app-muted">
-                                任务
+{t("agentView.task.tabTasks")}
                               </span>
                               {(
                                 [
-                                  { id: "all" as const, label: "全部", count: teamTaskStats.total },
-                                  { id: "open" as const, label: "待领取", count: teamTaskStats.open },
-                                  { id: "claimed" as const, label: "进行中", count: teamTaskStats.claimed },
-                                  { id: "failed" as const, label: "失败", count: teamTaskStats.failed },
-                                  { id: "done" as const, label: "已完成", count: teamTaskStats.done },
+                                  { id: "all" as const, label: t("agentView.task.filterAll"), count: teamTaskStats.total },
+                                  { id: "open" as const, label: t("agentView.task.modeOpen"), count: teamTaskStats.open },
+                                  { id: "claimed" as const, label: t("agentView.task.claimed"), count: teamTaskStats.claimed },
+                                  { id: "failed" as const, label: t("agentView.task.failed"), count: teamTaskStats.failed },
+                                  { id: "done" as const, label: t("agentView.task.done"), count: teamTaskStats.done },
                                 ] as const
                               ).map(({ id, label, count }) => (
                                 <button
@@ -2444,7 +2445,7 @@ export function AgentView() {
                             {teamTaskStats.total > 0 ? (
                               <div className="flex min-w-0 w-full items-center gap-2 sm:w-auto sm:max-w-[min(100%,320px)] sm:flex-1 sm:justify-end">
                                 <span className="shrink-0 text-[10px] font-medium uppercase tracking-wide text-app-muted">
-                                  完成度
+{t("agentView.task.completionLabel")}
                                 </span>
                                 <div className="h-2 min-w-[100px] flex-1 overflow-hidden rounded-full bg-app-border/80">
                                   <div
@@ -2462,9 +2463,9 @@ export function AgentView() {
                           <div className="space-y-2 border-b border-app-border/30 px-4 py-3">
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(120px,140px)_minmax(140px,200px)_auto] sm:items-end">
                               <div className="space-y-1.5">
-                                <Label className="text-[11px] font-medium text-app-muted">任务标题</Label>
+                                <Label className="text-[11px] font-medium text-app-muted">{t("agentView.task.addTitle")}</Label>
                                 <Input
-                                  placeholder="输入标题，Enter 快速添加"
+                                  placeholder={t("agentView.task.titlePlaceholder")}
                                   value={newTeamTaskTitle}
                                   onChange={(e) => setNewTeamTaskTitle(e.target.value)}
                                   onKeyDown={(e) => {
@@ -2476,7 +2477,7 @@ export function AgentView() {
                                 />
                               </div>
                               <div className="space-y-1.5">
-                                <Label className="text-[11px] font-medium text-app-muted">添加方式</Label>
+                                <Label className="text-[11px] font-medium text-app-muted">{t("agentView.task.addMode")}</Label>
                                 <Select
                                   value={newTeamTaskAssignMode}
                                   onValueChange={(v) => setNewTeamTaskAssignMode(v as "open" | "assigned")}
@@ -2486,13 +2487,13 @@ export function AgentView() {
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="assigned">指派并认领</SelectItem>
-                                    <SelectItem value="open">待领取</SelectItem>
+                                    <SelectItem value="assigned">{t("agentView.task.modeAssigned")}</SelectItem>
+                                    <SelectItem value="open">{t("agentView.task.modeOpen")}</SelectItem>
                                   </SelectContent>
                                 </Select>
                               </div>
                               <div className="space-y-1.5">
-                                <Label className="text-[11px] font-medium text-app-muted">指派人</Label>
+                                <Label className="text-[11px] font-medium text-app-muted">{t("agentView.task.assignee")}</Label>
                                 <Select
                                   value={teamRoleAgentId || (openclawConfig?.agents?.list?.[0]?.id ?? "")}
                                   onValueChange={(v) => setTeamRoleAgentId(v)}
@@ -2501,7 +2502,7 @@ export function AgentView() {
                                   }
                                 >
                                   <SelectTrigger className="h-10 w-full border-app-border/80 bg-app-surface text-xs">
-                                    <SelectValue placeholder="选择角色" />
+                                    <SelectValue placeholder={t("agentView.task.pickRole")} />
                                   </SelectTrigger>
                                   <SelectContent>
                                     {(openclawConfig?.agents?.list ?? []).map((a) => (
@@ -2524,12 +2525,12 @@ export function AgentView() {
                                 }
                                 onClick={() => void submitNewTeamTask()}
                               >
-                                添加
+                                {t("agentView.action.add")}
                               </Button>
                             </div>
                             {!(openclawConfig?.agents?.list?.length) ? (
                               <p className="text-[11px] text-amber-600/90 dark:text-amber-400">
-                                请先在「团队 → 角色列表」中添加至少一个角色后再指派任务。
+{t("agentView.task.needRolesForAssign")}
                               </p>
                             ) : null}
                           </div>
@@ -2541,42 +2542,42 @@ export function AgentView() {
                               </div>
                             ) : (
                               <ul className="max-h-[min(420px,52vh)] space-y-1.5 overflow-y-auto px-1 pr-1">
-                                {teamTaskList.map((t) => {
-                                  const busy = teamTaskUpdatingId === t.id
+                                {teamTaskList.map((task) => {
+                                  const busy = teamTaskUpdatingId === task.id
                                   const statusLabel =
-                                    t.status === "open"
-                                      ? "待领取"
-                                      : t.status === "claimed"
-                                        ? "进行中"
-                                        : t.status === "failed"
-                                          ? "失败"
-                                          : t.status === "done"
-                                            ? "已完成"
-                                            : t.status
+                                    task.status === "open"
+                                      ? t("agentView.task.modeOpen")
+                                      : task.status === "claimed"
+                                        ? t("agentView.task.claimed")
+                                        : task.status === "failed"
+                                          ? t("agentView.task.failed")
+                                          : task.status === "done"
+                                            ? t("agentView.task.done")
+                                            : task.status
                                   const borderCls =
-                                    t.status === "done"
+                                    task.status === "done"
                                       ? "border-l-emerald-500/70"
-                                      : t.status === "claimed"
+                                      : task.status === "claimed"
                                         ? "border-l-sky-500/70"
-                                        : t.status === "failed"
+                                        : task.status === "failed"
                                           ? "border-l-rose-500/70"
                                           : "border-l-amber-500/70"
                                   return (
                                     <li
-                                      key={t.id}
+                                      key={task.id}
                                       className={cn(
                                         "rounded-xl border border-app-border/50 bg-app-surface/70 py-2.5 pl-3 pr-2 shadow-sm backdrop-blur-sm border-l-[3px]",
                                         borderCls,
-                                        t.status === "done" && "opacity-90",
+                                        task.status === "done" && "opacity-90",
                                       )}
                                     >
                                       <div className="flex gap-3">
                                         <div className="pt-0.5 text-app-muted">
-                                          {t.status === "done" ? (
+                                          {task.status === "done" ? (
                                             <CheckCircle2 className="h-4 w-4 text-emerald-500" aria-hidden />
-                                          ) : t.status === "failed" ? (
+                                          ) : task.status === "failed" ? (
                                             <XCircle className="h-4 w-4 text-rose-500" aria-hidden />
-                                          ) : t.status === "claimed" ? (
+                                          ) : task.status === "claimed" ? (
                                             <Circle className="h-4 w-4 fill-sky-500/25 text-sky-500" aria-hidden />
                                           ) : (
                                             <Circle className="h-4 w-4 text-amber-500/90" aria-hidden />
@@ -2587,58 +2588,58 @@ export function AgentView() {
                                             <p
                                               className={cn(
                                                 "text-sm font-medium text-app-text",
-                                                t.status === "done" && "line-through decoration-app-muted/80",
+                                                task.status === "done" && "line-through decoration-app-muted/80",
                                               )}
                                             >
-                                              {t.title}
+                                              {task.title}
                                             </p>
                                             <span
                                               className={cn(
                                                 "shrink-0 rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-                                                t.status === "open" && "bg-amber-500/15 text-amber-700 dark:text-amber-300",
-                                                t.status === "claimed" && "bg-sky-500/15 text-sky-700 dark:text-sky-300",
-                                                t.status === "failed" && "bg-rose-500/15 text-rose-700 dark:text-rose-300",
-                                                t.status === "done" && "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+                                                task.status === "open" && "bg-amber-500/15 text-amber-700 dark:text-amber-300",
+                                                task.status === "claimed" && "bg-sky-500/15 text-sky-700 dark:text-sky-300",
+                                                task.status === "failed" && "bg-rose-500/15 text-rose-700 dark:text-rose-300",
+                                                task.status === "done" && "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
                                               )}
                                             >
                                               {statusLabel}
                                             </span>
                                           </div>
-                                          {t.status === "failed" && t.failureReason ? (
+                                          {task.status === "failed" && task.failureReason ? (
                                             <p className="mt-1.5 rounded-md border border-rose-500/20 bg-rose-500/5 px-2 py-1.5 text-xs leading-relaxed text-rose-900/90 dark:text-rose-100/90">
-                                              <span className="font-medium text-app-text/80">原因：</span>
-                                              {t.failureReason}
+                                              <span className="font-medium text-app-text/80">{t("agentView.task.reasonPrefix")}</span>
+                                              {task.failureReason}
                                             </p>
                                           ) : null}
                                           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-app-muted">
                                             <span>
-                                              更新{" "}
-                                              {new Date(t.updatedAtMs).toLocaleString(undefined, {
+{t("agentView.task.update")}{" "}
+                                              {new Date(task.updatedAtMs).toLocaleString(undefined, {
                                                 month: "numeric",
                                                 day: "numeric",
                                                 hour: "2-digit",
                                                 minute: "2-digit",
                                               })}
                                             </span>
-                                            {(t.status === "claimed" || t.status === "done" || t.status === "failed") &&
-                                            t.claimedByAgentId ? (
+                                            {(task.status === "claimed" || task.status === "done" || task.status === "failed") &&
+                                            task.claimedByAgentId ? (
                                               <span>
-                                                指派人{" "}
+{t("agentView.task.reassign")}{" "}
                                                 <span className="font-mono text-sky-600/90 dark:text-sky-400">
-                                                  @{t.claimedByAgentId}
+                                                  @{task.claimedByAgentId}
                                                 </span>
                                               </span>
                                             ) : null}
                                           </div>
                                           <div className="mt-2 flex flex-wrap items-center gap-2">
-                                            {t.status === "open" && (
+                                            {task.status === "open" && (
                                               <>
                                                 <Select
                                                   value={teamRoleAgentId || openclawConfig?.agents?.list?.[0]?.id || ""}
                                                   onValueChange={(v) => setTeamRoleAgentId(v)}
                                                 >
                                                   <SelectTrigger className="h-8 w-[132px] text-xs">
-                                                    <SelectValue placeholder="领取为" />
+                                                    <SelectValue placeholder={t("agentView.task.claimAs")} />
                                                   </SelectTrigger>
                                                   <SelectContent>
                                                     {(openclawConfig?.agents?.list ?? []).map((a) => (
@@ -2657,16 +2658,16 @@ export function AgentView() {
                                                   onClick={async () => {
                                                     const aid = teamRoleAgentId.trim() || openclawConfig?.agents?.list?.[0]?.id
                                                     if (!selectedId || !aid) return
-                                                    setTeamTaskUpdatingId(t.id)
+                                                    setTeamTaskUpdatingId(task.id)
                                                     try {
                                                       await invoke("update_team_task", {
                                                         instanceId: selectedId,
-                                                        taskId: t.id,
+                                                        taskId: task.id,
                                                         status: "claimed",
                                                         claimedByAgentId: aid,
                                                       })
                                                       await loadTeamDashboard()
-                                                      toast.success("已领取")
+                                                      toast.success(t("agentView.toast.claimed"))
                                                     } catch (err) {
                                                       toast.error(err instanceof Error ? err.message : String(err))
                                                     } finally {
@@ -2674,11 +2675,11 @@ export function AgentView() {
                                                     }
                                                   }}
                                                 >
-                                                  {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : "领取"}
+                                                  {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : t("agentView.action.claim")}
                                                 </Button>
                                               </>
                                             )}
-                                            {t.status === "claimed" && (
+                                            {task.status === "claimed" && (
                                               <>
                                                 <Button
                                                   type="button"
@@ -2687,15 +2688,15 @@ export function AgentView() {
                                                   disabled={busy}
                                                   onClick={async () => {
                                                     if (!selectedId) return
-                                                    setTeamTaskUpdatingId(t.id)
+                                                    setTeamTaskUpdatingId(task.id)
                                                     try {
                                                       await invoke("update_team_task", {
                                                         instanceId: selectedId,
-                                                        taskId: t.id,
+                                                        taskId: task.id,
                                                         status: "done",
                                                       })
                                                       await loadTeamDashboard()
-                                                      toast.success("已标记完成")
+                                                      toast.success(t("agentView.toast.markedDone"))
                                                     } catch (err) {
                                                       toast.error(err instanceof Error ? err.message : String(err))
                                                     } finally {
@@ -2703,7 +2704,7 @@ export function AgentView() {
                                                     }
                                                   }}
                                                 >
-                                                  {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : "完成"}
+                                                  {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : t("agentView.action.done")}
                                                 </Button>
                                                 <Button
                                                   type="button"
@@ -2713,15 +2714,15 @@ export function AgentView() {
                                                   disabled={busy}
                                                   onClick={async () => {
                                                     if (!selectedId) return
-                                                    setTeamTaskUpdatingId(t.id)
+                                                    setTeamTaskUpdatingId(task.id)
                                                     try {
                                                       await invoke("update_team_task", {
                                                         instanceId: selectedId,
-                                                        taskId: t.id,
+                                                        taskId: task.id,
                                                         status: "open",
                                                       })
                                                       await loadTeamDashboard()
-                                                      toast.success("已放回待领取")
+                                                      toast.success(t("agentView.toast.returnedOpen"))
                                                     } catch (err) {
                                                       toast.error(err instanceof Error ? err.message : String(err))
                                                     } finally {
@@ -2729,11 +2730,11 @@ export function AgentView() {
                                                     }
                                                   }}
                                                 >
-                                                  {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : "放回待领取"}
+                                                  {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : t("agentView.action.returnOpen")}
                                                 </Button>
                                               </>
                                             )}
-                                            {t.status === "failed" && (
+                                            {task.status === "failed" && (
                                               <Button
                                                 type="button"
                                                 size="sm"
@@ -2742,15 +2743,15 @@ export function AgentView() {
                                                 disabled={busy}
                                                 onClick={async () => {
                                                   if (!selectedId) return
-                                                  setTeamTaskUpdatingId(t.id)
+                                                  setTeamTaskUpdatingId(task.id)
                                                   try {
                                                     await invoke("update_team_task", {
                                                       instanceId: selectedId,
-                                                      taskId: t.id,
+                                                      taskId: task.id,
                                                       status: "open",
                                                     })
                                                     await loadTeamDashboard()
-                                                    toast.success("已重新打开，可再次领取或指派")
+                                                    toast.success(t("agentView.toast.reopened"))
                                                   } catch (err) {
                                                     toast.error(err instanceof Error ? err.message : String(err))
                                                   } finally {
@@ -2758,10 +2759,10 @@ export function AgentView() {
                                                   }
                                                 }}
                                               >
-                                                {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : "重新打开"}
+                                                {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : t("agentView.action.reopen")}
                                               </Button>
                                             )}
-                                            {(t.status === "open" || t.status === "claimed") && (
+                                            {(task.status === "open" || task.status === "claimed") && (
                                               <Button
                                                 type="button"
                                                 size="sm"
@@ -2769,11 +2770,11 @@ export function AgentView() {
                                                 className="h-8 text-xs text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300"
                                                 disabled={busy}
                                                 onClick={() => {
-                                                  setTeamTaskFailDialogTaskId(t.id)
+                                                  setTeamTaskFailDialogTaskId(task.id)
                                                   setTeamTaskFailReasonInput("")
                                                 }}
                                               >
-                                                标记失败
+{t("agentView.task.markFailShort")}
                                               </Button>
                                             )}
                                           </div>
@@ -2785,8 +2786,8 @@ export function AgentView() {
                                 {teamTaskList.length === 0 && !teamDashboardLoading && (
                                   <li className="rounded-xl border border-dashed border-app-border/60 py-12 text-center text-sm text-app-muted">
                                     {teamTaskStats.total === 0
-                                      ? "暂无任务，填写标题并选择指派人即可添加"
-                                      : "当前筛选下没有任务"}
+                                      ? t("agentView.task.emptyHint")
+                                      : t("agentView.task.emptyFilter")}
                                   </li>
                                 )}
                               </ul>
@@ -2796,7 +2797,7 @@ export function AgentView() {
                           </div>
                         ) : (
                           <p className="py-10 text-center text-sm text-app-muted">
-                            请先在「概览」中开启团队空间，再在此管理任务与成员动态。
+{t("agentView.task.enableSpaceFirst")}
                           </p>
                         )
                         )}
@@ -2815,16 +2816,16 @@ export function AgentView() {
                     >
                       <DialogContent className="border-app-border/80 bg-app-surface text-app-text sm:max-w-md">
                         <DialogHeader className="space-y-2">
-                          <DialogTitle className="text-lg">标记任务失败</DialogTitle>
+                          <DialogTitle className="text-lg">{t("agentView.task.failDialogTitle")}</DialogTitle>
                           <DialogDescription className="text-left text-sm leading-relaxed text-app-muted">
-                            请填写原因，Leader（main）会收到提醒并协调后续处理。
+{t("agentView.task.failDialogDesc")}
                           </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-1.5 pt-1">
-                          <Label className="text-xs font-medium text-app-text">失败原因</Label>
+                          <Label className="text-xs font-medium text-app-text">{t("agentView.task.failReason")}</Label>
                           <textarea
                             className="flex min-h-[100px] w-full resize-y rounded-lg border border-app-border/80 bg-app-surface px-3 py-2 text-sm text-app-text shadow-none placeholder:text-app-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-claw-500/40"
-                            placeholder="例如：依赖未就绪、验收标准不清、权限或环境阻塞"
+                            placeholder={t("agentView.task.failReasonPlaceholder")}
                             value={teamTaskFailReasonInput}
                             onChange={(e) => setTeamTaskFailReasonInput(e.target.value)}
                           />
@@ -2838,7 +2839,7 @@ export function AgentView() {
                               setTeamTaskFailReasonInput("")
                             }}
                           >
-                            返回
+{t("agentView.action.back")}
                           </Button>
                           <Button
                             type="button"
@@ -2853,7 +2854,7 @@ export function AgentView() {
                               const r = teamTaskFailReasonInput.trim()
                               if (!selectedId || !tid) return
                               if (!r) {
-                                toast.error("请填写失败原因")
+                                toast.error(t("agentView.toast.fillFailReason"))
                                 return
                               }
                               setTeamTaskUpdatingId(tid)
@@ -2865,7 +2866,7 @@ export function AgentView() {
                                   failureReason: r,
                                 })
                                 await loadTeamDashboard()
-                                toast.success("已标记失败")
+                                toast.success(t("agentView.toast.markedFailed"))
                                 setTeamTaskFailDialogTaskId(null)
                                 setTeamTaskFailReasonInput("")
                               } catch (err) {
@@ -2879,7 +2880,7 @@ export function AgentView() {
                             teamTaskUpdatingId === teamTaskFailDialogTaskId ? (
                               <Loader2 className="h-4 w-4 animate-spin" />
                             ) : (
-                              "确认"
+                              t("agentView.confirm")
                             )}
                           </Button>
                         </DialogFooter>
@@ -2889,24 +2890,24 @@ export function AgentView() {
                     <Dialog open={addRoleDialogOpen} onOpenChange={setAddRoleDialogOpen}>
                       <DialogContent className="border-app-border/80 bg-app-surface text-app-text sm:max-w-md">
                         <DialogHeader className="space-y-2">
-                          <DialogTitle className="text-lg">添加角色</DialogTitle>
+                          <DialogTitle className="text-lg">{t("agentView.addRole.title")}</DialogTitle>
                           <DialogDescription className="text-left text-sm leading-relaxed text-app-muted">
-                            为团队新增一名角色，并为其选择要使用的模型。
+{t("agentView.addRole.desc")}
                           </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-3 pt-1">
                           <div className="space-y-1.5">
-                            <Label className="text-xs font-medium text-app-text">角色 ID</Label>
+                            <Label className="text-xs font-medium text-app-text">{t("agentView.addRole.id")}</Label>
                             <Input
                               className="h-10 rounded-lg border-app-border/80 bg-app-surface font-mono text-sm shadow-none placeholder:text-app-muted"
-                              placeholder="例如 coder、researcher"
+                              placeholder={t("agentView.role.idPlaceholder")}
                               value={newRoleIdInput}
                               onChange={(e) => setNewRoleIdInput(e.target.value)}
                             />
-                            <p className="text-[11px] text-app-muted">字母开头，可用字母、数字、连字符与下划线，至多 63 个字符。</p>
+<p className="text-[11px] text-app-muted">{t("agentView.addRole.idHint")}</p>
                           </div>
                           <div className="space-y-1.5">
-                            <Label className="text-xs font-medium text-app-text">绑定模型</Label>
+                            <Label className="text-xs font-medium text-app-text">{t("agentView.addRole.bindModel")}</Label>
                             <Select value={newRoleModelKey} onValueChange={setNewRoleModelKey}>
                               <SelectTrigger className="h-10 rounded-lg border-app-border/80 bg-app-surface shadow-none">
                                 <SelectValue />
@@ -2928,7 +2929,7 @@ export function AgentView() {
                             className="rounded-lg border-app-border/80 bg-app-surface"
                             onClick={() => setAddRoleDialogOpen(false)}
                           >
-                            取消
+          {t("common.cancel")}
                           </Button>
                           <Button
                             type="button"
@@ -2939,10 +2940,10 @@ export function AgentView() {
                             {roleListSaving ? (
                               <>
                                 <Loader2 className="h-4 w-4 animate-spin" />
-                                保存中…
+{t("agentView.saving")}
                               </>
                             ) : (
-                              "保存"
+                              t("agentView.save")
                             )}
                           </Button>
                         </DialogFooter>
@@ -2952,15 +2953,13 @@ export function AgentView() {
                     <AlertDialog open={deleteRoleId !== null} onOpenChange={(open) => { if (!open) setDeleteRoleId(null) }}>
                       <AlertDialogContent className="border-app-border bg-app-surface text-app-text">
                         <AlertDialogHeader>
-                          <AlertDialogTitle>删除角色「{deleteRoleId ?? ""}」？</AlertDialogTitle>
+                          <AlertDialogTitle>{t("agentView.deleteRole.title", { id: deleteRoleId ?? "" })}</AlertDialogTitle>
                           <AlertDialogDescription className="text-app-muted">
-                            将从当前实例的 agents.list 中移除；Pond 团队展示中对应条目也会去掉。至少保留一个角色。删除后请重启
-                            Gateway，并检查 bindings 是否仍引用该 agentId。若该 agent 已有数据目录，请自行备份对应{" "}
-                            <code className="text-xs">~/.openclaw-*</code> 或 OpenClaw 文档中的路径。
+                            {t("agentView.deleteRole.desc")}
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel className="border-app-border">取消</AlertDialogCancel>
+                          <AlertDialogCancel className="border-app-border">{t("common.cancel")}</AlertDialogCancel>
                           <AlertDialogAction
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                             disabled={roleListSaving}
@@ -2969,7 +2968,7 @@ export function AgentView() {
                               void confirmDeleteRole()
                             }}
                           >
-                            {roleListSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "删除"}
+                            {roleListSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : t("agentView.delete")}
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
@@ -2986,13 +2985,13 @@ export function AgentView() {
                             <Heart className="h-4 w-4 text-claw-500" />
                           </div>
                           <div>
-                            <CardTitle className="text-base font-medium text-app-text">心跳 (Heartbeat)</CardTitle>
+                            <CardTitle className="text-base font-medium text-app-text">{t("agentView.section.heartbeat")}</CardTitle>
                           </div>
                         </div>
                       </CardHeader>
                       <CardContent className="space-y-5 pt-0">
                         <div className="space-y-2">
-                          <Label className="text-xs font-medium text-app-muted">配置作用域</Label>
+                          <Label className="text-xs font-medium text-app-muted">{t("agentView.heartbeat.scope")}</Label>
                           <Select
                             value={heartbeatScope}
                             onValueChange={setHeartbeatScope}
@@ -3001,32 +3000,32 @@ export function AgentView() {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="__defaults__">全局默认（agents.defaults）</SelectItem>
+                              <SelectItem value="__defaults__">{t("agentView.heartbeat.defaults")}</SelectItem>
                               {heartbeatRoleIds.map((id) => (
                                 <SelectItem key={id} value={id}>
-                                  角色 {id}
+                                  {t("agentView.heartbeat.rolePrefix", { id })}
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
                           {heartbeatScope !== "__defaults__" && (
                             <p className="text-xs text-app-muted">
-                              下方留空并保存将移除该角色的 <code className="font-mono text-[11px]">heartbeat</code>，改继承全局默认。
+                              {t("agentView.heartbeat.inheritHint")}
                             </p>
                           )}
                         </div>
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                           <div className="flex min-w-0 flex-col gap-2">
-                            <Label className="text-xs font-medium text-app-muted">心跳间隔 every</Label>
+                            <Label className="text-xs font-medium text-app-muted">{t("agentView.heartbeat.everyLabel")}</Label>
                             <Input
-                              placeholder="如 30m、2h；0m 禁用"
+                              placeholder={t("agentView.heartbeat.everyPlaceholder")}
                               value={agentHeartbeat.every}
                               onChange={(e) => setAgentHeartbeat({ ...agentHeartbeat, every: e.target.value })}
                               className="h-9 w-full max-w-[220px] border-app-border bg-app-elevated text-app-text"
                             />
                           </div>
                           <div className="flex min-w-0 flex-col gap-2">
-                            <Label className="text-xs font-medium text-app-muted">活跃时段 activeHours（可选）</Label>
+                            <Label className="text-xs font-medium text-app-muted">{t("agentView.heartbeat.activeHours")}</Label>
                             <div className="flex h-9 max-w-full flex-wrap items-center gap-2">
                               <Input
                                 placeholder="08:00"
@@ -3034,7 +3033,7 @@ export function AgentView() {
                                 onChange={(e) => setAgentHeartbeat({ ...agentHeartbeat, activeStart: e.target.value })}
                                 className="h-9 w-[7.25rem] border-app-border bg-app-elevated px-2.5 font-mono text-sm tabular-nums text-app-text"
                               />
-                              <span className="shrink-0 text-xs text-app-muted">至</span>
+                              <span className="shrink-0 text-xs text-app-muted">{t("agentView.heartbeat.to")}</span>
                               <Input
                                 placeholder="24:00"
                                 value={agentHeartbeat.activeEnd}
@@ -3046,13 +3045,13 @@ export function AgentView() {
                         </div>
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                           <div className="space-y-2">
-                            <Label className="text-xs font-medium text-app-muted">目标 target</Label>
+                            <Label className="text-xs font-medium text-app-muted">{t("agentView.heartbeat.target")}</Label>
                             <Select value={agentHeartbeat.target} onValueChange={(v) => setAgentHeartbeat({ ...agentHeartbeat, target: v })}>
                               <SelectTrigger className="h-9 border-app-border bg-app-elevated text-app-text">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="none">none（不对外投递）</SelectItem>
+                                <SelectItem value="none">{t("agentView.heartbeat.targetNone")}</SelectItem>
                                 <SelectItem value="last">last</SelectItem>
                                 <SelectItem value="whatsapp">whatsapp</SelectItem>
                                 <SelectItem value="telegram">telegram</SelectItem>
@@ -3061,7 +3060,7 @@ export function AgentView() {
                             </Select>
                           </div>
                           <div className="space-y-2">
-                            <Label className="text-xs font-medium text-app-muted">私聊投递 directPolicy</Label>
+                            <Label className="text-xs font-medium text-app-muted">{t("agentView.heartbeat.directPolicy")}</Label>
                             <Select
                               value={agentHeartbeat.directPolicy}
                               onValueChange={(v: "allow" | "block") =>
@@ -3080,18 +3079,18 @@ export function AgentView() {
                         </div>
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                           <div className="space-y-2">
-                            <Label className="text-xs font-medium text-app-muted">收件人 to（可选）</Label>
+                            <Label className="text-xs font-medium text-app-muted">{t("agentView.heartbeat.toLabel")}</Label>
                             <Input
-                              placeholder="渠道相关 ID，如手机号、会话 id"
+                              placeholder={t("agentView.heartbeat.toPlaceholder")}
                               value={agentHeartbeat.to}
                               onChange={(e) => setAgentHeartbeat({ ...agentHeartbeat, to: e.target.value })}
                               className="h-9 border-app-border bg-app-elevated text-app-text"
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label className="text-xs font-medium text-app-muted">账户 accountId（可选）</Label>
+                            <Label className="text-xs font-medium text-app-muted">{t("agentView.heartbeat.accountLabel")}</Label>
                             <Input
-                              placeholder="多账号渠道的 accountId"
+                              placeholder={t("agentView.heartbeat.accountPlaceholder")}
                               value={agentHeartbeat.accountId}
                               onChange={(e) => setAgentHeartbeat({ ...agentHeartbeat, accountId: e.target.value })}
                               className="h-9 border-app-border bg-app-elevated text-app-text"
@@ -3101,7 +3100,7 @@ export function AgentView() {
                         <div className="flex items-center justify-between gap-4 rounded-xl border border-app-border bg-app-elevated/40 px-4 py-3.5">
                           <div className="min-w-0 space-y-0.5">
                             <p className="text-sm font-medium text-app-text">lightContext</p>
-                            <p className="text-xs text-app-muted">仅注入 HEARTBEAT.md</p>
+                            <p className="text-xs text-app-muted">{t("agentView.heartbeat.lightContextHint")}</p>
                           </div>
                           <Switch
                             className="shrink-0"
@@ -3156,7 +3155,7 @@ export function AgentView() {
                               } else {
                                 const idx = list.findIndex((e) => e.id === heartbeatScope)
                                 if (idx < 0) {
-                                  toast.error("未找到该角色")
+                                  toast.error(t("agentView.toast.roleNotFound"))
                                   return
                                 }
                                 const entry = { ...list[idx] }
@@ -3172,14 +3171,14 @@ export function AgentView() {
                               await invoke("save_agent_raw_config", { agentId: selectedId, rawJson: updated })
                               setRawConfig(updated)
                               await loadInstanceConfig(selectedId)
-                              toast.success("心跳配置已保存")
+                              toast.success(t("agentView.toast.heartbeatSaved"))
                             } catch (e) {
                               toast.error(e instanceof Error ? e.message : String(e))
                             }
                           }}
                         >
                           <Save className="mr-2 h-4 w-4" />
-                          保存心跳配置
+{t("agentView.action.saveHeartbeat")}
                         </Button>
                       </CardContent>
                     </Card>
@@ -3189,7 +3188,7 @@ export function AgentView() {
                       <CardHeader className="pb-3">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div>
-                            <CardTitle className="text-sm font-medium text-app-text">定时任务</CardTitle>
+                            <CardTitle className="text-sm font-medium text-app-text">{t("agentView.section.cron")}</CardTitle>
                           </div>
                           <Button
                             size="sm"
@@ -3198,7 +3197,7 @@ export function AgentView() {
                             onClick={() => selectedId && fetchCronJobs(selectedId)}
                           >
                             <Download className="h-3.5 w-3.5" />
-                            刷新
+{t("agentView.action.refresh")}
                           </Button>
                         </div>
                       </CardHeader>
@@ -3208,7 +3207,7 @@ export function AgentView() {
                           if (list.length === 0) {
                             return (
                               <p className="py-6 text-center text-sm text-app-muted">
-                                当前实例暂无定时任务，在对话中让 Agent 创建定时任务后会在此显示
+{t("agentView.cron.empty")}
                               </p>
                             )
                           }
@@ -3222,7 +3221,7 @@ export function AgentView() {
                                     <code className="ml-auto shrink-0 rounded bg-app-surface px-1.5 py-0.5 text-[10px] font-mono text-app-muted">{job.schedule}</code>
                                   </div>
                                   {job.description && <p className="mt-1 text-xs text-app-muted truncate pl-4">{job.description}</p>}
-                                  {job.enabled && job.nextRunAt && <p className="mt-0.5 text-[11px] text-app-muted/80 pl-4">下次运行：{job.nextRunAt}</p>}
+                                  {job.enabled && job.nextRunAt && <p className="mt-0.5 text-[11px] text-app-muted/80 pl-4">{t("agentView.cron.nextRun", { time: job.nextRunAt })}</p>}
                                 </li>
                               ))}
                             </ul>
@@ -3242,7 +3241,7 @@ export function AgentView() {
                             <Radio className="h-4 w-4" />
                           </span>
                           <div className="min-w-0">
-                            <CardTitle className="text-sm font-medium text-app-text">消息渠道</CardTitle>
+                            <CardTitle className="text-sm font-medium text-app-text">{t("agentView.section.channels")}</CardTitle>
                           </div>
                         </div>
                       </CardHeader>
@@ -3274,7 +3273,7 @@ export function AgentView() {
                                 selectedId
                               ).catch(() => {})
                             }}
-                            aria-label="启用内部 Hooks"
+                            aria-label={t("agentView.hooks.internalAria")}
                           />
                         </div>
                       </CardHeader>
@@ -3292,12 +3291,12 @@ export function AgentView() {
                     {/* Skills: install URL + toggles */}
                     <Card className="bg-app-surface">
                       <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-medium text-app-text">技能</CardTitle>
+                        <CardTitle className="text-sm font-medium text-app-text">{t("agentView.section.skills")}</CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <div className="flex gap-2">
                             <Input
-                            placeholder="技能链接或 ID，如 https://clawhub.ai/skills/xxx 或 my-skill"
+                            placeholder={t("agentView.skills.installPlaceholder")}
                             value={skillInstallInput}
                             onChange={(e) => setSkillInstallInput(e.target.value)}
                             onKeyDown={(e) => {
@@ -3317,11 +3316,11 @@ export function AgentView() {
                             }}
                           >
                             {installingSkill ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                            安装
+{t("agentView.skills.install")}
                           </Button>
                           </div>
                         <div className="mt-4 flex items-center justify-between gap-2">
-                          <p className="text-sm font-medium text-app-text">全部技能</p>
+                          <p className="text-sm font-medium text-app-text">{t("agentView.skills.allTitle")}</p>
                           {skillsForInstance && skillsForInstance.all.length > 0 && (
                             <div className="flex items-center gap-1.5">
                               <Button
@@ -3331,7 +3330,7 @@ export function AgentView() {
                                 className="h-7 text-xs border-app-border text-app-muted hover:bg-app-hover"
                                 onClick={() => setSelectedSkillIds(skillsForInstance.all.map((s) => s.name))}
                               >
-                                全部启用
+{t("agentView.skills.enableAll")}
                               </Button>
                               <Button
                                 type="button"
@@ -3340,16 +3339,16 @@ export function AgentView() {
                                 className="h-7 text-xs border-app-border text-app-muted hover:bg-app-hover"
                                 onClick={() => setSelectedSkillIds([])}
                               >
-                                全部禁用
+{t("agentView.skills.disableAll")}
                               </Button>
                           </div>
                           )}
                           </div>
                         {(!skillsForInstance || skillsForInstance.all.length === 0) ? (
                           <p className="text-sm text-app-muted">
-                            未能列出技能。请确认本机可运行 OpenClaw CLI；也可通过上方安装技能到工作区或托管目录（
-                            <a href="https://docs.openclaw.ai/zh-CN/tools/skills#%E4%BD%8D%E7%BD%AE%E5%92%8C%E4%BC%98%E5%85%88%E7%BA%A7" target="_blank" rel="noopener noreferrer" className="text-claw-400 hover:underline">优先级</a>
-                            ：工作区 &gt; 托管/本地 &gt; 内置）。
+                            {t("agentView.skills.listErrorLead")}
+                            <a href="https://docs.openclaw.ai/zh-CN/tools/skills#%E4%BD%8D%E7%BD%AE%E5%92%8C%E4%BC%98%E5%85%88%E7%BA%A7" target="_blank" rel="noopener noreferrer" className="text-claw-400 hover:underline">{t("agentView.skills.listErrorLinkLabel")}</a>
+                            {t("agentView.skills.listErrorTail")}
                           </p>
                         ) : (
                           <div className="space-y-3">
@@ -3358,13 +3357,13 @@ export function AgentView() {
                               <Input
                                 value={skillListQuery}
                                 onChange={(e) => setSkillListQuery(e.target.value)}
-                                placeholder="搜索技能名称、描述或来源..."
+                                placeholder={t("agentView.skills.searchPlaceholder")}
                                 className="border-app-border bg-app-elevated pl-9 text-app-text placeholder:text-app-muted"
                               />
                             </div>
                             <div className="max-h-[min(420px,50vh)] min-h-0 overflow-y-auto rounded-lg border border-app-border bg-app-elevated/50">
                               {filteredSkillsAll.length === 0 ? (
-                                <p className="px-3 py-8 text-center text-sm text-app-muted">无匹配技能，请调整关键词</p>
+                                <p className="px-3 py-8 text-center text-sm text-app-muted">{t("agentView.skills.noMatch")}</p>
                               ) : (
                           <ul className="divide-y divide-app-border">
                             {filteredSkillsAll.map((row) => {
@@ -3382,13 +3381,13 @@ export function AgentView() {
                                       "hover:bg-app-hover/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-claw-500/30",
                                     )}
                                     onClick={() => void handleOpenSkillDirectory(row.name)}
-                                    aria-label={`打开技能 ${row.name} 所在目录`}
+                                    aria-label={t("agentView.skills.openSkillDirAria", { name: row.name })}
                                   >
                                     <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                                       <span className="text-sm font-medium text-app-text">{row.name}</span>
                                       {row.bundled && (
                                         <span className="rounded bg-app-border/60 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-app-muted">
-                                          内置
+{t("agentView.skills.builtin")}
                                         </span>
                                       )}
                                       <span
@@ -3397,7 +3396,7 @@ export function AgentView() {
                                           row.eligible ? "text-emerald-600 dark:text-emerald-400" : "text-app-muted",
                                         )}
                                       >
-                                        {row.eligible ? "可用" : "条件未满足"}
+                                        {row.eligible ? t("agentView.skills.eligible") : t("agentView.skills.notEligible")}
                                       </span>
                                     </div>
                                     {row.description ? (
@@ -3405,7 +3404,7 @@ export function AgentView() {
                                     ) : null}
                                     <p className="text-[11px] text-app-muted/90">
                                       {row.source || "—"}
-                                      {row.blockedByAllowlist ? " · 受 allowBundled 限制" : ""}
+                                      {row.blockedByAllowlist ? t("agentView.skills.allowBundledNote") : ""}
                                     </p>
                                   </button>
                                   <div className="flex shrink-0 items-center gap-1 pt-0.5 sm:gap-1.5">
@@ -3415,7 +3414,7 @@ export function AgentView() {
                                       size="icon"
                                       className="h-8 w-8 shrink-0 text-app-muted hover:text-app-text"
                                       onClick={() => void handleOpenSkillDirectory(row.name)}
-                                      aria-label={`打开 ${row.name} 目录`}
+                                      aria-label={t("agentView.skills.openFolderAria", { name: row.name })}
                                     >
                                       <FolderOpen className="h-4 w-4" />
                                     </Button>
@@ -3433,7 +3432,7 @@ export function AgentView() {
                                         ) : (
                                           <>
                                             <Trash2 className="h-3.5 w-3.5" />
-                                            卸载
+{t("agentView.skills.uninstall")}
                                           </>
                                         )}
                                       </Button>
@@ -3458,7 +3457,7 @@ export function AgentView() {
                           disabled={saving || !skillsForInstance || skillsForInstance.all.length === 0}
                         >
                           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                          保存技能配置
+{t("agentView.action.saveSkills")}
                         </Button>
                       </CardContent>
                     </Card>
@@ -3467,14 +3466,14 @@ export function AgentView() {
                       <CardHeader className="pb-3">
                         <div className="flex items-center gap-2">
                           <Wrench className="h-4 w-4 text-claw-500" />
-                          <CardTitle className="text-sm font-medium text-app-text">工具权限</CardTitle>
+                          <CardTitle className="text-sm font-medium text-app-text">{t("agentView.section.tools")}</CardTitle>
                         </div>
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <div className="space-y-3">
-                          <Label className="text-xs text-app-muted">预设模板（Profile）</Label>
+                          <Label className="text-xs text-app-muted">{t("agentView.tools.profileLabel")}</Label>
                           <div className="grid grid-cols-1 gap-2">
-                            {TOOL_PROFILES.map((p) => (
+                            {toolProfiles.map((p) => (
                               <button
                                 key={p.value}
                                 type="button"
@@ -3505,11 +3504,11 @@ export function AgentView() {
                                 profile: agentTools.profile === "full" ? undefined : agentTools.profile,
                               },
                             })
-                            if (success) toast.success("工具权限已保存")
+                            if (success) toast.success(t("agentView.toast.toolsProfileSaved"))
                           }}
                         >
                           <Save className="mr-2 h-4 w-4" />
-                          保存工具权限
+{t("agentView.action.saveTools")}
                         </Button>
                       </CardContent>
                     </Card>
@@ -3523,11 +3522,11 @@ export function AgentView() {
                         <CardHeader className="pb-3 shrink-0">
                         <CardTitle className="text-sm font-medium text-app-text flex items-center gap-2">
                           <FileText className="h-4 w-4" />
-                          工作区文件
+{t("agentView.section.workspaceFiles")}
                         </CardTitle>
                         {workspaceOverrideAgents.length > 0 && (
                           <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
-                            <Label className="text-xs text-app-muted shrink-0">编辑目标</Label>
+                            <Label className="text-xs text-app-muted shrink-0">{t("agentView.workspace.editTarget")}</Label>
                             <Select
                               value={workspaceOpenclawRoleId ?? "__default__"}
                               onValueChange={(v) =>
@@ -3535,13 +3534,13 @@ export function AgentView() {
                               }
                             >
                               <SelectTrigger className="h-9 max-w-md border-app-border bg-app-elevated text-sm">
-                                <SelectValue placeholder="选择角色工作区" />
+                                <SelectValue placeholder={t("agentView.workspace.pickRoleWs")} />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="__default__">实例默认 workspace/</SelectItem>
+                                <SelectItem value="__default__">{t("agentView.workspace.defaultWs")}</SelectItem>
                                 {workspaceOverrideAgents.map((a) => (
                                   <SelectItem key={a.id} value={a.id}>
-                                    {a.id}（独立 workspace）
+                                    {t("agentView.workspace.roleWs", { id: a.id })}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -3559,7 +3558,7 @@ export function AgentView() {
                             <aside className="w-44 shrink-0 border-r border-app-border bg-app-elevated/50 flex flex-col py-2 overflow-y-auto">
                             <TooltipProvider delayDuration={300}>
                               {workspaceFileList.length === 0 ? (
-                                <p className="px-3 py-2 text-xs text-app-muted">加载失败或暂无列表</p>
+                                <p className="px-3 py-2 text-xs text-app-muted">{t("agentView.workspace.loadError")}</p>
                               ) : (
                                 workspaceFileList.map((f) => (
                                   <Tooltip key={f.name}>
@@ -3579,11 +3578,11 @@ export function AgentView() {
                                         )}
                                       >
                                   {f.name}
-                                  {!f.exists ? <span className="ml-1 text-[10px] text-app-muted">（未创建）</span> : null}
+                                  {!f.exists ? <span className="ml-1 text-[10px] text-app-muted">{t("agentView.workspace.notCreated")}</span> : null}
                                       </button>
                                     </TooltipTrigger>
                                     <TooltipContent side="right" className="max-w-[200px] bg-app-elevated border border-app-border text-app-text text-xs">
-                                      {WORKSPACE_FILE_LABELS[f.name] ?? "工作区文件"}
+                                      {workspaceFileLabel(f.name)}
                                     </TooltipContent>
                                   </Tooltip>
                                 ))
@@ -3596,7 +3595,7 @@ export function AgentView() {
                         )}
                         <textarea
                               className="flex-1 min-h-0 w-full resize-none rounded-lg border border-app-border bg-app-elevated px-3 py-2 text-sm text-app-text placeholder:text-app-muted focus:outline-none focus:ring-2 focus:ring-claw-500/50"
-                              placeholder={selectedWorkspaceFile ? "文件内容（留空保存将创建或清空）" : "左侧选择文件"}
+                              placeholder={selectedWorkspaceFile ? t("agentView.workspace.filePlaceholder") : t("agentView.workspace.pickFileLeft")}
                           value={workspaceFileContent}
                           onChange={(e) => setWorkspaceFileContent(e.target.value)}
                           disabled={!selectedWorkspaceFile}
@@ -3612,7 +3611,7 @@ export function AgentView() {
                           disabled={!selectedWorkspaceFile || workspaceFileSaving}
                         >
                           {workspaceFileSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                          保存
+                          {t("agentView.save")}
                         </Button>
                               <Button
                                 size="sm"
@@ -3621,7 +3620,7 @@ export function AgentView() {
                                 onClick={() => selectedWorkspaceFile && loadWorkspaceFileContent(selectedWorkspaceFile)}
                                 disabled={!selectedWorkspaceFile}
                               >
-                                重新加载
+                                {t("agentView.action.reload")}
                               </Button>
                             </div>
                           </div>
@@ -3640,24 +3639,24 @@ export function AgentView() {
                             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-claw-500/10">
                               <Globe className="h-4 w-4 text-claw-500" />
                             </div>
-                            <CardTitle className="text-sm font-medium text-app-text">浏览器</CardTitle>
+                            <CardTitle className="text-sm font-medium text-app-text">{t("agentView.section.browser")}</CardTitle>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-xs text-app-muted">启用</span>
+                            <span className="text-xs text-app-muted">{t("agentView.browser.enabled")}</span>
                             <Switch checked={browserEnabled} onCheckedChange={setBrowserEnabled} />
                           </div>
                         </div>
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <div className="space-y-2">
-                          <Label htmlFor="browser-profile" className="text-app-muted">配置文件</Label>
+                          <Label htmlFor="browser-profile" className="text-app-muted">{t("agentView.browser.profile")}</Label>
                           <Select value={browserMode} onValueChange={(v) => setBrowserMode(v as "openclaw" | "chrome")}>
                             <SelectTrigger id="browser-profile" className="border-app-border bg-app-elevated text-app-text">
-                              <SelectValue placeholder="选择模式" />
+                              <SelectValue placeholder={t("agentView.browser.pickMode")} />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="openclaw">openclaw — 托管隔离浏览器（可固定 profile）</SelectItem>
-                              <SelectItem value="chrome">chrome — 系统浏览器 + 扩展中继</SelectItem>
+                              <SelectItem value="openclaw">{t("agentView.browser.mode.openclaw")}</SelectItem>
+                              <SelectItem value="chrome">{t("agentView.browser.mode.chrome")}</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -3665,20 +3664,20 @@ export function AgentView() {
                         {browserMode === "openclaw" && (
                           <>
                             <div className="space-y-2">
-                              <Label htmlFor="browser-user-data-dir" className="text-app-muted">Profile 目录</Label>
+                              <Label htmlFor="browser-user-data-dir" className="text-app-muted">{t("agentView.browser.userDataDir")}</Label>
                               <Input
                                 id="browser-user-data-dir"
-                                placeholder={browserDefaultUserDataDir || "加载中…"}
+                                placeholder={browserDefaultUserDataDir || t("agentView.loading")}
                                 value={browserUserDataDir}
                                 onChange={(e) => setBrowserUserDataDir(e.target.value)}
                                 className="border-app-border bg-app-elevated text-app-text font-mono text-sm"
                               />
                             </div>
                             <div className="space-y-2">
-                              <Label htmlFor="browser-executable" className="text-app-muted">可执行文件</Label>
+                              <Label htmlFor="browser-executable" className="text-app-muted">{t("agentView.browser.executable")}</Label>
                               <Input
                                 id="browser-executable"
-                                placeholder={browserExecutablePlaceholder || "加载中…"}
+                                placeholder={browserExecutablePlaceholder || t("agentView.loading")}
                                 value={browserExecutablePath}
                                 onChange={(e) => setBrowserExecutablePath(e.target.value)}
                                 className="border-app-border bg-app-elevated text-app-text font-mono text-sm"
@@ -3688,7 +3687,7 @@ export function AgentView() {
                               <TooltipProvider delayDuration={300}>
                                 <div className="flex items-center justify-between gap-2">
                                   <div className="flex items-center gap-1.5">
-                                    <Label htmlFor="browser-color" className="text-app-muted">主题色</Label>
+                                    <Label htmlFor="browser-color" className="text-app-muted">{t("agentView.browser.color")}</Label>
                                     <Tooltip>
                                       <TooltipTrigger asChild>
                                         <span className="inline-flex text-app-muted hover:text-app-text cursor-help" tabIndex={0}>
@@ -3696,7 +3695,7 @@ export function AgentView() {
                                         </span>
                                       </TooltipTrigger>
                                       <TooltipContent side="right" className="max-w-[240px] text-xs">
-                                        openclaw 托管浏览器窗口的主题色，用于标题栏等界面元素。
+{t("agentView.browser.colorHint")}
                                       </TooltipContent>
                                     </Tooltip>
                                   </div>
@@ -3723,7 +3722,7 @@ export function AgentView() {
                                         </span>
                                       </TooltipTrigger>
                                       <TooltipContent side="right" className="max-w-[240px] text-xs">
-                                        无头模式，不显示浏览器窗口，在后台运行。适合服务器或不需要看到界面的场景。
+{t("agentView.browser.headlessHint")}
                                       </TooltipContent>
                                     </Tooltip>
                                   </div>
@@ -3739,7 +3738,7 @@ export function AgentView() {
                                         </span>
                                       </TooltipTrigger>
                                       <TooltipContent side="right" className="max-w-[240px] text-xs">
-                                        关闭 Chrome 沙箱。部分环境（如 Docker、某些 Linux）需要开启才能正常启动浏览器。
+{t("agentView.browser.noSandboxHint")}
                                       </TooltipContent>
                                     </Tooltip>
                                   </div>
@@ -3747,7 +3746,7 @@ export function AgentView() {
                                 </div>
                                 <div className="flex items-center justify-between gap-2">
                                   <div className="flex items-center gap-1.5">
-                                    <Label htmlFor="browser-attach-only" className="text-app-muted">仅附加</Label>
+                                    <Label htmlFor="browser-attach-only" className="text-app-muted">{t("agentView.browser.attachOnly")}</Label>
                                     <Tooltip>
                                       <TooltipTrigger asChild>
                                         <span className="inline-flex text-app-muted hover:text-app-text cursor-help" tabIndex={0}>
@@ -3755,7 +3754,7 @@ export function AgentView() {
                                         </span>
                                       </TooltipTrigger>
                                       <TooltipContent side="right" className="max-w-[240px] text-xs">
-                                        不自动启动浏览器，仅附加到已存在且开启远程调试的 Chrome 实例（如你自启的固定 profile）。
+{t("agentView.browser.attachOnlyHint")}
                                       </TooltipContent>
                                     </Tooltip>
                                   </div>
@@ -3799,7 +3798,7 @@ export function AgentView() {
                               }
                               try {
                                 await saveOpenClawConfig({ ...openclawConfig, browser: nextBrowser } as OpenClawConfig, selectedId)
-                                toast.success("已保存")
+                                toast.success(t("agentView.model.saved"))
                               } catch (e) {
                                 toast.error(String(e))
                               }
@@ -3807,7 +3806,7 @@ export function AgentView() {
                             }}
                           >
                             {browserSaving ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : <Save className="h-4 w-4 mr-1.5" />}
-                            保存
+                            {t("agentView.save")}
                           </Button>
                           {selectedId && browserMode === "openclaw" && (
                             <Button
@@ -3819,13 +3818,13 @@ export function AgentView() {
                                 const runOnce = async (): Promise<{ ok: boolean; msg: string }> => {
                                   const r = await invoke<{ stdout: string; stderr: string; success: string }>("run_browser_command", { instanceId: selectedId, profile: browserMode, subcommand: "start", extraArgs: null })
                                   if (r.success === "true") return { ok: true, msg: "" }
-                                  const msg = r.stderr || r.stdout || "启动失败"
+                                  const msg = r.stderr || r.stdout || t("agentView.browser.startFailed")
                                   return { ok: false, msg }
                                 }
                                 try {
                                   const gw = getEffectiveGatewayInfo(selectedId)
                                   if (gw.agentGatewayStatus !== "running") {
-                                    toast.error("请先启动 Gateway 后再打开浏览器")
+                                    toast.error(t("agentView.toast.startGatewayBeforeBrowser"))
                                     setBrowserCommandLoading(false)
                                     return
                                   }
@@ -3835,15 +3834,15 @@ export function AgentView() {
                                     await invoke("ensure_gateway_remote_token", { instanceId: selectedId })
                                     result = await runOnce()
                                   }
-                                  if (result.ok) toast.success("浏览器已打开")
+                                  if (result.ok) toast.success(t("agentView.toast.browserOpened"))
                                   else {
                                     const isGatewayHint = /unauthorized|token missing|gateway/i.test(result.msg)
                                     if (isGatewayHint) {
                                       try {
                                         await invoke("ensure_gateway_tokens_for_instance", { instanceId: selectedId })
-                                        toast.error("已写入认证配置。若 Gateway 此前已启动，请先重启 Gateway 后再试")
+                                        toast.error(t("agentView.toast.restartGwAfterAuth"))
                                       } catch {
-                                        toast.error("无法打开浏览器，请确认 Gateway 已启动")
+                                        toast.error(t("agentView.toast.cannotOpenBrowser"))
                                       }
                                     } else toast.error(result.msg.length > 120 ? result.msg.slice(0, 120) + "…" : result.msg)
                                   }
@@ -3853,13 +3852,13 @@ export function AgentView() {
                                     try {
                                       await invoke("ensure_gateway_remote_token", { instanceId: selectedId })
                                       const retry = await runOnce()
-                                      if (retry.ok) toast.success("浏览器已打开")
+                                      if (retry.ok) toast.success(t("agentView.toast.browserOpened"))
                                       else {
                                         await invoke("ensure_gateway_tokens_for_instance", { instanceId: selectedId }).catch(() => {})
-                                        toast.error("已写入认证配置。若 Gateway 此前已启动，请先重启 Gateway 后再试")
+                                        toast.error(t("agentView.toast.restartGwAfterAuth"))
                                       }
                                     } catch {
-                                      toast.error("无法打开浏览器，请确认 Gateway 已启动")
+                                      toast.error(t("agentView.toast.cannotOpenBrowser"))
                                     }
                                   } else toast.error(msg)
                                 }
@@ -3867,7 +3866,7 @@ export function AgentView() {
                               }}
                             >
                               {browserCommandLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Globe className="h-4 w-4" />}
-                              打开浏览器
+                              {t("agentView.action.openBrowser")}
                             </Button>
                           )}
                         </div>
@@ -3888,11 +3887,11 @@ export function AgentView() {
                               const dirPath = await invoke<string>("get_agent_directory", { agentId: selectedId })
                               await invoke("open_path", { path: dirPath })
                             } catch (e) {
-                              toast.error(`打开目录失败: ${e instanceof Error ? e.message : String(e)}`)
+                              toast.error(t("agentView.toast.openDirFailed", { msg: e instanceof Error ? e.message : String(e) }))
                             }
                           }}
                           className="flex items-center gap-1.5 text-xs text-app-muted hover:text-app-text truncate min-w-0 max-w-[60%] text-left"
-                          title="点击打开实例目录"
+                          title={t("agentView.instance.openDirTitle")}
                         >
                           <FolderOpen className="h-3.5 w-3.5 shrink-0" />
                           <span className="truncate">{rawConfigPath || "—"}</span>
@@ -3905,23 +3904,23 @@ export function AgentView() {
                               disabled={rawConfigSaving}
                             >
                               {rawConfigSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                            保存
+                              {t("agentView.save")}
                             </Button>
                             <Button
                               size="sm"
-                            variant="outline"
+                              variant="outline"
                               className="border-app-border text-app-muted hover:bg-app-hover"
                               onClick={() => selectedId && loadAgentRawConfig(selectedId)}
                             >
-                              重新加载
+                              {t("agentView.action.reload")}
                             </Button>
                             <a
-                            href="https://docs.openclaw.ai/"
+                              href="https://docs.openclaw.ai/"
                               target="_blank"
                               rel="noopener noreferrer"
-                            className="text-xs text-claw-500 hover:text-claw-400 hover:underline"
+                              className="text-xs text-claw-500 hover:text-claw-400 hover:underline"
                             >
-                            文档
+                              {t("agentView.section.docs")}
                             </a>
                           </div>
                       </div>
@@ -3950,7 +3949,7 @@ export function AgentView() {
                             onClick={() => setConfirmDelete(true)}
                           >
                             <Trash2 className="mr-1.5 h-4 w-4" />
-                            删除此 Agent
+{t("agentView.action.deleteAgent")}
                           </Button>
                   </>
                 )}
@@ -3975,9 +3974,9 @@ export function AgentView() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10">
                   <Trash2 className="h-6 w-6 text-red-500" />
                 </div>
-                <h3 className="mt-4 text-base font-semibold text-app-text">删除实例</h3>
+                <h3 className="mt-4 text-base font-semibold text-app-text">{t("agentView.deleteInstance.title")}</h3>
                 <p className="mt-2 text-sm text-app-muted">
-                  确定删除「{getAgentDisplayName(selectedId, displayNames)}」？将同时删除其 OpenClaw 实例目录、绑定的渠道和聊天记录，此操作不可撤销。
+{t("agentView.deleteInstance.confirm", { name: getAgentDisplayName(selectedId, displayNames) })}
                 </p>
               </div>
               <div className="mt-6 flex gap-2">
@@ -3986,7 +3985,7 @@ export function AgentView() {
                   className="flex-1 border-app-border text-app-muted hover:bg-app-hover"
                   onClick={() => setConfirmDelete(false)}
                 >
-                  取消
+{t("common.cancel")}
                 </Button>
                 <Button
                   className="flex-1 bg-red-600 hover:bg-red-700 text-white border-0"
@@ -3994,7 +3993,7 @@ export function AgentView() {
                   disabled={saving}
                 >
                   {saving ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Trash2 className="mr-1.5 h-4 w-4" />}
-                  {saving ? "删除中…" : "确认删除"}
+                  {saving ? t("agentView.deleting") : t("agentView.confirmDelete")}
                 </Button>
               </div>
             </CardContent>

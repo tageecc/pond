@@ -18,7 +18,6 @@ export interface ModelInfo {
   reasoning?: boolean
   input?: string[]
   deprecated?: boolean
-  description?: string
 }
 
 export const MODELS_DATABASE: ModelInfo[] = [
@@ -30,7 +29,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 1050000,
     maxTokens: 128000,
     cost: { input: 2.5, output: 15.0, cacheRead: 0.25 },
-    description: "OpenAI最强大的模型 (2026年3月)"
   },
   {
     id: "gpt-5.4-pro",
@@ -39,7 +37,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 1050000,
     maxTokens: 128000,
     cost: { input: 30.0, output: 180.0 },
-    description: "GPT-5.4的高级版本"
   },
   {
     id: "gpt-5.3-chat",
@@ -48,7 +45,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 400000,
     maxTokens: 64000,
     cost: { input: 1.5, output: 10.0 },
-    description: "GPT-5.3对话优化版本"
   },
   {
     id: "gpt-5.2",
@@ -57,7 +53,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 400000,
     maxTokens: 64000,
     cost: { input: 1.2, output: 8.0 },
-    description: "2025年12月发布"
   },
   {
     id: "gpt-5-mini",
@@ -66,7 +61,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 400000,
     maxTokens: 64000,
     cost: { input: 0.25, output: 2.0, cacheRead: 0.025 },
-    description: "性价比最高的GPT-5系列"
   },
   {
     id: "gpt-4.1-nano",
@@ -75,7 +69,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 1000000,
     maxTokens: 32000,
     cost: { input: 0.15, output: 1.5 },
-    description: "超长上下文的轻量版本"
   },
   {
     id: "o4-mini-deep-research",
@@ -85,7 +78,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     maxTokens: 64000,
     cost: { input: 1.0, output: 8.0 },
     reasoning: true,
-    description: "深度研究优化版本 (2025年10月)"
   },
   {
     id: "o3-deep-research",
@@ -95,7 +87,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     maxTokens: 64000,
     cost: { input: 2.0, output: 12.0 },
     reasoning: true,
-    description: "高级深度研究模型 (2025年10月)"
   },
   {
     id: "gpt-4o",
@@ -105,7 +96,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     maxTokens: 16384,
     cost: { input: 2.5, output: 10.0 },
     input: ["text", "image", "audio"],
-    description: "GPT-4 优化版本，多模态支持"
   },
   {
     id: "gpt-4-turbo",
@@ -114,7 +104,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 128000,
     maxTokens: 4096,
     cost: { input: 10.0, output: 30.0 },
-    description: "GPT-4 高速版本"
   },
   {
     id: "gpt-4",
@@ -123,7 +112,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 8192,
     maxTokens: 4096,
     cost: { input: 30.0, output: 60.0 },
-    description: "经典GPT-4模型"
   },
   {
     id: "gpt-3.5-turbo",
@@ -132,7 +120,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 16385,
     maxTokens: 4096,
     cost: { input: 0.5, output: 1.5 },
-    description: "性价比最高的经典模型"
   },
 
   // ===== Anthropic Claude =====
@@ -143,7 +130,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 1000000,
     maxTokens: 128000,
     cost: { input: 5.0, output: 25.0 },
-    description: "最智能的Claude模型，适合代理和编程"
   },
   {
     id: "claude-sonnet-4.6",
@@ -152,7 +138,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 1000000,
     maxTokens: 64000,
     cost: { input: 3.0, output: 15.0 },
-    description: "速度与智能的最佳平衡"
   },
   {
     id: "claude-haiku-4.5",
@@ -161,7 +146,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 200000,
     maxTokens: 64000,
     cost: { input: 1.0, output: 5.0 },
-    description: "最快的Claude模型"
   },
   {
     id: "claude-3-opus",
@@ -170,7 +154,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 200000,
     maxTokens: 4096,
     cost: { input: 15.0, output: 75.0 },
-    description: "Claude 3 最强版本"
   },
   {
     id: "claude-3.5-sonnet",
@@ -179,7 +162,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 200000,
     maxTokens: 8192,
     cost: { input: 3.0, output: 15.0 },
-    description: "Claude 3.5 平衡版本"
   },
   {
     id: "claude-3-haiku",
@@ -188,7 +170,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 200000,
     maxTokens: 4096,
     cost: { input: 0.25, output: 1.25 },
-    description: "Claude 3 快速版本"
   },
 
   // ===== Google Gemini =====
@@ -200,7 +181,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     maxTokens: 16000,
     cost: { input: 2.0, output: 12.0 },
     input: ["text", "image", "video", "audio"],
-    description: "顶级推理和多模态能力 (2026年2月)"
   },
   {
     id: "gemini-3-pro-preview",
@@ -210,7 +190,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     maxTokens: 16000,
     cost: { input: 2.0, output: 12.0 },
     input: ["text", "image", "video"],
-    description: "Gemini 3预览版本"
   },
   {
     id: "gemini-2.5-pro",
@@ -220,7 +199,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     maxTokens: 64000,
     cost: { input: 1.25, output: 10.0 },
     input: ["text", "image"],
-    description: "复杂推理和长文档处理"
   },
   {
     id: "gemini-2.5-flash",
@@ -230,7 +208,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     maxTokens: 64000,
     cost: { input: 0.3, output: 2.5 },
     input: ["text", "image"],
-    description: "高吞吐量，性价比高"
   },
   {
     id: "gemini-2.5-flash-lite",
@@ -239,7 +216,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 1000000,
     maxTokens: 64000,
     cost: { input: 0.1, output: 0.4 },
-    description: "预算友好型任务"
   },
   {
     id: "gemini-2.0-flash",
@@ -248,7 +224,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 1000000,
     maxTokens: 8000,
     cost: { input: 0.1, output: 0.4 },
-    description: "传统应用，最低成本"
   },
   {
     id: "gemini-pro",
@@ -258,7 +233,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     maxTokens: 8192,
     cost: { input: 0.5, output: 1.5 },
     input: ["text", "image"],
-    description: "经典Gemini模型"
   },
 
   // ===== Zhipu GLM =====
@@ -269,7 +243,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 200000,
     maxTokens: 128000,
     cost: { input: 1.0, output: 3.2 },
-    description: "智谱AI 2026旗舰模型，745B参数"
   },
   {
     id: "glm-4.7",
@@ -278,7 +251,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 200000,
     maxTokens: 128000,
     cost: { input: 0.8, output: 2.8 },
-    description: "高智能GLM模型"
   },
   {
     id: "glm-4.6",
@@ -287,7 +259,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 200000,
     maxTokens: 128000,
     cost: { input: 0.7, output: 2.5 },
-    description: "超强性能GLM模型"
   },
   {
     id: "glm-4-long",
@@ -296,7 +267,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 1000000,
     maxTokens: 128000,
     cost: { input: 1.0, output: 3.0 },
-    description: "超长上下文处理"
   },
   {
     id: "glm-4-flash",
@@ -305,7 +275,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 128000,
     maxTokens: 16000,
     cost: { input: 0.0, output: 0.0 },
-    description: "免费模型"
   },
   {
     id: "glm-4",
@@ -314,7 +283,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 128000,
     maxTokens: 4096,
     cost: { input: 0.1, output: 0.1 },
-    description: "经典GLM-4模型"
   },
   {
     id: "glm-3-turbo",
@@ -323,7 +291,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 128000,
     maxTokens: 4096,
     cost: { input: 0.005, output: 0.005 },
-    description: "GLM-3快速版本"
   },
 
   // ===== DeepSeek =====
@@ -334,7 +301,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 1000000,
     maxTokens: 16000,
     cost: { input: 0.3, output: 0.5 },
-    description: "DeepSeek 2026旗舰模型"
   },
   {
     id: "deepseek-chat",
@@ -343,7 +309,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 128000,
     maxTokens: 8000,
     cost: { input: 0.28, output: 0.42, cacheRead: 0.028 },
-    description: "DeepSeek对话模型"
   },
   {
     id: "deepseek-reasoner",
@@ -353,7 +318,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     maxTokens: 64000,
     cost: { input: 0.28, output: 0.42, cacheRead: 0.028 },
     reasoning: true,
-    description: "DeepSeek推理模型"
   },
   {
     id: "deepseek-coder",
@@ -362,7 +326,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 128000,
     maxTokens: 8000,
     cost: { input: 0.28, output: 0.42 },
-    description: "DeepSeek编程专用模型"
   },
 
   // ===== Moonshot AI Kimi =====
@@ -373,7 +336,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 262144,
     maxTokens: 16000,
     cost: { input: 0.45, output: 2.2, cacheRead: 0.225 },
-    description: "Moonshot 2026最新模型"
   },
   {
     id: "kimi-k2.5-thinking",
@@ -383,7 +345,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     maxTokens: 16000,
     cost: { input: 0.45, output: 2.2, cacheRead: 0.225 },
     reasoning: true,
-    description: "Kimi K2.5推理版本"
   },
   {
     id: "kimi-k2-0905-exacto",
@@ -392,7 +353,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 131072,
     maxTokens: 16000,
     cost: { input: 0.4, output: 2.0, cacheRead: 0.15 },
-    description: "Kimi K2精确版本"
   },
   {
     id: "kimi-k2-thinking",
@@ -402,7 +362,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     maxTokens: 16000,
     cost: { input: 0.47, output: 2.0, cacheRead: 0.141 },
     reasoning: true,
-    description: "Kimi K2推理模型"
   },
   {
     id: "kimi-k2-0711",
@@ -411,7 +370,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 131000,
     maxTokens: 16000,
     cost: { input: 0.55, output: 2.2 },
-    description: "Kimi K2经典版本"
   },
   {
     id: "moonshot-v1-8k",
@@ -420,7 +378,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 8000,
     maxTokens: 4096,
     cost: { input: 0.12, output: 0.12 },
-    description: "Moonshot第一代模型"
   },
   {
     id: "moonshot-v1-32k",
@@ -429,7 +386,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 32000,
     maxTokens: 4096,
     cost: { input: 0.24, output: 0.24 },
-    description: "Moonshot第一代32K版本"
   },
   {
     id: "moonshot-v1-128k",
@@ -438,7 +394,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 128000,
     maxTokens: 4096,
     cost: { input: 0.6, output: 0.6 },
-    description: "Moonshot第一代128K版本"
   },
 
   // ===== Alibaba Bailian =====
@@ -451,7 +406,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     maxTokens: 8192,
     cost: { input: 0.343, output: 1.371, cacheRead: 0.034 }, // ~2.4 CNY/M -> $0.343/M, cache supported
     reasoning: true,
-    description: "百炼旗舰模型，复杂任务能力最强，支持思考模式"
   },
   {
     id: "qwen3.5-plus",
@@ -461,7 +415,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     maxTokens: 8192,
     cost: { input: 0.217, output: 0.543, cacheRead: 0.022 }, // ~1.52 CNY/M -> $0.217/M
     reasoning: true,
-    description: "百炼高性价比模型，效果、速度、成本均衡"
   },
   {
     id: "qwen3.5-flash",
@@ -471,7 +424,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     maxTokens: 8192,
     cost: { input: 0.043, output: 0.086, cacheRead: 0.004 }, // ~0.3 CNY/M -> $0.043/M
     reasoning: true,
-    description: "百炼极速模型，简单任务速度快、成本低"
   },
   {
     id: "qwen-turbo",
@@ -481,7 +433,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     maxTokens: 8192,
     cost: { input: 0.043, output: 0.086 }, // ~0.3 CNY/M
     reasoning: true,
-    description: "百炼快速版本，支持百万级上下文"
   },
   {
     id: "qwen-long",
@@ -490,7 +441,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 10000000,
     maxTokens: 8192,
     cost: { input: 0.071, output: 0.143 }, // ~0.5 CNY/M
-    description: "百炼超长上下文模型，支持千万级token"
   },
   {
     id: "qwen-omni-turbo",
@@ -500,7 +450,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     maxTokens: 8192,
     cost: { input: 0.143, output: 0.429 }, // ~1 CNY/M in, ~3 CNY/M out
     input: ["text", "image", "audio"],
-    description: "百炼全模态模型，支持文本、图像、音频"
   },
   {
     id: "qwq-plus",
@@ -510,7 +459,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     maxTokens: 8192,
     cost: { input: 0.514, output: 1.543 }, // ~3.6 CNY/M in, ~10.8 CNY/M out
     reasoning: true,
-    description: "百炼推理增强模型"
   },
   {
     id: "qvq-72b-preview",
@@ -521,7 +469,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     cost: { input: 0.057, output: 0.143 }, // ~0.4 CNY/M, ~1 CNY/M
     input: ["text", "image"],
     reasoning: true,
-    description: "百炼视觉推理模型"
   },
   {
     id: "qwen-vl-max",
@@ -531,7 +478,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     maxTokens: 8192,
     cost: { input: 0.057, output: 0.143 },
     input: ["text", "image"],
-    description: "百炼视觉理解旗舰模型"
   },
   {
     id: "qwen-vl-plus",
@@ -541,7 +487,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     maxTokens: 8192,
     cost: { input: 0.029, output: 0.057 }, // ~0.2 CNY/M, ~0.4 CNY/M
     input: ["text", "image"],
-    description: "百炼视觉理解高性价比模型"
   },
   
   // Qwen open-weight (hosted on Bailian)
@@ -552,7 +497,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 131072,
     maxTokens: 8192,
     cost: { input: 0.057, output: 0.171 }, // $0.40/M, $1.20/M (intl)
-    description: "百炼托管的Qwen2.5开源旗舰模型"
   },
   {
     id: "qwen2.5-32b-instruct",
@@ -561,7 +505,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 131072,
     maxTokens: 8192,
     cost: { input: 0.029, output: 0.086 },
-    description: "百炼托管的Qwen2.5开源模型"
   },
   {
     id: "qwen2.5-14b-instruct",
@@ -570,7 +513,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 131072,
     maxTokens: 8192,
     cost: { input: 0.014, output: 0.043 },
-    description: "百炼托管的Qwen2.5开源14B模型"
   },
   {
     id: "qwen2.5-7b-instruct",
@@ -579,7 +521,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 131072,
     maxTokens: 8192,
     cost: { input: 0.007, output: 0.021 },
-    description: "百炼托管的Qwen2.5开源7B模型"
   },
   {
     id: "qwen2.5-coder-32b-instruct",
@@ -588,7 +529,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 131072,
     maxTokens: 8192,
     cost: { input: 0.029, output: 0.086 }, // $0.20/M, $0.60/M
-    description: "百炼托管的Qwen2.5代码专用模型"
   },
   {
     id: "qwen3-coder-next",
@@ -598,7 +538,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     maxTokens: 8192,
     cost: { input: 0.286, output: 0.857 }, // ~2 CNY/M, ~6 CNY/M
     reasoning: true,
-    description: "百炼代码推理模型，支持思维链"
   },
   
   // DeepSeek on Bailian
@@ -609,7 +548,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 65536,
     maxTokens: 8192,
     cost: { input: 0.286, output: 0.429, cacheRead: 0.029 }, // ~2 CNY/M, ~3 CNY/M, cache supported
-    description: "百炼托管的DeepSeek最新模型"
   },
   {
     id: "deepseek-v3.2-exp",
@@ -618,7 +556,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 65536,
     maxTokens: 8192,
     cost: { input: 0.286, output: 0.429 },
-    description: "百炼托管的DeepSeek实验版"
   },
   {
     id: "deepseek-v3.1",
@@ -627,7 +564,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 65536,
     maxTokens: 8192,
     cost: { input: 0.571, output: 1.714 }, // ~4 CNY/M, ~12 CNY/M
-    description: "百炼托管的DeepSeek V3.1"
   },
   {
     id: "deepseek-v3",
@@ -636,7 +572,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 65536,
     maxTokens: 8192,
     cost: { input: 0.286, output: 1.143 }, // ~2 CNY/M, ~8 CNY/M
-    description: "百炼托管的DeepSeek V3"
   },
   {
     id: "deepseek-r1",
@@ -646,7 +581,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     maxTokens: 8192,
     cost: { input: 0.571, output: 2.286 }, // ~4 CNY/M, ~16 CNY/M
     reasoning: true,
-    description: "百炼托管的DeepSeek推理模型"
   },
   {
     id: "deepseek-r1-0528",
@@ -656,7 +590,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     maxTokens: 8192,
     cost: { input: 0.571, output: 2.286 },
     reasoning: true,
-    description: "百炼托管的DeepSeek R1快照版本"
   },
   {
     id: "deepseek-r1-distill-qwen-32b",
@@ -666,7 +599,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     maxTokens: 8192,
     cost: { input: 0.286, output: 0.857 }, // ~2 CNY/M, ~6 CNY/M
     reasoning: true,
-    description: "百炼托管的DeepSeek R1蒸馏版（Qwen 32B）"
   },
   {
     id: "deepseek-r1-distill-qwen-14b",
@@ -676,7 +608,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     maxTokens: 8192,
     cost: { input: 0.143, output: 0.429 }, // ~1 CNY/M, ~3 CNY/M
     reasoning: true,
-    description: "百炼托管的DeepSeek R1蒸馏版（Qwen 14B）"
   },
   {
     id: "deepseek-r1-distill-qwen-7b",
@@ -686,7 +617,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     maxTokens: 8192,
     cost: { input: 0.071, output: 0.143 }, // ~0.5 CNY/M, ~1 CNY/M
     reasoning: true,
-    description: "百炼托管的DeepSeek R1蒸馏版（Qwen 7B）"
   },
   
   // DeepSeek via SiliconFlow
@@ -697,7 +627,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 65536,
     maxTokens: 8192,
     cost: { input: 0.286, output: 0.429 },
-    description: "百炼托管的硅基流动DeepSeek V3.2"
   },
   {
     id: "siliconflow/deepseek-v3.1-terminus",
@@ -706,7 +635,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 65536,
     maxTokens: 8192,
     cost: { input: 0.571, output: 1.714 },
-    description: "百炼托管的硅基流动DeepSeek V3.1终极版"
   },
   {
     id: "siliconflow/deepseek-r1-0528",
@@ -716,7 +644,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     maxTokens: 8192,
     cost: { input: 0.571, output: 2.286 },
     reasoning: true,
-    description: "百炼托管的硅基流动DeepSeek R1"
   },
   {
     id: "siliconflow/deepseek-v3-0324",
@@ -725,89 +652,80 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 65536,
     maxTokens: 8192,
     cost: { input: 0.286, output: 1.143 },
-    description: "百炼托管的硅基流动DeepSeek V3快照"
   },
   
   // Kimi on Bailian
   {
     id: "bailian/kimi-k2.5",
-    name: "Kimi K2.5 (百炼)",
+    name: "Kimi K2.5 (Bailian)",
     provider: "bailian",
     contextWindow: 1000000,
     maxTokens: 8192,
     cost: { input: 0.571, output: 3.0 }, // ~4 CNY/M, ~21 CNY/M
-    description: "百炼托管的Kimi最新旗舰模型，超长上下文"
   },
   {
     id: "bailian/kimi-k2-thinking",
-    name: "Kimi K2 Thinking (百炼)",
+    name: "Kimi K2 Thinking (Bailian)",
     provider: "bailian",
     contextWindow: 1000000,
     maxTokens: 8192,
     cost: { input: 0.571, output: 2.286 }, // ~4 CNY/M, ~16 CNY/M
     reasoning: true,
-    description: "百炼托管的Kimi推理模型"
   },
   {
     id: "bailian/moonshot-kimi-k2-instruct",
-    name: "Moonshot Kimi K2 Instruct (百炼)",
+    name: "Moonshot Kimi K2 Instruct (Bailian)",
     provider: "bailian",
     contextWindow: 1000000,
     maxTokens: 8192,
     cost: { input: 0.571, output: 2.286 },
-    description: "百炼托管的Kimi K2指令模型"
   },
   {
     id: "bailian/kimi-k2.5-moonshot",
-    name: "Kimi K2.5 月之暗面 (百炼)",
+    name: "Kimi K2.5 Moonshot (Bailian)",
     provider: "bailian",
     contextWindow: 1000000,
     maxTokens: 8192,
     cost: { input: 0.571, output: 3.0 },
-    description: "百炼托管的月之暗面Kimi K2.5"
   },
   
   // GLM on Bailian
   {
     id: "bailian/glm-5",
-    name: "GLM-5 (百炼)",
+    name: "GLM-5 (Bailian)",
     provider: "bailian",
     contextWindow: 131072,
     maxTokens: 8192,
     cost: { input: 0.714, output: 2.857 }, // ~5 CNY/M, ~20 CNY/M
     reasoning: true,
-    description: "百炼托管的智谱GLM-5，支持思考模式"
   },
   
   // MiniMax on Bailian (OpenAI-compatible API; model id must match console)
   {
     id: "MiniMax-M2.5",
-    name: "MiniMax M2.5 (百炼)",
+    name: "MiniMax M2.5 (Bailian)",
     provider: "bailian",
     contextWindow: 196608,
     maxTokens: 32768,
     cost: { input: 0.3, output: 1.2 },
     reasoning: true,
-    description: "百炼 MiniMax-M2.5（兼容模式 model 字段须为此大小写）"
   },
   {
     id: "MiniMax-M2.1",
-    name: "MiniMax M2.1 (百炼)",
+    name: "MiniMax M2.1 (Bailian)",
     provider: "bailian",
     contextWindow: 200000,
     maxTokens: 8192,
     cost: { input: 0.3, output: 1.2 },
     reasoning: true,
-    description: "百炼 MiniMax-M2.1"
   },
   {
     id: "bailian/abab6.5g-chat",
-    name: "Abab 6.5G Chat (百炼)",
+    name: "Abab 6.5G Chat (Bailian)",
     provider: "bailian",
     contextWindow: 32768,
     maxTokens: 8192,
     cost: { input: 0.0, output: 0.0 },
-    description: "百炼托管的MiniMax Abab模型（限时免费）"
   },
 
   // ===== Baidu ERNIE =====
@@ -818,7 +736,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 120000,
     maxTokens: 4096,
     cost: { input: 0.07, output: 0.28 },
-    description: "文心一言4.5 21B模型"
   },
   {
     id: "ernie-4.5-21b-a3b-thinking",
@@ -828,7 +745,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     maxTokens: 4096,
     cost: { input: 0.07, output: 0.28 },
     reasoning: true,
-    description: "文心一言4.5推理版本"
   },
   {
     id: "ernie-4.5-vl-28b-a3b",
@@ -838,7 +754,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     maxTokens: 4096,
     cost: { input: 0.14, output: 0.56 },
     input: ["text", "image"],
-    description: "文心一言4.5视觉模型"
   },
   {
     id: "ernie-4.5-300b-a47b",
@@ -847,7 +762,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 123000,
     maxTokens: 4096,
     cost: { input: 0.28, output: 1.1 },
-    description: "文心一言4.5大参数模型"
   },
   {
     id: "ernie-4.5-vl-424b-a47b",
@@ -857,7 +771,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     maxTokens: 4096,
     cost: { input: 0.42, output: 1.25 },
     input: ["text", "image"],
-    description: "文心一言4.5视觉大模型"
   },
   {
     id: "ernie-bot-4",
@@ -866,7 +779,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 5120,
     maxTokens: 2048,
     cost: { input: 0.12, output: 0.12 },
-    description: "文心一言4.0经典版本"
   },
   {
     id: "ernie-bot-turbo",
@@ -875,7 +787,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 11200,
     maxTokens: 1024,
     cost: { input: 0.008, output: 0.008 },
-    description: "文心一言快速版本"
   },
 
   // ===== MiniMax =====
@@ -887,7 +798,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     maxTokens: 8192,
     cost: { input: 0.3, output: 1.2, cacheRead: 0.03, cacheWrite: 0.375 },
     reasoning: true,
-    description: "MiniMax 2026旗舰模型"
   },
   {
     id: "minimax-m2.5-highspeed",
@@ -896,7 +806,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 204800,
     maxTokens: 8192,
     cost: { input: 0.6, output: 2.4 },
-    description: "MiniMax M2.5高速版本"
   },
   {
     id: "minimax-m2.1",
@@ -905,7 +814,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 204800,
     maxTokens: 8192,
     cost: { input: 0.3, output: 1.2 },
-    description: "MiniMax M2.1编程增强"
   },
   {
     id: "minimax-m2.1-highspeed",
@@ -914,7 +822,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 204800,
     maxTokens: 8192,
     cost: { input: 0.6, output: 2.4 },
-    description: "MiniMax M2.1高速版本"
   },
   {
     id: "minimax-m2",
@@ -923,7 +830,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 204800,
     maxTokens: 8192,
     cost: { input: 0.3, output: 1.2 },
-    description: "MiniMax M2代理能力强"
   },
   {
     id: "minimax-m2-her",
@@ -932,7 +838,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 66000,
     maxTokens: 4096,
     cost: { input: 0.3, output: 1.2 },
-    description: "MiniMax角色扮演模型"
   },
   {
     id: "minimax-01",
@@ -941,7 +846,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 245760,
     maxTokens: 4096,
     cost: { input: 0.2, output: 0.8 },
-    description: "MiniMax第一代模型"
   },
   {
     id: "abab6.5s-chat",
@@ -950,7 +854,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 245760,
     maxTokens: 8192,
     cost: { input: 0.015, output: 0.015 },
-    description: "Abab6.5s对话模型"
   },
   {
     id: "abab6.5t-chat",
@@ -959,7 +862,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 245760,
     maxTokens: 8192,
     cost: { input: 0.005, output: 0.005 },
-    description: "Abab6.5t快速版本"
   },
   {
     id: "abab6.5g-chat",
@@ -968,7 +870,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 8192,
     maxTokens: 8192,
     cost: { input: 0.1, output: 0.1 },
-    description: "Abab6.5g通用版本"
   },
 
   // ===== Baichuan =====
@@ -979,7 +880,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 32000,
     maxTokens: 4096,
     cost: { input: 0.007, output: 0.013 }, // converted to USD
-    description: "百川M3 Plus模型"
   },
   {
     id: "baichuan-m3",
@@ -988,7 +888,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 32000,
     maxTokens: 4096,
     cost: { input: 0.014, output: 0.043 },
-    description: "百川M3模型"
   },
   {
     id: "baichuan4-turbo",
@@ -997,7 +896,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 32000,
     maxTokens: 4096,
     cost: { input: 0.021, output: 0.021 },
-    description: "百川4快速版本"
   },
   {
     id: "baichuan4-air",
@@ -1006,7 +904,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 32000,
     maxTokens: 4096,
     cost: { input: 0.0014, output: 0.0014 },
-    description: "百川4轻量版本"
   },
   {
     id: "baichuan4",
@@ -1015,7 +912,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 32000,
     maxTokens: 4096,
     cost: { input: 0.14, output: 0.14 },
-    description: "百川4旗舰模型"
   },
   {
     id: "baichuan3-turbo",
@@ -1024,7 +920,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 32000,
     maxTokens: 4096,
     cost: { input: 0.017, output: 0.017 },
-    description: "百川3快速版本"
   },
   {
     id: "baichuan3-turbo-128k",
@@ -1033,7 +928,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 128000,
     maxTokens: 4096,
     cost: { input: 0.034, output: 0.034 },
-    description: "百川3 128K版本"
   },
   {
     id: "baichuan2-turbo",
@@ -1043,7 +937,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     maxTokens: 4096,
     cost: { input: 0.011, output: 0.011 },
     deprecated: true,
-    description: "百川2模型（已停用）"
   },
 
   // ===== ByteDance Doubao =====
@@ -1054,7 +947,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 256000,
     maxTokens: 8192,
     cost: { input: 0.006, output: 0.023 }, // converted to USD
-    description: "豆包Pro 256K超长上下文"
   },
   {
     id: "doubao-pro-128k",
@@ -1063,7 +955,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 128000,
     maxTokens: 8192,
     cost: { input: 0.006, output: 0.023 },
-    description: "豆包Pro 128K版本"
   },
   {
     id: "doubao-pro-32k",
@@ -1072,7 +963,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 32000,
     maxTokens: 8192,
     cost: { input: 0.006, output: 0.023 },
-    description: "豆包Pro 32K版本"
   },
   {
     id: "doubao-lite-128k",
@@ -1081,7 +971,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 128000,
     maxTokens: 8192,
     cost: { input: 0.001, output: 0.003 },
-    description: "豆包Lite轻量版本"
   },
   {
     id: "doubao-lite-32k",
@@ -1090,7 +979,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 32000,
     maxTokens: 8192,
     cost: { input: 0.001, output: 0.003 },
-    description: "豆包Lite 32K版本"
   },
   {
     id: "seed-code-256k",
@@ -1099,7 +987,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 256000,
     maxTokens: 8192,
     cost: { input: 0.006, output: 0.017 },
-    description: "豆包专业编程模型"
   },
 
   // ===== Mistral AI =====
@@ -1110,7 +997,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 128000,
     maxTokens: 8192,
     cost: { input: 0.5, output: 1.5 },
-    description: "Mistral 2025年12月旗舰"
   },
   {
     id: "mistral-medium-3.1",
@@ -1119,7 +1005,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 128000,
     maxTokens: 8192,
     cost: { input: 0.4, output: 2.0 },
-    description: "Mistral中型模型"
   },
   {
     id: "mistral-small-3.2-24b",
@@ -1128,7 +1013,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 131000,
     maxTokens: 8192,
     cost: { input: 0.05, output: 0.08 },
-    description: "Mistral小型高效模型"
   },
   {
     id: "ministral-3-14b-2512",
@@ -1137,7 +1021,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 131000,
     maxTokens: 8192,
     cost: { input: 0.04, output: 0.08 },
-    description: "Ministral 14B模型"
   },
   {
     id: "mistral-nemo",
@@ -1146,7 +1029,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 131000,
     maxTokens: 8192,
     cost: { input: 0.02, output: 0.04 },
-    description: "Mistral最便宜的模型"
   },
   {
     id: "ministral-3b",
@@ -1155,7 +1037,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 128000,
     maxTokens: 8192,
     cost: { input: 0.025, output: 0.05 },
-    description: "Ministral 3B小型模型"
   },
   {
     id: "devstral-2-2512",
@@ -1164,7 +1045,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 128000,
     maxTokens: 8192,
     cost: { input: 0.3, output: 0.9 },
-    description: "Devstral编程模型"
   },
   {
     id: "devstral-small-1.1",
@@ -1173,7 +1053,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 131000,
     maxTokens: 8192,
     cost: { input: 0.02, output: 0.04 },
-    description: "Devstral小型编程模型"
   },
   {
     id: "mistral-7b-instruct",
@@ -1182,7 +1061,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 4000,
     maxTokens: 2048,
     cost: { input: 0.005, output: 0.015 },
-    description: "Mistral 7B经典模型"
   },
 
   // ===== Cohere =====
@@ -1193,7 +1071,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 256000,
     maxTokens: 8192,
     cost: { input: 2.5, output: 10.0 },
-    description: "Cohere最强命令模型"
   },
   {
     id: "command-r-plus",
@@ -1202,7 +1079,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 128000,
     maxTokens: 4096,
     cost: { input: 2.5, output: 10.0 },
-    description: "Cohere增强版本"
   },
   {
     id: "command-r",
@@ -1211,7 +1087,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 128000,
     maxTokens: 4096,
     cost: { input: 0.15, output: 0.6 },
-    description: "Cohere标准版本"
   },
   {
     id: "command-r7b-12-2024",
@@ -1220,7 +1095,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 128000,
     maxTokens: 4096,
     cost: { input: 0.037, output: 0.15 },
-    description: "Cohere 7B模型"
   },
 
   // ===== xAI Grok =====
@@ -1231,7 +1105,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 2000000,
     maxTokens: 16000,
     cost: { input: 0.2, output: 0.5, cacheRead: 0.05 },
-    description: "Grok 4.1快速版本，200万上下文"
   },
   {
     id: "grok-4-fast",
@@ -1240,7 +1113,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 2000000,
     maxTokens: 16000,
     cost: { input: 0.2, output: 0.5 },
-    description: "Grok 4快速版本"
   },
   {
     id: "grok-4",
@@ -1249,7 +1121,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 256000,
     maxTokens: 16000,
     cost: { input: 3.0, output: 15.0, cacheRead: 0.75 },
-    description: "Grok 4标准版本"
   },
   {
     id: "grok-3",
@@ -1258,7 +1129,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 131072,
     maxTokens: 8192,
     cost: { input: 3.0, output: 15.0, cacheRead: 0.5 },
-    description: "Grok 3模型"
   },
   {
     id: "grok-3-mini",
@@ -1267,7 +1137,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 131072,
     maxTokens: 8192,
     cost: { input: 0.3, output: 0.5 },
-    description: "Grok 3迷你版本"
   },
   {
     id: "grok-code-fast",
@@ -1276,7 +1145,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 256000,
     maxTokens: 16000,
     cost: { input: 0.25, output: 0.6 },
-    description: "Grok编程专用模型"
   },
 
   // ===== 01.AI Yi =====
@@ -1287,7 +1155,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 32000,
     maxTokens: 8192,
     cost: { input: 3.0, output: 3.0 },
-    description: "零一万物大型模型"
   },
   {
     id: "yi-large-turbo",
@@ -1296,7 +1163,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 32000,
     maxTokens: 8192,
     cost: { input: 1.71, output: 1.71 }, // ~12 CNY
-    description: "零一万物快速版本"
   },
   {
     id: "yi-medium",
@@ -1305,7 +1171,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 32000,
     maxTokens: 8192,
     cost: { input: 0.36, output: 0.36 }, // ~2.5 CNY
-    description: "零一万物中型模型"
   },
   {
     id: "yi-34b-chat-200k",
@@ -1314,7 +1179,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 200000,
     maxTokens: 8192,
     cost: { input: 0.5, output: 0.5 },
-    description: "零一万物200K超长上下文"
   },
   {
     id: "yi-34b-chat",
@@ -1323,7 +1187,6 @@ export const MODELS_DATABASE: ModelInfo[] = [
     contextWindow: 4000,
     maxTokens: 4096,
     cost: { input: 0.3, output: 0.3 },
-    description: "零一万物34B对话模型"
   },
 ]
 
@@ -1337,27 +1200,6 @@ export const MODELS_BY_PROVIDER = MODELS_DATABASE.reduce((acc, model) => {
   acc[model.provider].push(model)
   return acc
 }, {} as Record<string, ModelInfo[]>)
-
-/**
- * Provider display metadata
- */
-export const PROVIDER_INFO: Record<string, { name: string; description: string }> = {
-  openai: { name: "OpenAI", description: "GPT系列模型，业界领先" },
-  anthropic: { name: "Anthropic", description: "Claude系列，安全性强" },
-  google: { name: "Google", description: "Gemini系列，多模态能力强" },
-  zhipu: { name: "智谱AI", description: "GLM系列，国产领先" },
-  deepseek: { name: "DeepSeek", description: "性价比最高，支持超长上下文" },
-  moonshot: { name: "Moonshot AI", description: "Kimi系列，超长上下文专家" },
-  bailian: { name: "阿里云百炼", description: "Qwen、DeepSeek、Kimi、GLM、MiniMax等全模型平台" },
-  baidu: { name: "百度文心", description: "ERNIE系列，百度生态" },
-  minimax: { name: "MiniMax", description: "Abab系列，角色扮演能力强" },
-  baichuan: { name: "百川智能", description: "Baichuan系列，中文优化" },
-  doubao: { name: "字节豆包", description: "Doubao系列，性价比高" },
-  mistral: { name: "Mistral AI", description: "欧洲AI领导者" },
-  cohere: { name: "Cohere", description: "企业级AI解决方案" },
-  xai: { name: "xAI", description: "Grok系列，超长上下文" },
-  "01ai": { name: "零一万物", description: "Yi系列，高性能中文模型" },
-}
 
 /**
  * Lookup model by id
@@ -1374,15 +1216,15 @@ export function getModelsByProvider(provider: string): ModelInfo[] {
 }
 
 /**
- * Fuzzy search across id, name, provider, description
+ * Fuzzy search across id, name, provider
  */
 export function searchModels(query: string): ModelInfo[] {
   const q = query.toLowerCase()
-  return MODELS_DATABASE.filter(m => 
-    m.id.toLowerCase().includes(q) ||
-    m.name.toLowerCase().includes(q) ||
-    m.provider.toLowerCase().includes(q) ||
-    m.description?.toLowerCase().includes(q)
+  return MODELS_DATABASE.filter(
+    m =>
+      m.id.toLowerCase().includes(q) ||
+      m.name.toLowerCase().includes(q) ||
+      m.provider.toLowerCase().includes(q)
   )
 }
 

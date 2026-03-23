@@ -1,0 +1,14 @@
+{
+  "titleBarGateway": {
+    "runningOnPort": "Running · port {{port}}",
+    "starting": "Starting…",
+    "stopped": "Stopped",
+    "statusRunning": "Running, local port {{port}}",
+    "statusStarting": "Starting",
+    "statusStopped": "Not running",
+    "running": "Running",
+    "start": "Start",
+    "stop": "Stop",
+    "restart": "Restart"
+  }
+}

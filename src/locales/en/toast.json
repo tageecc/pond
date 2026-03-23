@@ -1,0 +1,9 @@
+{
+  "toast": {
+    "instanceSetupLoading": "Initializing instance directory…",
+    "instanceReady": "Instance ready",
+    "createInstanceLoading": "Creating OpenClaw instance…",
+    "createInstanceSuccessHint": "Add your API key under Model settings",
+    "modelConfigReminder": "Remember to add your API key under Model settings"
+  }
+}

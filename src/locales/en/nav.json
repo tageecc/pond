@@ -1,0 +1,30 @@
+{
+  "nav": {
+    "dashboard": "Overview",
+    "analytics": "Analytics",
+    "agents": "Instances",
+    "chat": "Chat"
+  },
+  "navGroups": {
+    "team": "Team",
+    "run": "Runtime",
+    "capabilities": "Capabilities & environment",
+    "sessionWs": "Session & workspace",
+    "automation": "Automation & integration",
+    "system": "System"
+  },
+  "navSections": {
+    "model": "Model",
+    "channels": "Channels",
+    "skills": "Skills & tools",
+    "browser": "Browser",
+    "session": "Session",
+    "workspace": "Workspace files",
+    "wakeup": "Heartbeat & schedule",
+    "hooks": "Hooks",
+    "logs": "Gateway logs",
+    "advanced": "Advanced",
+    "team_agents": "Roles",
+    "team_space": "Team space"
+  }
+}

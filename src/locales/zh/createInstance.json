@@ -1,0 +1,10 @@
+{
+  "createInstance": {
+    "title": "新建 OpenClaw 实例",
+    "description": "将新建独立数据目录 {{short}}，与主实例 {{default}}（default）隔离。",
+    "short": "~/.openclaw-<短 id>",
+    "defaultPath": "~/.openclaw",
+    "creating": "创建中…",
+    "create": "创建"
+  }
+}

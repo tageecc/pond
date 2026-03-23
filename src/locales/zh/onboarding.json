@@ -1,0 +1,26 @@
+{
+  "onboarding": {
+    "welcomeTitle": "欢迎使用 Pond",
+    "welcomeSubtitle": "连接第一个模型",
+    "systemOpenClaw": "本机已安装 OpenClaw",
+    "importOneClick": "一键导入",
+    "orManual": "或手动配置",
+    "chooseProvider": "选择模型提供商",
+    "chooseProviderDesc": "选择后点击下一步填写 API Key",
+    "provider": "提供商",
+    "selectProvider": "选择提供商",
+    "next": "下一步",
+    "enterApiKey": "填写 API Key",
+    "enterApiKeyDesc": "在 {{name}} 登录并创建 Key，粘贴到下方",
+    "getKeyAt": "前往 {{name}} 获取 Key",
+    "apiKeyPlaceholder": "sk-... 或从控制台复制的 Key",
+    "modelIdOptional": "模型 ID（可选）",
+    "back": "返回",
+    "done": "完成",
+    "overwriteTitle": "本机已有 OpenClaw 配置",
+    "overwriteDesc": "手动配置将覆盖本机已有的 OpenClaw 配置（~/.openclaw/openclaw.json）中的模型与 Agent 设置。如需保留原配置，请点击上方「一键导入」。",
+    "confirmOverwrite": "确认覆盖",
+    "browserOpenFailed": "无法打开浏览器，请手动访问：{{url}}",
+    "apiKeyRequired": "请填写 API Key"
+  }
+}
