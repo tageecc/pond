@@ -73,22 +73,26 @@ fn build_openclaw_cli(
 ) -> Result<std::process::Command, String> {
     let inst = instance_id.trim();
     let cwd = PathBuf::from(paths::get_home_dir().map_err(|e| e.to_string())?);
-    if let Ok(res_dir) = app_handle.path().resource_dir() {
-        let bundled_openclaw = res_dir.join("openclaw");
-        let cli_js = bundled_openclaw.join("dist/cli.js");
-        let cli_alt = bundled_openclaw.join("bin/openclaw.js");
-        let cli = if cli_js.exists() { cli_js } else if cli_alt.exists() { cli_alt } else { bundled_openclaw.join("dist/cli.mjs") };
-        if cli.exists() {
-            let node_exe = bundled_node_path(&res_dir).unwrap_or_else(|| std::path::PathBuf::from(if cfg!(target_os = "windows") { "node.exe" } else { "node" }));
-            let mut c = StdCommand::new(&node_exe);
-            c.arg(&cli);
-            apply_openclaw_instance_cli_flags(&mut c, inst);
-            c.args(subargs).current_dir(cwd);
-            return Ok(c);
-        }
+    let res_dir = app_handle
+        .path()
+        .resource_dir()
+        .map_err(|e| format!("resource_dir: {}", e))?;
+    let cli = res_dir.join("openclaw").join("openclaw.mjs");
+    if !cli.is_file() {
+        return Err(
+            "Bundled OpenClaw missing (resources/openclaw/openclaw.mjs). Run: node scripts/bundle-tauri-resources.mjs"
+                .to_string(),
+        );
     }
-    let mut c = StdCommand::new("npx");
-    c.arg("openclaw");
+    let node_exe = bundled_node_path(&res_dir).ok_or_else(|| {
+        format!(
+            "Bundled Node missing (resources/node/{}/{}). Run: node scripts/bundle-tauri-resources.mjs",
+            bundled_node_platform(),
+            bundled_node_binary_name()
+        )
+    })?;
+    let mut c = StdCommand::new(&node_exe);
+    c.arg(&cli);
     apply_openclaw_instance_cli_flags(&mut c, inst);
     c.args(subargs).current_dir(cwd);
     Ok(c)
@@ -1177,15 +1181,11 @@ pub struct HooksListResult {
     pub hooks: Vec<HookListEntry>,
 }
 
-/// Root of bundled OpenClaw package (dir containing dist/cli.js); for bundled hooks HOOK.md.
+/// Bundled npm package root (`resources/openclaw/`); must contain `openclaw.mjs`.
 fn get_bundled_openclaw_root(app_handle: &AppHandle) -> Option<std::path::PathBuf> {
     let res_dir = app_handle.path().resource_dir().ok()?;
     let root = res_dir.join("openclaw");
-    if root.join("dist/cli.js").exists() || root.join("bin/openclaw.js").exists() || root.join("dist/cli.mjs").exists() {
-        Some(root)
-    } else {
-        None
-    }
+    root.join("openclaw.mjs").is_file().then_some(root)
 }
 
 /// Candidate OpenClaw install roots: app resources, global `npm i -g openclaw`, repo `node_modules/openclaw`.

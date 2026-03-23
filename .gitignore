@@ -24,6 +24,7 @@ lerna-debug.log*
 # ========================================
 # 所有 resources 下的二进制和大文件不提交
 resources/openclaw/
+resources/openclaw
 resources/node/
 resources/colima/
 resources/webtop/

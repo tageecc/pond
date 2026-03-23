@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useTranslation } from "react-i18next"
 import { invoke } from "@tauri-apps/api/core"
 import { useAppStore } from "../stores/appStore"
@@ -27,17 +27,12 @@ import { ExternalLink, Loader2, Sparkles, Download, ChevronRight, ChevronDown } 
 import { cn } from "../lib/utils"
 import { PROVIDERS, getProvider } from "../constants/providers"
 import { ModelIdField } from "./ModelIdField"
-import type { OpenClawConfig } from "../types"
-import { hasConfiguredModel as hasConfiguredModelFromConfig } from "../lib/openclawAgentsModels"
+import { hasConfiguredModel } from "../lib/openclawAgentsModels"
 import {
   onTauriTitleBarDragMouseDown,
   TITLE_BAR_DRAG_HEIGHT,
   TITLE_BAR_LEFT_INSET,
 } from "../lib/tauriTitleBarDrag"
-
-function hasConfiguredModel(config: OpenClawConfig | null): boolean {
-  return hasConfiguredModelFromConfig(config)
-}
 
 export function Onboarding() {
   const { t } = useTranslation()
@@ -51,13 +46,25 @@ export function Onboarding() {
   const [error, setError] = useState<string | null>(null)
   const [hasSystemOpenClaw, setHasSystemOpenClaw] = useState<boolean | null>(null)
   const [showOverwriteConfirm, setShowOverwriteConfirm] = useState(false)
+  const openClawExistedBeforeWizardRef = useRef<boolean | null>(null)
 
   const selectedProvider = getProvider(providerId) ?? PROVIDERS[0]
 
   useEffect(() => {
     invoke<{ exists: boolean }>("detect_system_openclaw")
-      .then((r) => setHasSystemOpenClaw(r?.exists ?? false))
-      .catch(() => setHasSystemOpenClaw(false))
+      .then((r) => {
+        const ex = r?.exists ?? false
+        setHasSystemOpenClaw(ex)
+        if (openClawExistedBeforeWizardRef.current === null) {
+          openClawExistedBeforeWizardRef.current = ex
+        }
+      })
+      .catch(() => {
+        setHasSystemOpenClaw(false)
+        if (openClawExistedBeforeWizardRef.current === null) {
+          openClawExistedBeforeWizardRef.current = false
+        }
+      })
   }, [])
 
   const handleOneClickImport = async () => {
@@ -121,16 +128,19 @@ export function Onboarding() {
       setError(t("onboarding.apiKeyRequired"))
       return
     }
-    // Re-check on disk; avoid stale detect_system_openclaw
-    try {
-      const result = await invoke<{ exists: boolean }>("detect_system_openclaw")
-      if (result?.exists) {
-        setShowOverwriteConfirm(true)
-      } else {
-        await doComplete()
+    let existedBefore = openClawExistedBeforeWizardRef.current
+    if (existedBefore === null) {
+      try {
+        const result = await invoke<{ exists: boolean }>("detect_system_openclaw")
+        existedBefore = result?.exists ?? false
+      } catch {
+        existedBefore = false
       }
-    } catch {
-      // On detect error, complete anyway
+      openClawExistedBeforeWizardRef.current = existedBefore
+    }
+    if (existedBefore) {
+      setShowOverwriteConfirm(true)
+    } else {
       await doComplete()
     }
   }

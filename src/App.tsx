@@ -25,32 +25,12 @@ function isTauri(): boolean {
 }
 
 function MainApp() {
-  const { t } = useTranslation()
   const currentView = useAppStore((s) => s.currentView)
-  const preferencesOpen = useAppStore((s) => s.preferencesOpen)
-  const setPreferencesOpen = useAppStore((s) => s.setPreferencesOpen)
 
   useGlobalNotifications()
 
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === ",") {
-        e.preventDefault()
-        setPreferencesOpen(true)
-      }
-    }
-    window.addEventListener("keydown", onKeyDown)
-    return () => window.removeEventListener("keydown", onKeyDown)
-  }, [setPreferencesOpen])
-
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-app-bg">
-      <Toaster
-        position="top-center"
-        offset={{ top: "56px" }}
-        richColors={false}
-        closeButton={false}
-      />
       <AppTitleBar />
       <main className="relative z-10 flex min-h-0 flex-1 flex-col overflow-visible">
         {currentView === "chat" || currentView === "agents" ? (
@@ -68,15 +48,6 @@ function MainApp() {
           </div>
         )}
       </main>
-
-      <Dialog open={preferencesOpen} onOpenChange={setPreferencesOpen}>
-        <DialogContent className="max-w-lg max-h-[85vh] flex flex-col p-0 gap-0">
-          <DialogTitle className="sr-only">{t("settings.title")}</DialogTitle>
-          <div className="flex-1 overflow-y-auto px-4 pt-9 pb-5">
-            <Settings />
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
@@ -87,6 +58,8 @@ function App() {
   const needsOnboarding = useAppStore((s) => s.needsOnboarding)
   const pendingAgentId = useAppStore((s) => s.pendingAgentId)
   const switchInstance = useAppStore((s) => s.switchInstance)
+  const preferencesOpen = useAppStore((s) => s.preferencesOpen)
+  const setPreferencesOpen = useAppStore((s) => s.setPreferencesOpen)
 
   useEffect(() => {
     useThemeStore.getState().init()
@@ -128,11 +101,36 @@ function App() {
     useAppStore.setState({ pendingAgentId: null })
   }, [pendingAgentId, switchInstance])
 
-  if (needsOnboarding) {
-    return <Onboarding />
-  }
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === ",") {
+        e.preventDefault()
+        setPreferencesOpen(true)
+      }
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [setPreferencesOpen])
 
-  return <MainApp />
+  return (
+    <>
+      <Toaster
+        position="top-center"
+        offset={{ top: "56px" }}
+        richColors={false}
+        closeButton={false}
+      />
+      {needsOnboarding ? <Onboarding /> : <MainApp />}
+      <Dialog open={preferencesOpen} onOpenChange={setPreferencesOpen}>
+        <DialogContent className="max-w-lg max-h-[85vh] flex flex-col p-0 gap-0">
+          <DialogTitle className="sr-only">{t("settings.title")}</DialogTitle>
+          <div className="flex-1 overflow-y-auto px-4 pt-9 pb-5">
+            <Settings />
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
 }
 
 export default App
