@@ -87,8 +87,6 @@ interface AppState {
   enabledSkills: string[]
   /** Skills for selected instance (incl. bundled); from list_skills_for_instance */
   skillsForInstance: import('../types').SkillsForInstance | null
-  /** Per-instance skill counts for switcher badge */
-  instanceSkillCounts: Record<string, number>
   /** Hooks list cache (stale-while-revalidate when revisiting settings) */
   hooksListCache: Record<string, import('../types').HooksListResult>
   
@@ -194,7 +192,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   availableSkills: [],
   enabledSkills: [],
   skillsForInstance: null,
-  instanceSkillCounts: {},
   hooksListCache: {},
   todaySpend: null,
   cronJobs: [],
@@ -526,22 +523,15 @@ export const useAppStore = create<AppState>((set, get) => ({
       const forInstance = await invoke<import('../types').SkillsForInstance>('list_skills_for_instance', {
         instanceId: selectedId,
       })
-      const count = forInstance.all.length
-      set((s) => ({
+      set({
         skillsForInstance: forInstance,
         enabledSkills: forInstance.enabled,
-        instanceSkillCounts: { ...s.instanceSkillCounts, [selectedId]: count },
-      }))
+      })
     } catch (error) {
       console.error('Failed to load skills:', error)
-      set((s) => {
-        const next = { ...s.instanceSkillCounts }
-        delete next[selectedId]
-        return {
-          skillsForInstance: null,
-          enabledSkills: [],
-          instanceSkillCounts: next,
-        }
+      set({
+        skillsForInstance: null,
+        enabledSkills: [],
       })
     }
   },

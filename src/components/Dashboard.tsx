@@ -595,7 +595,7 @@ export function Dashboard() {
                                   job.enabled ? "bg-emerald-500" : "bg-zinc-400"
                                 )} />
                                 <span className="text-sm font-medium text-app-text truncate">{job.name}</span>
-                                <code className="text-[10px] font-mono text-app-muted bg-app-surface/80 px-1.5 py-0.5 rounded shrink-0">{job.schedule}</code>
+                                <code className="text-[10px] font-mono text-app-muted bg-app-surface px-1.5 py-0.5 rounded shrink-0">{job.schedule}</code>
                               </div>
                               {job.description && (
                                 <p className="text-xs text-app-muted mt-0.5 truncate pl-3.5">{job.description}</p>
@@ -630,7 +630,7 @@ export function Dashboard() {
                       <li key={s.sessionKey}>
                         <button
                           type="button"
-                          className="flex w-full items-center gap-2.5 rounded-lg border border-app-border/60 bg-app-elevated/40 px-3 py-2.5 text-left transition-colors hover:bg-app-hover/60"
+                          className="flex w-full items-center gap-2.5 rounded-lg border border-app-border/60 bg-app-elevated px-3 py-2.5 text-left transition-colors hover:bg-app-hover"
                           onClick={() => setCurrentView("chat", s.instanceId)}
                         >
                           <MessageCircle className="h-4 w-4 shrink-0 text-claw-500" />

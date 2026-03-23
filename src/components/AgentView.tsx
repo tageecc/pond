@@ -1462,7 +1462,7 @@ export function AgentView() {
                                             )}
                                           </div>
                                       <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-app-muted">
-                                        <span className="rounded border border-app-border bg-app-surface/80 px-1.5 py-0.5">
+                                        <span className="rounded border border-app-border bg-app-surface px-1.5 py-0.5">
                                           {getProvider((raw as LLMModelConfig).provider as string)?.name ?? (raw as LLMModelConfig).provider ?? "—"}
                                         </span>
                                         <span className={configured ? "text-emerald-500/90" : "text-amber-500/90"}>
@@ -1929,7 +1929,7 @@ export function AgentView() {
                                             </span>
                                             <div className="min-w-0 flex-1">
                                               <Input
-                                                className="h-9 w-full rounded-lg border-app-border/80 bg-app-surface/80 text-sm font-semibold text-app-text shadow-none placeholder:font-mono placeholder:text-app-muted"
+                                                className="h-9 w-full rounded-lg border-app-border/80 bg-app-surface text-sm font-semibold text-app-text shadow-none placeholder:font-mono placeholder:text-app-muted"
                                                 placeholder={agent.id}
                                                 disabled={teamFetchLoading}
                                                 title={`界面展示名称；未填写时与角色 ID「${agent.id}」相同。保存配置仍使用下方技术 ID。`}
@@ -2472,7 +2472,7 @@ export function AgentView() {
                                     e.preventDefault()
                                     void submitNewTeamTask()
                                   }}
-                                  className="h-10 border-app-border/80 bg-app-surface/80"
+                                  className="h-10 border-app-border/80 bg-app-surface"
                                 />
                               </div>
                               <div className="space-y-1.5">
@@ -2482,7 +2482,7 @@ export function AgentView() {
                                   onValueChange={(v) => setNewTeamTaskAssignMode(v as "open" | "assigned")}
                                   disabled={!openclawConfig?.agents?.list?.length}
                                 >
-                                  <SelectTrigger className="h-10 w-full border-app-border/80 bg-app-surface/80 text-xs">
+                                  <SelectTrigger className="h-10 w-full border-app-border/80 bg-app-surface text-xs">
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -2500,7 +2500,7 @@ export function AgentView() {
                                     !openclawConfig?.agents?.list?.length || newTeamTaskAssignMode === "open"
                                   }
                                 >
-                                  <SelectTrigger className="h-10 w-full border-app-border/80 bg-app-surface/80 text-xs">
+                                  <SelectTrigger className="h-10 w-full border-app-border/80 bg-app-surface text-xs">
                                     <SelectValue placeholder="选择角色" />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -2823,7 +2823,7 @@ export function AgentView() {
                         <div className="space-y-1.5 pt-1">
                           <Label className="text-xs font-medium text-app-text">失败原因</Label>
                           <textarea
-                            className="flex min-h-[100px] w-full resize-y rounded-lg border border-app-border/80 bg-app-surface/80 px-3 py-2 text-sm text-app-text shadow-none placeholder:text-app-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-claw-500/40"
+                            className="flex min-h-[100px] w-full resize-y rounded-lg border border-app-border/80 bg-app-surface px-3 py-2 text-sm text-app-text shadow-none placeholder:text-app-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-claw-500/40"
                             placeholder="例如：依赖未就绪、验收标准不清、权限或环境阻塞"
                             value={teamTaskFailReasonInput}
                             onChange={(e) => setTeamTaskFailReasonInput(e.target.value)}

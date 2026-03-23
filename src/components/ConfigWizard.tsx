@@ -1084,7 +1084,7 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
                     value={addName}
                     onChange={(e) => setAddName(e.target.value)}
                     disabled={addingChannel}
-                    className="h-11 rounded-xl border-app-border/80 bg-app-elevated/40 text-app-text placeholder:text-app-muted/80"
+                    className="h-11 rounded-xl border-app-border/80 bg-app-elevated text-app-text placeholder:text-app-muted/80"
                   />
                 </div>
               </>

@@ -1,21 +1,32 @@
+<div align="center">
+
 # Pond
 
-> **OpenClaw runs on disk. Pond runs the control plane.**
+---
 
-| [简体中文](./README_zh.md)
-
-<div align="center">
+**OpenClaw runs on disk. Pond runs the control plane.**
 
 [![GitHub Release](https://img.shields.io/github/v/release/tageecc/pond)](https://github.com/tageecc/pond/releases)
 [![License](https://img.shields.io/github/license/tageecc/pond)](https://github.com/tageecc/pond/blob/main/LICENSE)
-[![Tauri](https://img.shields.io/badge/Tauri-2-24C8D8?logo=tauri)](https://tauri.app/)
-[![pnpm](https://img.shields.io/badge/pnpm-9-f69220?logo=pnpm)](https://pnpm.io/)
 [![GitHub Stars](https://img.shields.io/github/stars/tageecc/pond)](https://github.com/tageecc/pond/stargazers)
 [![GitHub Issues](https://img.shields.io/github/issues/tageecc/pond)](https://github.com/tageecc/pond/issues)
+
+<br/>
+
+[![Tauri](https://img.shields.io/badge/Tauri-2-24C8D8?logo=tauri&logoColor=white)](https://tauri.app/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Rust](https://img.shields.io/badge/Rust-stable-dea582?logo=rust&logoColor=white)](https://www.rust-lang.org/)
+[![pnpm](https://img.shields.io/badge/pnpm-9-f69220?logo=pnpm&logoColor=white)](https://pnpm.io/)
+[![OpenClaw](https://img.shields.io/badge/OpenClaw-docs-111111)](https://docs.openclaw.ai)
+
+<br/>
 
 **Pond is a native desktop shell for [OpenClaw](https://docs.openclaw.ai)**—built so you are not stuck in five terminals and three config files when you scale from one bot to **many agents** and **many instances** on the same machine.
 
 If you use OpenClaw seriously, you already split **profiles** (`~/.openclaw` vs `~/.openclaw-{id}`), restart Gateways, watch spend, and coordinate who talks to whom. Pond puts **team management**, **Gateway control**, **chat**, **dashboards**, and **analytics** behind one UI, with Rust doing the process and filesystem work.
+
+[GitHub Releases](https://github.com/tageecc/pond/releases) · [Contributing](./CONTRIBUTING.md) · [简体中文](./README_zh.md)
 
 </div>
 

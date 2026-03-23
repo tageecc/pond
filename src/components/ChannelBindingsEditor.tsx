@@ -147,7 +147,7 @@ export function ChannelBindingsEditor({
             <li
               key={i}
               className={cn(
-                "rounded-xl border border-app-border/40 bg-app-surface/80 p-3",
+                "rounded-xl border border-app-border/40 bg-app-surface p-3",
                 disabled && "opacity-60",
               )}
             >

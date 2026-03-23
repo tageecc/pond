@@ -410,7 +410,7 @@ export function AIConfig() {
                     "overflow-hidden rounded-2xl border transition-all duration-200",
                     selected
                       ? "border-claw-500/50 bg-app-surface shadow-lg shadow-claw-500/5"
-                      : "border-app-border bg-app-surface/80 hover:border-app-hover hover:bg-app-surface"
+                      : "border-app-border bg-app-surface hover:border-app-hover hover:bg-app-elevated"
                   )}
                 >
                   <button

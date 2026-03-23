@@ -1,21 +1,32 @@
+<div align="center">
+
 # Pond
 
-> **OpenClaw runs on disk. Pond runs the control plane.**
+---
 
-| [English](./README.md)
-
-<div align="center">
+**OpenClaw 跑在磁盘上，Pond 是你的控制面。**
 
 [![GitHub Release](https://img.shields.io/github/v/release/tageecc/pond)](https://github.com/tageecc/pond/releases)
 [![License](https://img.shields.io/github/license/tageecc/pond)](https://github.com/tageecc/pond/blob/main/LICENSE)
-[![Tauri](https://img.shields.io/badge/Tauri-2-24C8D8?logo=tauri)](https://tauri.app/)
-[![pnpm](https://img.shields.io/badge/pnpm-9-f69220?logo=pnpm)](https://pnpm.io/)
 [![GitHub Stars](https://img.shields.io/github/stars/tageecc/pond)](https://github.com/tageecc/pond/stargazers)
 [![GitHub Issues](https://img.shields.io/github/issues/tageecc/pond)](https://github.com/tageecc/pond/issues)
+
+<br/>
+
+[![Tauri](https://img.shields.io/badge/Tauri-2-24C8D8?logo=tauri&logoColor=white)](https://tauri.app/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Rust](https://img.shields.io/badge/Rust-stable-dea582?logo=rust&logoColor=white)](https://www.rust-lang.org/)
+[![pnpm](https://img.shields.io/badge/pnpm-9-f69220?logo=pnpm&logoColor=white)](https://pnpm.io/)
+[![OpenClaw](https://img.shields.io/badge/OpenClaw-docs-111111)](https://docs.openclaw.ai)
+
+<br/>
 
 **Pond 是 [OpenClaw](https://docs.openclaw.ai) 的桌面控制面**：当你从「一个 bot」升级到 **多智能体**、**多实例** 时，不必在多个终端和零散配置里来回切换——**团队管理、Gateway、对话、概览与数据分析** 都在一个原生窗口里完成。
 
 OpenClaw 跑在磁盘上；Pond 负责 **实例边界、进程与团队协作面**：同一台机器上多套 `~/.openclaw` 与 `~/.openclaw-{id}`，各自 Gateway、配置与团队数据范围清晰可管理。
+
+[GitHub Releases](https://github.com/tageecc/pond/releases) · [贡献指南](./CONTRIBUTING.md) · [English](./README.md)
 
 </div>
 
