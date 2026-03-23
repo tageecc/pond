@@ -1,8 +1,27 @@
 {
   "menu": {
     "pond": "Pond",
+    "about": "关于 Pond",
+    "services": "服务",
+    "hide": "隐藏 Pond",
+    "hideOthers": "隐藏其他",
+    "showAll": "全部显示",
     "preferences": "偏好设置…",
+    "quit": "退出 Pond",
+    "file": "文件",
+    "closeWindow": "关闭窗口",
     "edit": "编辑",
-    "quit": "退出"
+    "undo": "撤销",
+    "redo": "重做",
+    "cut": "剪切",
+    "copy": "拷贝",
+    "paste": "粘贴",
+    "selectAll": "全选",
+    "view": "显示",
+    "toggleFullScreen": "进入全屏幕",
+    "window": "窗口",
+    "minimize": "最小化",
+    "zoom": "缩放",
+    "help": "帮助"
   }
 }

@@ -1,5 +1,4 @@
 import { useEffect } from "react"
-import type { Submenu } from "@tauri-apps/api/menu"
 import { useTranslation } from "react-i18next"
 import { Toaster } from "@/components/ui/sonner"
 import { useAppStore } from "./stores/appStore"
@@ -119,47 +118,129 @@ function App() {
     void import("@tauri-apps/api/menu").then(
       async ({ Menu, Submenu, MenuItem, PredefinedMenuItem }) => {
         const openPrefs = () => useAppStore.getState().setPreferencesOpen(true)
-        const buildPondAppMenuItems = async () => {
-          const sep = await PredefinedMenuItem.new({ item: "Separator" })
-          const prefItem = await MenuItem.new({
-            id: "preferences",
-            text: t("menu.preferences"),
-            accelerator: "CmdOrControl+,",
-            action: openPrefs,
-          })
-          const quitItem = await PredefinedMenuItem.new({ item: "Quit" })
-          return [prefItem, sep, quitItem]
-        }
-        const buildEditAndPondMenu = async () => {
-          const editSub = await Submenu.new({
-            text: t("menu.edit"),
-            items: [
-              await PredefinedMenuItem.new({ item: "Undo" }),
-              await PredefinedMenuItem.new({ item: "Redo" }),
-              await PredefinedMenuItem.new({ item: "Separator" }),
-              await PredefinedMenuItem.new({ item: "Cut" }),
-              await PredefinedMenuItem.new({ item: "Copy" }),
-              await PredefinedMenuItem.new({ item: "Paste" }),
-              await PredefinedMenuItem.new({ item: "SelectAll" }),
-            ],
-          })
-          const pondSub = await Submenu.new({
-            text: t("menu.pond"),
-            items: await buildPondAppMenuItems(),
-          })
-          return Menu.new({ items: [pondSub, editSub] })
-        }
-        try {
-          const menu = await Menu.default()
-          const top = await menu.items()
-          const appMenu = top[0]
-          if (appMenu?.kind === "Submenu") {
-            await (appMenu as Submenu).append(await buildPondAppMenuItems())
-          }
-          if (!cancelled) await menu.setAsAppMenu()
-        } catch {
-          const menu = await buildEditAndPondMenu()
-          if (!cancelled) await menu.setAsAppMenu()
+        const sep = () => PredefinedMenuItem.new({ item: "Separator" })
+
+        const pondSub = await Submenu.new({
+          text: t("menu.pond"),
+          items: [
+            await PredefinedMenuItem.new({
+              item: { About: { name: "Pond" } },
+              text: t("menu.about"),
+            }),
+            await PredefinedMenuItem.new({
+              item: "Services",
+              text: t("menu.services"),
+            }),
+            await sep(),
+            await PredefinedMenuItem.new({
+              item: "Hide",
+              text: t("menu.hide"),
+            }),
+            await PredefinedMenuItem.new({
+              item: "HideOthers",
+              text: t("menu.hideOthers"),
+            }),
+            await PredefinedMenuItem.new({
+              item: "ShowAll",
+              text: t("menu.showAll"),
+            }),
+            await sep(),
+            await MenuItem.new({
+              id: "preferences",
+              text: t("menu.preferences"),
+              accelerator: "CmdOrControl+,",
+              action: openPrefs,
+            }),
+            await sep(),
+            await PredefinedMenuItem.new({
+              item: "Quit",
+              text: t("menu.quit"),
+            }),
+          ],
+        })
+
+        const fileSub = await Submenu.new({
+          text: t("menu.file"),
+          items: [
+            await PredefinedMenuItem.new({
+              item: "CloseWindow",
+              text: t("menu.closeWindow"),
+            }),
+          ],
+        })
+
+        const editSub = await Submenu.new({
+          text: t("menu.edit"),
+          items: [
+            await PredefinedMenuItem.new({
+              item: "Undo",
+              text: t("menu.undo"),
+            }),
+            await PredefinedMenuItem.new({
+              item: "Redo",
+              text: t("menu.redo"),
+            }),
+            await sep(),
+            await PredefinedMenuItem.new({
+              item: "Cut",
+              text: t("menu.cut"),
+            }),
+            await PredefinedMenuItem.new({
+              item: "Copy",
+              text: t("menu.copy"),
+            }),
+            await PredefinedMenuItem.new({
+              item: "Paste",
+              text: t("menu.paste"),
+            }),
+            await PredefinedMenuItem.new({
+              item: "SelectAll",
+              text: t("menu.selectAll"),
+            }),
+          ],
+        })
+
+        const viewSub = await Submenu.new({
+          text: t("menu.view"),
+          items: [
+            await PredefinedMenuItem.new({
+              item: "Fullscreen",
+              text: t("menu.toggleFullScreen"),
+            }),
+          ],
+        })
+
+        const windowSub = await Submenu.new({
+          text: t("menu.window"),
+          items: [
+            await PredefinedMenuItem.new({
+              item: "Minimize",
+              text: t("menu.minimize"),
+            }),
+            await PredefinedMenuItem.new({
+              item: "Maximize",
+              text: t("menu.zoom"),
+            }),
+          ],
+        })
+
+        const helpSub = await Submenu.new({
+          text: t("menu.help"),
+          items: [],
+        })
+
+        const menu = await Menu.new({
+          items: [pondSub, fileSub, editSub, viewSub, windowSub, helpSub],
+        })
+        if (cancelled) return
+        await menu.setAsAppMenu()
+
+        const isMac =
+          typeof navigator !== "undefined" &&
+          (navigator.platform?.toLowerCase().includes("mac") ?? false)
+        if (isMac && !cancelled) {
+          await windowSub.setAsWindowsMenuForNSApp()
+          await helpSub.setAsHelpMenuForNSApp()
         }
       },
     )
