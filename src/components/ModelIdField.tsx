@@ -3,11 +3,17 @@ import { useTranslation } from "react-i18next"
 import { ChevronDown } from "lucide-react"
 import type { ModelInfo } from "../constants/models"
 import { getModelsByProvider } from "../constants/models"
-import { getModelCatalogDescription } from "../lib/modelCatalogDescriptions"
 import { Input } from "./ui/input"
 import { Popover, PopoverAnchor, PopoverContent } from "./ui/popover"
 import { cn } from "../lib/utils"
-import type { TFunction } from "i18next"
+import type { TFunction, i18n as I18nInstance } from "i18next"
+
+function modelCatalogDescription(i18n: I18nInstance, modelId: string): string {
+  const b = i18n.getResource(i18n.language, "translation", "modelsCatalog") as
+    | { descriptions?: Record<string, string> }
+    | undefined
+  return b?.descriptions?.[modelId] ?? ""
+}
 
 function metaLine(m: ModelInfo, t: TFunction, catalogDesc: string): string {
   if (m.contextWindow === 0 && m.cost.input === 0 && m.cost.output === 0) {
@@ -68,7 +74,7 @@ export function ModelIdField({
   const filtered = useMemo(() => {
     const q = query.trim()
     return catalog.filter((m) =>
-      matchesQuery(m, q, getModelCatalogDescription(i18n, m.id))
+      matchesQuery(m, q, modelCatalogDescription(i18n, m.id))
     )
   }, [catalog, query, i18n])
 
@@ -243,7 +249,7 @@ export function ModelIdField({
           ) : (
             filtered.map((m, idx) => {
               const highlighted = idx === highlightIndex
-              const meta = metaLine(m, t, getModelCatalogDescription(i18n, m.id))
+              const meta = metaLine(m, t, modelCatalogDescription(i18n, m.id))
               return (
                 <button
                   key={m.id}

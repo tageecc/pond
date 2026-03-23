@@ -91,7 +91,7 @@ async function whitePlatePng() {
 }
 
 async function main() {
-  const defaultSrc = path.join(root, 'ChatGPT Image 2026年3月23日 19_41_56.png');
+  const defaultSrc = path.join(root, 'src-tauri/icons/app-icon-source.png');
   const input = process.argv[2] ? path.resolve(process.argv[2]) : defaultSrc;
 
   if (!fs.existsSync(input)) {
@@ -136,11 +136,8 @@ async function main() {
     .toBuffer();
 
   const outIcon = path.join(root, 'src-tauri/icons/logo-source.png');
-  const outPublic = path.join(root, 'public/pond.png');
   await fs.promises.writeFile(outIcon, finalBuf);
-  await fs.promises.writeFile(outPublic, finalBuf);
   console.log('wrote', outIcon);
-  console.log('wrote', outPublic);
 }
 
 main().catch((e) => {

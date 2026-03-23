@@ -102,7 +102,6 @@ import { resolveTeamLeaderAgentId, TEAM_LEADER_AGENT_ID } from "../lib/teamLeade
 import { getAgentIds } from "../lib/openclawAgentsModels"
 import { agentsModelsToFlatView, flatViewToAgentsModels } from "../lib/openclawAgentsModels"
 import { PROVIDERS, getProvider } from "../constants/providers"
-import { providerLabel } from "../lib/providerLabel"
 import { ModelIdField } from "./ModelIdField"
 import { CreateOpenClawInstanceDialog } from "./CreateOpenClawInstanceDialog"
 import { InstanceGatewayLogPanel } from "./InstanceGatewayLogPanel"
@@ -868,7 +867,7 @@ export function AgentView() {
     const name = (m as LLMModelConfig).name
     if (name && String(name).trim()) return String(name).trim()
     const provider = (m as LLMModelConfig).provider as string | undefined
-    const providerName = provider ? providerLabel(t, provider) : t("agentView.providerUnset")
+    const providerName = provider ? t(`providers.names.${provider}`) : t("agentView.providerUnset")
     const model = (m as LLMModelConfig).model
     if (model && String(model).trim()) return `${providerName} · ${model}`
     return providerName
@@ -1379,7 +1378,7 @@ export function AgentView() {
                                   onSelect={() => { setModelSaveError(null); handleAddModel(p.id) }}
                                   className="cursor-pointer rounded-lg"
                                 >
-                                  {providerLabel(t, p.id)}
+                                  {t(`providers.names.${p.id}`)}
                                 </DropdownMenuItem>
                               ))}
                             </DropdownMenuContent>
@@ -1412,7 +1411,7 @@ export function AgentView() {
                                     onSelect={() => { setModelSaveError(null); handleAddModel(p.id) }}
                                     className="cursor-pointer rounded-lg"
                                   >
-                                    {providerLabel(t, p.id)}
+                                    {t(`providers.names.${p.id}`)}
                                   </DropdownMenuItem>
                                 ))}
                               </DropdownMenuContent>
@@ -1466,7 +1465,7 @@ export function AgentView() {
                                       <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-app-muted">
                                         <span className="rounded border border-app-border bg-app-surface px-1.5 py-0.5">
                                           {(raw as LLMModelConfig).provider
-                                            ? providerLabel(t, String((raw as LLMModelConfig).provider))
+                                            ? t(`providers.names.${String((raw as LLMModelConfig).provider)}`)
                                             : "—"}
                                         </span>
                                         <span className={configured ? "text-emerald-500/90" : "text-amber-500/90"}>

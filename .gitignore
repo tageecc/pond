@@ -71,6 +71,10 @@ src-tauri/WixTools/
 # ========================================
 *.tmp
 *.temp
+# tauri icon 在未走 icons:build 清理时可能生成
+src-tauri/icons/ios/
+src-tauri/icons/android/
+src-tauri/icons/64x64.png
 .env
 .env.local
 .env.*.local

@@ -26,7 +26,6 @@ import {
 import { ExternalLink, Loader2, Sparkles, Download, ChevronRight, ChevronDown } from "lucide-react"
 import { cn } from "../lib/utils"
 import { PROVIDERS, getProvider } from "../constants/providers"
-import { providerLabel } from "../lib/providerLabel"
 import { ModelIdField } from "./ModelIdField"
 import type { OpenClawConfig } from "../types"
 import { hasConfiguredModel as hasConfiguredModelFromConfig } from "../lib/openclawAgentsModels"
@@ -200,7 +199,7 @@ export function Onboarding() {
                       variant="outline"
                       className="h-10 w-full justify-between rounded-lg border-app-border bg-app-elevated text-app-text text-sm hover:bg-app-hover [&>svg]:opacity-80"
                     >
-                      <span>{providerLabel(t, providerId)}</span>
+                      <span>{t(`providers.names.${providerId}`)}</span>
                       <ChevronDown className="h-4 w-4 shrink-0" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -212,7 +211,7 @@ export function Onboarding() {
                         onSelect={() => { setProviderId(p.id); setError(null) }}
                         className="cursor-pointer rounded-lg text-app-text focus:bg-claw-500/10 focus:text-app-text"
                       >
-                        {providerLabel(t, p.id)}
+                        {t(`providers.names.${p.id}`)}
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuContent>
@@ -246,7 +245,7 @@ export function Onboarding() {
           <Card className="bg-app-surface">
             <CardHeader className="pb-2 pt-5 px-5">
               <CardTitle className="text-sm font-semibold text-app-text">{t("onboarding.enterApiKey")}</CardTitle>
-              <CardDescription className="text-xs text-app-muted">{t("onboarding.enterApiKeyDesc", { name: providerLabel(t, providerId) })}</CardDescription>
+              <CardDescription className="text-xs text-app-muted">{t("onboarding.enterApiKeyDesc", { name: t(`providers.names.${providerId}`) })}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 px-5 pb-5">
               <Button
@@ -257,7 +256,7 @@ export function Onboarding() {
                 onClick={openKeyUrl}
               >
                 <ExternalLink className="h-3.5 w-3.5" />
-                {t("onboarding.getKeyAt", { name: providerLabel(t, providerId) })}
+                {t("onboarding.getKeyAt", { name: t(`providers.names.${providerId}`) })}
               </Button>
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-app-muted">API Key</label>

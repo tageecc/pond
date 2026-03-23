@@ -97,7 +97,6 @@ function ModelCardIcon({ providerId, size = 40 }: { providerId?: string; size?: 
 }
 
 import { PROVIDERS, getProvider } from "../constants/providers"
-import { providerLabel } from "../lib/providerLabel"
 import { ModelIdField } from "./ModelIdField"
 import type { TFunction } from "i18next"
 
@@ -119,7 +118,7 @@ function getModelDisplayName(
   if (name && String(name).trim()) return String(name).trim()
   const provider = (m as LLMModelConfig).provider as string | undefined
   const providerName = provider
-    ? providerLabel(t, provider)
+    ? t(`providers.names.${provider}`)
     : t("agentView.providerUnset")
   const model = (m as LLMModelConfig).model
   if (model && String(model).trim()) return `${providerName} · ${model}`
@@ -367,7 +366,7 @@ export function AIConfig() {
                   }}
                   className="cursor-pointer rounded-lg"
                 >
-                  {providerLabel(t, p.id)}
+                  {t(`providers.names.${p.id}`)}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
@@ -404,7 +403,7 @@ export function AIConfig() {
                     }}
                     className="cursor-pointer rounded-lg"
                   >
-                    {providerLabel(t, p.id)}
+                    {t(`providers.names.${p.id}`)}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
@@ -450,7 +449,7 @@ export function AIConfig() {
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-app-muted">
                         <span className="rounded-full border border-app-border bg-app-elevated/80 px-2 py-0.5 text-app-muted">
                           {(raw as LLMModelConfig).provider
-                            ? providerLabel(t, String((raw as LLMModelConfig).provider))
+                            ? t(`providers.names.${String((raw as LLMModelConfig).provider)}`)
                             : "—"}
                         </span>
                         <span className={configured ? "text-emerald-500/90" : "text-amber-500/90"}>

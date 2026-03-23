@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import type { TFunction } from "i18next";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
 import { useAppStore } from "../stores/appStore";
@@ -97,11 +96,6 @@ const CHANNEL_FORM_FIELDS: Record<
   twitch: "generic",
   bluebubbles: "generic",
 };
-
-function getChannelSteps(t: TFunction, typeId: ChannelTypeId): string[] {
-  const v = t(`configWizard.channelSteps.${typeId}`, { returnObjects: true });
-  return Array.isArray(v) ? (v as string[]) : [];
-}
 
 function channelTypeFromTopKey(instanceId: string): ChannelTypeId {
   if (!OPENCLAW_CHANNEL_ID_SET.has(instanceId)) {
@@ -507,8 +501,11 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
               const selected = selectedId === id;
               const typeId = channelTypeFromTopKey(id);
               const displayName = getInstanceDisplayName(raw, id, channelTypeLabel);
+              const stepRows = t(`configWizard.channelSteps.${typeId}`, {
+                returnObjects: true,
+              });
               const instructions = {
-                steps: getChannelSteps(t, typeId),
+                steps: Array.isArray(stepRows) ? (stepRows as string[]) : [],
                 fields: CHANNEL_FORM_FIELDS[typeId],
               };
               return (
@@ -1271,26 +1268,33 @@ export function HooksManager({ embedded }: { embedded?: boolean }) {
             <div className="flex items-center gap-2.5">
               <GitMerge className="h-4 w-4 text-claw-500 shrink-0" />
               <div>
-                <p className="font-medium text-app-text">{t("configWizard.hooksList")}</p>
+                <p className="font-medium text-app-text">{t("configWizard.hooksTitle")}</p>
                 <p className="text-xs text-app-muted">{t("configWizard.hooksHint")}</p>
               </div>
             </div>
+            <div className="flex items-center gap-3">
+              {hooksLoading && showList && (
+                <span className="text-xs text-app-muted">{t("configWizard.refreshing")}</span>
+              )}
             <Switch
               checked={internalEnabled}
               onCheckedChange={setInternalEnabled}
               aria-label={t("configWizard.internalHooks")}
             />
+            </div>
           </div>
         )}
         <div className="space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-xs font-medium uppercase tracking-wider text-app-muted">
-              {t("configWizard.hooksList")}
-            </p>
-            {hooksLoading && showList && (
-              <span className="text-xs text-app-muted">{t("configWizard.refreshing")}</span>
-            )}
-          </div>
+          {embedded && (
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs font-medium uppercase tracking-wider text-app-muted">
+                {t("configWizard.hooksList")}
+              </p>
+              {hooksLoading && showList && (
+                <span className="text-xs text-app-muted">{t("configWizard.refreshing")}</span>
+              )}
+            </div>
+          )}
           {showFullLoading ? (
             <div className="rounded-xl border border-app-border bg-app-surface px-5 py-8 text-center text-sm text-app-muted">
               {t("configWizard.loading")}

@@ -1,4 +1,5 @@
 import { useEffect } from "react"
+import type { Submenu } from "@tauri-apps/api/menu"
 import { useTranslation } from "react-i18next"
 import { Toaster } from "@/components/ui/sonner"
 import { useAppStore } from "./stores/appStore"
@@ -118,7 +119,7 @@ function App() {
     void import("@tauri-apps/api/menu").then(
       async ({ Menu, Submenu, MenuItem, PredefinedMenuItem }) => {
         const openPrefs = () => useAppStore.getState().setPreferencesOpen(true)
-        const buildPondSubmenu = async () => {
+        const buildPondAppMenuItems = async () => {
           const sep = await PredefinedMenuItem.new({ item: "Separator" })
           const prefItem = await MenuItem.new({
             id: "preferences",
@@ -127,10 +128,7 @@ function App() {
             action: openPrefs,
           })
           const quitItem = await PredefinedMenuItem.new({ item: "Quit" })
-          return Submenu.new({
-            text: t("menu.pond"),
-            items: [prefItem, sep, quitItem],
-          })
+          return [prefItem, sep, quitItem]
         }
         const buildEditAndPondMenu = async () => {
           const editSub = await Submenu.new({
@@ -145,12 +143,19 @@ function App() {
               await PredefinedMenuItem.new({ item: "SelectAll" }),
             ],
           })
-          const pondSub = await buildPondSubmenu()
-          return Menu.new({ items: [editSub, pondSub] })
+          const pondSub = await Submenu.new({
+            text: t("menu.pond"),
+            items: await buildPondAppMenuItems(),
+          })
+          return Menu.new({ items: [pondSub, editSub] })
         }
         try {
           const menu = await Menu.default()
-          await menu.append(await buildPondSubmenu())
+          const top = await menu.items()
+          const appMenu = top[0]
+          if (appMenu?.kind === "Submenu") {
+            await (appMenu as Submenu).append(await buildPondAppMenuItems())
+          }
           if (!cancelled) await menu.setAsAppMenu()
         } catch {
           const menu = await buildEditAndPondMenu()

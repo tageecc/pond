@@ -1,7 +1,6 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Clock, CheckCircle2, XCircle, Loader2, MessageSquare, Wrench, Brain, ChevronDown, ChevronUp } from "lucide-react"
-import type { TFunction } from "i18next"
 import { cn } from "../lib/utils"
 import { Button } from "./ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
@@ -81,10 +80,6 @@ function getStepColor(type: ExecutionStepType, status: ExecutionStepStatus) {
   }
 }
 
-function getStepLabel(t: TFunction, type: ExecutionStepType) {
-  return t(`executionTimeline.stepTypes.${type}`)
-}
-
 function formatDuration(ms: number): string {
   if (ms < 1000) return `${ms}ms`
   if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`
@@ -146,7 +141,7 @@ function StepItem({
             "font-medium",
             getStepColor(step.type, step.status)
           )}>
-            {getStepLabel(t, step.type)}
+            {t(`executionTimeline.stepTypes.${step.type}`)}
           </span>
           <span className="text-[11px] text-app-muted">
             {formatTimestamp(step.timestamp, i18n.language)}

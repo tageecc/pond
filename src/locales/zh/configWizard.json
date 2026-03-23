@@ -80,6 +80,7 @@
     "saveConfig": "保存配置",
     "hooksLoadFailed": "未能列出技能",
     "hooksEmpty": "未发现 Hooks（工作区 / 托管 / 内置目录）",
+    "hooksTitle": "Hooks",
     "hooksList": "Hooks 列表",
     "refreshing": "刷新中…",
     "loading": "加载中…",
