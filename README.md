@@ -1,10 +1,10 @@
-<div align="center">
-
 # Pond
 
-**OpenClaw runs on disk. Pond runs the control plane.**
+> **OpenClaw runs on disk. Pond runs the control plane.**
 
-<br/>
+| [简体中文](./README_zh.md)
+
+<div align="center">
 
 [![GitHub Release](https://img.shields.io/github/v/release/tageecc/pond)](https://github.com/tageecc/pond/releases)
 [![License](https://img.shields.io/github/license/tageecc/pond)](https://github.com/tageecc/pond/blob/main/LICENSE)
@@ -12,8 +12,6 @@
 [![pnpm](https://img.shields.io/badge/pnpm-9-f69220?logo=pnpm)](https://pnpm.io/)
 [![GitHub Stars](https://img.shields.io/github/stars/tageecc/pond)](https://github.com/tageecc/pond/stargazers)
 [![GitHub Issues](https://img.shields.io/github/issues/tageecc/pond)](https://github.com/tageecc/pond/issues)
-
-<br/>
 
 **Pond is a native desktop shell for [OpenClaw](https://docs.openclaw.ai)**—built so you are not stuck in five terminals and three config files when you scale from one bot to **many agents** and **many instances** on the same machine.
 
@@ -189,11 +187,3 @@ Issues and PRs are welcome. Run `pnpm exec tsc --noEmit` before you open a PR. S
 ## License
 
 [MIT](LICENSE)
-
----
-
-**Links**
-
-- Repository: <https://github.com/tageecc/pond>
-- OpenClaw: <https://docs.openclaw.ai>
-- [README in Chinese](./README_zh.md)

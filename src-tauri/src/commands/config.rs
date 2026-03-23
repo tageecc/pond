@@ -613,14 +613,6 @@ pub fn import_config(import_path: String, instance_id: String) -> Result<(), Str
     Ok(())
 }
 
-/// App data dir (chat, spend, etc.); matches Tauri app data layout.
-#[tauri::command]
-pub fn get_config_dir_path() -> Result<String, String> {
-    paths::get_app_data_dir()
-        .map(|p| p.to_string_lossy().to_string())
-        .map_err(|e| e.to_string())
-}
-
 /// Whether any instance dir exists (`~/.openclaw` or `~/.openclaw-*`).
 #[tauri::command]
 pub fn detect_system_openclaw() -> Result<serde_json::Value, String> {
@@ -669,24 +661,6 @@ pub fn import_system_openclaw_config(app_handle: AppHandle) -> Result<(), String
     let ws = paths::workspace_dir(Some("default"))?;
     let ws_str = ws.to_string_lossy().to_string();
     workspace::run_openclaw_agents_add_sync(&app_handle, "default", "main", &ws_str, None)?;
-    Ok(())
-}
-
-/// Open app data dir with the OS default handler (Finder / Explorer / xdg-open).
-#[tauri::command]
-pub fn open_config_dir() -> Result<(), String> {
-    let dir = paths::get_app_data_dir().map_err(|e| e.to_string())?;
-    let path = dir.as_os_str();
-
-    #[cfg(target_os = "macos")]
-    std::process::Command::new("open").arg(path).spawn().map_err(|e| e.to_string())?;
-
-    #[cfg(windows)]
-    std::process::Command::new("explorer").arg(path).spawn().map_err(|e| e.to_string())?;
-
-    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
-    std::process::Command::new("xdg-open").arg(path).spawn().map_err(|e| e.to_string())?;
-
     Ok(())
 }
 

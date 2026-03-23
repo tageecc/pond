@@ -168,8 +168,6 @@ pub fn run() {
             config::set_exit_preferences,
             config::export_config,
             config::import_config,
-            config::get_config_dir_path,
-            config::open_config_dir,
             config::detect_system_openclaw,
             config::import_system_openclaw_config,
             config::import_discovered_instance,

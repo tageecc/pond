@@ -1,10 +1,10 @@
-<div align="center">
-
 # Pond
 
-**OpenClaw runs on disk. Pond runs the control plane.**
+> **OpenClaw runs on disk. Pond runs the control plane.**
 
-<br/>
+| [English](./README.md)
+
+<div align="center">
 
 [![GitHub Release](https://img.shields.io/github/v/release/tageecc/pond)](https://github.com/tageecc/pond/releases)
 [![License](https://img.shields.io/github/license/tageecc/pond)](https://github.com/tageecc/pond/blob/main/LICENSE)
@@ -12,8 +12,6 @@
 [![pnpm](https://img.shields.io/badge/pnpm-9-f69220?logo=pnpm)](https://pnpm.io/)
 [![GitHub Stars](https://img.shields.io/github/stars/tageecc/pond)](https://github.com/tageecc/pond/stargazers)
 [![GitHub Issues](https://img.shields.io/github/issues/tageecc/pond)](https://github.com/tageecc/pond/issues)
-
-<br/>
 
 **Pond 是 [OpenClaw](https://docs.openclaw.ai) 的桌面控制面**：当你从「一个 bot」升级到 **多智能体**、**多实例** 时，不必在多个终端和零散配置里来回切换——**团队管理、Gateway、对话、概览与数据分析** 都在一个原生窗口里完成。
 
@@ -171,9 +169,3 @@ Rust：`src-tauri/src/commands/` · 注册：`lib.rs` · 界面：`src/component
 ## 许可证
 
 [MIT](LICENSE)
-
----
-
-- 仓库：<https://github.com/tageecc/pond>
-- OpenClaw 文档：<https://docs.openclaw.ai>
-- [English README](./README.md)

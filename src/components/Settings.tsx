@@ -129,18 +129,9 @@ export function Settings() {
       </div>
       <div className="h-px bg-app-border" />
 
-      {/* App data dir (chat, usage, etc.) */}
-      <div className="pt-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start gap-2 text-app-muted hover:text-app-text"
-          onClick={openConfigDir}
-        >
-          <FolderOpen className="h-4 w-4 shrink-0" />
-          <span className="truncate">{configDirPath || "打开应用数据目录"}</span>
-        </Button>
-      </div>
+      <p className="py-3 text-center text-xs tabular-nums text-app-muted">
+        {appVersion ? `v${appVersion}` : "…"}
+      </p>
     </div>
   )
 }
