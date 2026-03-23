@@ -46,10 +46,13 @@ Filenames follow Tauri bundle output (look for `aarch64`, `x86_64`, or `arm64` i
 
 ## Local smoke build
 
+若环境里存在 `CI=1`（部分 IDE/自动化会注入），直接运行 `pnpm tauri build` 可能报错 `invalid value '1' for '--ci'`。请使用：
+
 ```bash
 pnpm install
-pnpm build
-pnpm tauri build
+pnpm tauri:build
 ```
+
+或先清除：`env -u CI pnpm exec tauri build`。
 
 Artifacts appear under `src-tauri/target/release/bundle/`.
