@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: OpenClaw upstream documentation
+    url: https://docs.openclaw.ai
+    about: Runtime, protocol, and OpenClaw config questions may belong upstream first.

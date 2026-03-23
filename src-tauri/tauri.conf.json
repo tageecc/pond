@@ -1,0 +1,43 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Pond",
+  "version": "1.0.0",
+  "identifier": "ai.clawhub.pond",
+  "build": {
+    "beforeDevCommand": "pnpm dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "pnpm build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "",
+        "width": 1024,
+        "height": 768,
+        "resizable": true,
+        "fullscreen": false,
+        "minWidth": 800,
+        "minHeight": 600,
+        "decorations": true,
+        "titleBarStyle": "Overlay",
+        "backgroundColor": "#f4f4f5"
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' data: https:; frame-src 'self' http://127.0.0.1:6080 http://127.0.0.1:6081 http://127.0.0.1:6082 http://127.0.0.1:6083 http://127.0.0.1:6084 http://127.0.0.1:6085 https://127.0.0.1:6080 https://127.0.0.1:6081 https://127.0.0.1:6082 https://127.0.0.1:6083 https://127.0.0.1:6084 https://127.0.0.1:6085 http://localhost:6080 http://localhost:6081 https://localhost:6080 https://localhost:6081; connect-src 'self' http://127.0.0.1:6080 http://127.0.0.1:6081 http://127.0.0.1:6082 http://127.0.0.1:18789 http://127.0.0.1:18790 http://127.0.0.1:18791 https://127.0.0.1:6080 https://127.0.0.1:6081 https://127.0.0.1:6082 http://localhost:6080 http://localhost:6081 http://localhost:18789 http://localhost:18790 http://localhost:18791 wss://127.0.0.1:6080 wss://127.0.0.1:6081 ws://127.0.0.1:6080 ws://127.0.0.1:6081 ws://localhost:6080 ws://localhost:6081 https://clawhub.ai"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["msi", "dmg", "appimage"],
+    "resources": ["../resources/"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}

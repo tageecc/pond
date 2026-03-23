@@ -1,0 +1,76 @@
+# ========================================
+# 构建产物与缓存
+# ========================================
+dist/
+dist-ssr/
+node_modules/
+.cache/
+target/
+*.local
+
+# ========================================
+# 日志文件
+# ========================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ========================================
+# 资源文件（运行时动态下载）
+# ========================================
+# 所有 resources 下的二进制和大文件不提交
+resources/openclaw/
+resources/node/
+resources/colima/
+resources/webtop/
+resources/*.tar
+resources/*.zst
+resources/*.zip
+resources/*.gz
+resources/*.xz
+resources/scripts/
+
+# 但保留容器配置文件
+!resources/containers/
+
+# ========================================
+# 编辑器与 IDE
+# ========================================
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+*~
+
+# ========================================
+# 操作系统文件
+# ========================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ========================================
+# Tauri 构建产物
+# ========================================
+src-tauri/target/
+src-tauri/WixTools/
+
+# ========================================
+# 临时文件
+# ========================================
+*.tmp
+*.temp
+.env
+.env.local
+.env.*.local

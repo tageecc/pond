@@ -1,0 +1,325 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    line-height: 1.6;
+    font-weight: 400;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    --chart-1: oklch(0.32 0 none);
+    --chart-2: oklch(0.41 0 none);
+    --chart-3: oklch(0.54 0 none);
+    --chart-4: oklch(0.71 0 none);
+    --chart-5: oklch(0.89 0 none);
+    --chart-background: oklch(1 0 0);
+    --chart-foreground: oklch(0.145 0.004 285);
+    --chart-foreground-muted: oklch(0.55 0.014 260);
+    --chart-line-primary: var(--chart-1);
+    --chart-line-secondary: var(--chart-2);
+    --chart-crosshair: oklch(0.4 0.1828 274.34);
+    --chart-grid: oklch(0.9 0 0);
+    --chart-tooltip-background: oklch(0.21 0.006 285 / 0.8);
+    --chart-tooltip-foreground: oklch(0.985 0 0);
+    --chart-tooltip-muted: oklch(0.65 0.01 260);
+    --chart-marker-background: oklch(0.97 0.005 260);
+    --chart-marker-border: oklch(0.85 0.01 260);
+    --chart-marker-foreground: oklch(0.3 0.01 260);
+    --chart-ring-background: oklch(0.9 0.005 260 / 0.25);
+    --chart-label: oklch(0.45 0.01 260);
+  }
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+  }
+  html, body, #root {
+    height: 100%;
+    overflow: hidden;
+  }
+  body {
+    @apply text-foreground;
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    font-family: theme('fontFamily.sans');
+  }
+  .dark body {
+    background-color: var(--app-bg);
+    color: var(--app-text);
+  }
+  body {
+    background-color: var(--app-bg);
+    @apply text-foreground;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  .dark {
+    --chart-1: oklch(1 0 none);
+    --chart-2: oklch(0.73 0 none);
+    --chart-3: oklch(0.51 0 none);
+    --chart-4: oklch(0.39 0 none);
+    --chart-5: oklch(0.32 0 none);
+    --chart-background: oklch(0.145 0 0);
+    --chart-foreground: oklch(0.45 0 0);
+    --chart-foreground-muted: oklch(0.65 0.01 260);
+    --chart-crosshair: oklch(0.45 0 0);
+    --chart-grid: oklch(0.25 0 0);
+    --chart-marker-background: oklch(0.25 0.01 260);
+    --chart-marker-border: oklch(0.4 0.01 260);
+    --chart-marker-foreground: oklch(0.9 0 0);
+    --chart-ring-background: oklch(0.35 0.01 260 / 0.25);
+    --chart-label: oklch(0.75 0.01 260);
+  }
+}
+
+/* Title bar drag (macOS WebView -webkit-app-region), glass, status dots */
+.titlebar-drag {
+  -webkit-app-region: drag;
+}
+.titlebar-no-drag {
+  -webkit-app-region: no-drag;
+}
+.glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.dark .glass {
+  background: rgba(26, 26, 29, 0.8);
+}
+
+/* Sidebar glass; borders/shadows from Tailwind */
+.sidebar-glass {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.dark .sidebar-glass {
+  background: rgba(17, 17, 19, 0.75);
+}
+
+/* Instance rail + main cards: shared radius, border, shadow */
+.pond-panel-chrome {
+  border-radius: 1rem;
+  border: 1px solid rgb(255 255 255 / 0.6);
+  box-shadow:
+    0 4px 28px -12px rgba(0, 0, 0, 0.14),
+    inset 0 1px 0 rgb(255 255 255 / 0.65);
+}
+.dark .pond-panel-chrome {
+  border-color: rgb(255 255 255 / 0.07);
+  box-shadow:
+    0 8px 36px -14px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgb(255 255 255 / 0.04);
+}
+
+.sidebar-glass-panel {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(228, 228, 231, 0.5);
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+}
+.dark .sidebar-glass-panel {
+  background: rgba(26, 26, 29, 0.5);
+  border-color: rgba(36, 36, 40, 0.6);
+}
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.status-dot.running {
+  background: #4ade80;
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.6);
+  animation: pulse 2s infinite;
+}
+.status-dot.stopped {
+  background: #ef4444;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+.icon-button {
+  @apply p-2 rounded-lg transition-colors hover:bg-app-hover active:opacity-80;
+}
+.scroll-container {
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+/* Sonner icons: match app status (success = running green, error = destructive) */
+[data-sonner-toast][data-type="success"] [data-icon] {
+  color: #4ade80; /* same as .status-dot.running */
+}
+[data-sonner-toast][data-type="error"] [data-icon] {
+  color: hsl(var(--destructive));
+}
+[data-sonner-toast][data-type="warning"] [data-icon] {
+  color: hsl(var(--chart-4));
+}
+[data-sonner-toast][data-type="info"] [data-icon] {
+  color: hsl(var(--chart-1));
+}
+
+/* Toast grid: icon | text; action buttons row below text, left-aligned, content-sized */
+[data-sonner-toast][data-styled] {
+  display: grid !important;
+  grid-template-columns: auto 1fr;
+  column-gap: 0.5rem;
+  row-gap: 0.5rem;
+  align-items: start;
+}
+[data-sonner-toast][data-styled] [data-icon] {
+  grid-column: 1;
+  grid-row: 1;
+  margin-top: 0.125rem;
+}
+[data-sonner-toast][data-styled] [data-content] {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+}
+[data-sonner-toast][data-styled] [data-button][data-cancel] {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: start;
+  margin: 0 !important;
+  width: auto;
+  max-width: 100%;
+}
+[data-sonner-toast][data-styled] [data-button][data-action] {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: start;
+  margin: 0 !important;
+  width: auto;
+  max-width: 100%;
+}
+/* When both cancel and action: cancel row 2, action row 3 */
+[data-sonner-toast][data-styled] [data-button][data-cancel] ~ [data-button][data-action] {
+  grid-row: 3;
+}
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@layer base {
+  :root {
+    /* Light theme app semantic colors */
+    --app-bg: #f4f4f5;
+    --app-surface: #ffffff;
+    --app-elevated: #ffffff;
+    --app-border: #e4e4e7;
+    --app-text: #18181b;
+    --app-muted: #71717a;
+    --app-hover: #e4e4e7;
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 7 83% 59%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+    
+    /* Bklit UI Chart Variables */
+    --chart-background: oklch(1 0 0);
+    --chart-foreground: oklch(0.145 0.004 285);
+    --chart-foreground-muted: oklch(0.55 0.014 260);
+    --chart-line-primary: oklch(0.623 0.214 255);
+    --chart-line-secondary: oklch(0.705 0.015 265);
+    --chart-crosshair: oklch(0.4 0.1828 274.34);
+    --chart-grid: oklch(0.9 0 0);
+    --chart-tooltip-background: oklch(0.21 0.006 285 / 0.8);
+    --chart-tooltip-foreground: oklch(0.985 0 0);
+    --chart-tooltip-muted: oklch(0.65 0.01 260);
+    --chart-marker-background: oklch(0.97 0.005 260);
+    --chart-marker-border: oklch(0.85 0.01 260);
+    --chart-marker-foreground: oklch(0.3 0.01 260);
+    --chart-marker-badge-background: oklch(0 0 0);
+    --chart-marker-badge-foreground: oklch(1 0 0);
+    --chart-ring-background: oklch(0.9 0.005 260 / 0.25);
+    --chart-label: oklch(0.45 0.01 260);
+    --chart-segment-background: oklch(0.5 0 0 / 0.06);
+    --chart-segment-line: oklch(0.5 0 0 / 0.25);
+  }
+  .dark {
+    --app-bg: #0a0a0b;
+    --app-surface: #111113;
+    --app-elevated: #1a1a1d;
+    --app-border: #242428;
+    --app-text: #e5e5e5;
+    --app-muted: #a1a1aa;
+    --app-hover: #2e2e33;
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 7 83% 59%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    
+    /* Bklit UI Chart Variables (Dark) */
+    --chart-background: oklch(0.145 0 0);
+    --chart-foreground: oklch(0.45 0 0);
+    --chart-foreground-muted: oklch(0.65 0.01 260);
+    --chart-crosshair: oklch(0.45 0 0);
+    --chart-grid: oklch(0.25 0 0);
+    --chart-marker-background: oklch(0.25 0.01 260);
+    --chart-marker-border: oklch(0.4 0.01 260);
+    --chart-marker-foreground: oklch(0.9 0 0);
+    --chart-marker-badge-background: oklch(1 0 0);
+    --chart-marker-badge-foreground: oklch(0.15 0 0);
+    --chart-ring-background: oklch(0.35 0.01 260 / 0.25);
+    --chart-label: oklch(0.75 0.01 260);
+    --chart-segment-background: oklch(1 0 0 / 0.06);
+    --chart-segment-line: oklch(1 0 0 / 0.25);
+  }
+}
