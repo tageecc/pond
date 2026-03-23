@@ -13,6 +13,7 @@ import { Settings } from "./components/Settings"
 import { AppTitleBar } from "./components/AppTitleBar"
 import { InstanceSidebar } from "./components/InstanceSidebar"
 import { Dialog, DialogContent, DialogTitle } from "./components/ui/dialog"
+import { installTauriAppMenu } from "@/lib/tauriAppMenu"
 import "./styles/globals.css"
 
 function isTauri(): boolean {
@@ -81,7 +82,7 @@ function MainApp() {
 }
 
 function App() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const locale = useAppStore((s) => s.locale)
   const needsOnboarding = useAppStore((s) => s.needsOnboarding)
   const pendingAgentId = useAppStore((s) => s.pendingAgentId)
@@ -115,139 +116,11 @@ function App() {
   useEffect(() => {
     if (!isTauri()) return
     let cancelled = false
-    void import("@tauri-apps/api/menu").then(
-      async ({ Menu, Submenu, MenuItem, PredefinedMenuItem }) => {
-        const openPrefs = () => useAppStore.getState().setPreferencesOpen(true)
-        const sep = () => PredefinedMenuItem.new({ item: "Separator" })
-
-        const pondSub = await Submenu.new({
-          text: t("menu.pond"),
-          items: [
-            await PredefinedMenuItem.new({
-              item: { About: { name: "Pond" } },
-              text: t("menu.about"),
-            }),
-            await PredefinedMenuItem.new({
-              item: "Services",
-              text: t("menu.services"),
-            }),
-            await sep(),
-            await PredefinedMenuItem.new({
-              item: "Hide",
-              text: t("menu.hide"),
-            }),
-            await PredefinedMenuItem.new({
-              item: "HideOthers",
-              text: t("menu.hideOthers"),
-            }),
-            await PredefinedMenuItem.new({
-              item: "ShowAll",
-              text: t("menu.showAll"),
-            }),
-            await sep(),
-            await MenuItem.new({
-              id: "preferences",
-              text: t("menu.preferences"),
-              accelerator: "CmdOrControl+,",
-              action: openPrefs,
-            }),
-            await sep(),
-            await PredefinedMenuItem.new({
-              item: "Quit",
-              text: t("menu.quit"),
-            }),
-          ],
-        })
-
-        const fileSub = await Submenu.new({
-          text: t("menu.file"),
-          items: [
-            await PredefinedMenuItem.new({
-              item: "CloseWindow",
-              text: t("menu.closeWindow"),
-            }),
-          ],
-        })
-
-        const editSub = await Submenu.new({
-          text: t("menu.edit"),
-          items: [
-            await PredefinedMenuItem.new({
-              item: "Undo",
-              text: t("menu.undo"),
-            }),
-            await PredefinedMenuItem.new({
-              item: "Redo",
-              text: t("menu.redo"),
-            }),
-            await sep(),
-            await PredefinedMenuItem.new({
-              item: "Cut",
-              text: t("menu.cut"),
-            }),
-            await PredefinedMenuItem.new({
-              item: "Copy",
-              text: t("menu.copy"),
-            }),
-            await PredefinedMenuItem.new({
-              item: "Paste",
-              text: t("menu.paste"),
-            }),
-            await PredefinedMenuItem.new({
-              item: "SelectAll",
-              text: t("menu.selectAll"),
-            }),
-          ],
-        })
-
-        const viewSub = await Submenu.new({
-          text: t("menu.view"),
-          items: [
-            await PredefinedMenuItem.new({
-              item: "Fullscreen",
-              text: t("menu.toggleFullScreen"),
-            }),
-          ],
-        })
-
-        const windowSub = await Submenu.new({
-          text: t("menu.window"),
-          items: [
-            await PredefinedMenuItem.new({
-              item: "Minimize",
-              text: t("menu.minimize"),
-            }),
-            await PredefinedMenuItem.new({
-              item: "Maximize",
-              text: t("menu.zoom"),
-            }),
-          ],
-        })
-
-        const helpSub = await Submenu.new({
-          text: t("menu.help"),
-          items: [],
-        })
-
-        const menu = await Menu.new({
-          items: [pondSub, fileSub, editSub, viewSub, windowSub, helpSub],
-        })
-        if (cancelled) return
-        await menu.setAsAppMenu()
-
-        const isMac =
-          typeof navigator !== "undefined" &&
-          (navigator.platform?.toLowerCase().includes("mac") ?? false)
-        if (isMac && !cancelled) {
-          await windowSub.setAsWindowsMenuForNSApp()
-          await helpSub.setAsHelpMenuForNSApp()
-        }
-      },
-    )
+    void installTauriAppMenu(t, () => cancelled)
     return () => {
       cancelled = true
     }
-  }, [locale, t, i18n.language])
+  }, [locale, t])
 
   useEffect(() => {
     if (!pendingAgentId) return
