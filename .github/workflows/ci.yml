@@ -50,18 +50,22 @@ jobs:
             label: macos-aarch64
             rust-target: aarch64-apple-darwin
             tauri-args: '--target aarch64-apple-darwin'
+            node-dist-triple: darwin-arm64
           - platform: macos-latest
             label: macos-x86_64
             rust-target: x86_64-apple-darwin
             tauri-args: '--target x86_64-apple-darwin'
+            node-dist-triple: darwin-x64
           - platform: ubuntu-22.04
             label: linux-x64
             rust-target: ''
             tauri-args: ''
+            node-dist-triple: linux-x64
           - platform: windows-latest
             label: windows-x64
             rust-target: ''
             tauri-args: ''
+            node-dist-triple: win-x64
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout
@@ -107,6 +111,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          POND_NODE_DIST_TRIPLE: ${{ matrix.node-dist-triple }}
         with:
           tagName: v__VERSION__
           releaseName: 'Pond v__VERSION__'

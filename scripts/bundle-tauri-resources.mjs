@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Copies the OpenClaw npm package and a matching Node.js binary into resources/
- * so the packaged app can run `openclaw` without relying on PATH (macOS .app has a minimal PATH).
+ * Copies OpenClaw from node_modules and the matching official Node binary into resources/.
+ * The Node **dist triple** must match the **Rust target** of the Tauri build (e.g. Intel mac
+ * DMG needs darwin-x64 even when built on an arm64 runner). CI sets POND_NODE_DIST_TRIPLE.
  */
 import {
   chmodSync,
@@ -26,7 +27,16 @@ const NODE_MINOR = 13
 const NODE_PATCH = 1
 const NODE_VERSION = `${NODE_MAJOR}.${NODE_MINOR}.${NODE_PATCH}`
 
-function platformTriple() {
+/** Official Node tarball/zip name segment, aligned with gateway.rs bundled_node_platform(). */
+const RUST_TRIPLE_TO_NODE_DIST = {
+  "aarch64-apple-darwin": "darwin-arm64",
+  "x86_64-apple-darwin": "darwin-x64",
+  "x86_64-unknown-linux-gnu": "linux-x64",
+  "aarch64-unknown-linux-gnu": "linux-arm64",
+  "x86_64-pc-windows-msvc": "win-x64",
+}
+
+function hostNodeDistTriple() {
   const p = process.platform
   const a = process.arch
   if (p === "darwin" && a === "arm64") return "darwin-arm64"
@@ -35,16 +45,23 @@ function platformTriple() {
   if (p === "linux" && a === "arm64") return "linux-arm64"
   if (p === "win32" && a === "x64") return "win-x64"
   if (p === "win32" && a === "ia32") return "win-x86"
-  throw new Error(`Unsupported OS/arch for bundling Node: ${p} ${a}`)
+  throw new Error(`Unsupported host OS/arch for bundling Node: ${p} ${a}`)
 }
 
-function bundledNodeDir() {
-  return join(RES, "node", platformTriple())
+function effectiveNodeDistTriple() {
+  const explicit = process.env.POND_NODE_DIST_TRIPLE?.trim()
+  if (explicit) return explicit
+  const rust =
+    process.env.TAURI_ENV_TARGET_TRIPLE?.trim() ||
+    process.env.TARGET?.trim() ||
+    process.env.CARGO_BUILD_TARGET?.trim()
+  if (rust && RUST_TRIPLE_TO_NODE_DIST[rust]) return RUST_TRIPLE_TO_NODE_DIST[rust]
+  return hostNodeDistTriple()
 }
 
-function bundledNodeExe() {
-  const dir = bundledNodeDir()
-  return process.platform === "win32" ? join(dir, "node.exe") : join(dir, "node")
+function bundledNodeExePath(triple) {
+  const dir = join(RES, "node", triple)
+  return triple.startsWith("win") ? join(dir, "node.exe") : join(dir, "node")
 }
 
 function resolveOpenclawSource() {
@@ -86,21 +103,25 @@ function extractNodeArchive(archivePath, triple) {
     }
     const base = `node-v${NODE_VERSION}-${triple}`
     const srcDir = join(tmp, base)
-    const pick =
-      process.platform === "win32" ? join(srcDir, "node.exe") : join(srcDir, "bin", "node")
+    const pick = triple.startsWith("win")
+      ? join(srcDir, "node.exe")
+      : join(srcDir, "bin", "node")
     if (!existsSync(pick)) {
       throw new Error(`Expected Node binary at ${pick}`)
     }
-    const dest = bundledNodeExe()
+    const dest = bundledNodeExePath(triple)
     mkdirSync(dirname(dest), { recursive: true })
     cpSync(pick, dest)
+    if (!triple.startsWith("win")) {
+      chmodSync(dest, 0o755)
+    }
   } finally {
     rmSync(tmp, { recursive: true, force: true })
   }
 }
 
 async function ensureBundledNode(triple) {
-  const dest = bundledNodeExe()
+  const dest = bundledNodeExePath(triple)
   if (existsSync(dest)) return
   const ext = triple.startsWith("win") ? "zip" : triple.startsWith("linux") ? "tar.xz" : "tar.gz"
   const name = `node-v${NODE_VERSION}-${triple}`
@@ -130,12 +151,14 @@ function copyOpenclaw(src) {
 }
 
 async function main() {
-  const triple = platformTriple()
+  const triple = effectiveNodeDistTriple()
+  console.log(
+    `Bundle Node dist triple: ${triple} (host ${process.platform}/${process.arch}; POND_NODE_DIST_TRIPLE=${process.env.POND_NODE_DIST_TRIPLE ?? ""} TARGET=${process.env.TARGET ?? ""})`,
+  )
   copyOpenclaw(resolveOpenclawSource())
   await ensureBundledNode(triple)
-  const n = bundledNodeExe()
+  const n = bundledNodeExePath(triple)
   if (!existsSync(n)) throw new Error(`Bundled Node not found at ${n}`)
-  if (process.platform !== "win32") chmodSync(n, 0o755)
   console.log(`Node runtime ready: ${n} (${statSync(n).size} bytes)`)
 }
 
