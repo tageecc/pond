@@ -85,7 +85,6 @@
       "openFolderAria": "打开 {{name}} 目录"
     },
     "instance": {
-      "deletedAllOnboarding": "已删除所有实例，正在返回引导界面...",
       "openDirTitle": "点击打开实例目录"
     },
     "saving": "保存中…",

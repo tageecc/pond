@@ -27,7 +27,7 @@ This project follows the [Contributor Covenant](CODE_OF_CONDUCT.md). By particip
 
 ```bash
 pnpm install
-pnpm tauri dev    # desktop + hot reload
+pnpm tauri:dev    # bundle OpenClaw + Node into resources/, then desktop + hot reload
 pnpm dev          # Vite only (no Tauri shell)
 ```
 
@@ -71,7 +71,7 @@ Frontend calls Rust with `invoke` from `@tauri-apps/api/core`. Commands are regi
 
 ## Debugging
 
-- Rust logs: terminal running `pnpm tauri dev`
+- Rust logs: terminal running `pnpm tauri:dev`
 - Frontend: DevTools in dev
 - Inspect OpenClaw JSON: `cat ~/.openclaw/openclaw.json` (adjust path per instance)
 

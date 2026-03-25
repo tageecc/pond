@@ -9,9 +9,14 @@ import {
   cpSync,
   createWriteStream,
   existsSync,
+  lstatSync,
   mkdirSync,
+  readdirSync,
+  readFileSync,
+  realpathSync,
   rmSync,
   statSync,
+  writeFileSync,
 } from "node:fs"
 import { tmpdir } from "node:os"
 import { join, dirname } from "node:path"
@@ -22,6 +27,9 @@ import { execFileSync } from "node:child_process"
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, "..")
 const RES = join(ROOT, "resources")
+/** Separate from `resources/` so Tauri WalkDir only scans this tree (no symlink dirs, no mixed junk). */
+const OPENCLAW_RUNTIME_ROOT = join(ROOT, "src-tauri", "openclaw-runtime")
+const OPENCLAW_DST = join(OPENCLAW_RUNTIME_ROOT, "node_modules", "openclaw")
 const NODE_MAJOR = 22
 const NODE_MINOR = 13
 const NODE_PATCH = 1
@@ -34,6 +42,7 @@ const RUST_TRIPLE_TO_NODE_DIST = {
   "x86_64-unknown-linux-gnu": "linux-x64",
   "aarch64-unknown-linux-gnu": "linux-arm64",
   "x86_64-pc-windows-msvc": "win-x64",
+  "aarch64-pc-windows-msvc": "win-arm64",
 }
 
 function hostNodeDistTriple() {
@@ -44,6 +53,7 @@ function hostNodeDistTriple() {
   if (p === "linux" && a === "x64") return "linux-x64"
   if (p === "linux" && a === "arm64") return "linux-arm64"
   if (p === "win32" && a === "x64") return "win-x64"
+  if (p === "win32" && a === "arm64") return "win-arm64"
   if (p === "win32" && a === "ia32") return "win-x86"
   throw new Error(`Unsupported host OS/arch for bundling Node: ${p} ${a}`)
 }
@@ -68,6 +78,38 @@ function resolveOpenclawSource() {
   const mod = join(ROOT, "node_modules", "openclaw")
   if (existsSync(join(mod, "openclaw.mjs"))) return mod
   throw new Error("openclaw not found under node_modules; run pnpm install from the repo root.")
+}
+
+/**
+ * Tauri bundles resources with walkdir::WalkDir, which does not descend into symlinked
+ * directories. A symlink `openclaw/dist` → pnpm store yields an .app with openclaw.mjs but no dist/.
+ */
+function assertNoSymlinksUnder(root, label) {
+  const stack = [root]
+  while (stack.length > 0) {
+    const dir = stack.pop()
+    let names
+    try {
+      names = readdirSync(dir)
+    } catch {
+      continue
+    }
+    for (const name of names) {
+      const p = join(dir, name)
+      let st
+      try {
+        st = lstatSync(p)
+      } catch {
+        continue
+      }
+      if (st.isSymbolicLink()) {
+        throw new Error(
+          `${label}: symlink at ${p} — Tauri skips symlinked dirs when collecting resources; rebuild with cp -RL (Unix) or cpSync dereference (Windows).`,
+        )
+      }
+      if (st.isDirectory()) stack.push(p)
+    }
+  }
 }
 
 async function downloadToFile(url, dest) {
@@ -138,15 +180,112 @@ async function ensureBundledNode(triple) {
 }
 
 function copyOpenclaw(src) {
-  const dst = join(RES, "openclaw")
-  if (existsSync(dst)) {
-    rmSync(dst, { recursive: true, force: true })
+  const dst = OPENCLAW_DST
+  const legacy = join(RES, "openclaw")
+  if (existsSync(legacy)) {
+    rmSync(legacy, { recursive: true, force: true })
   }
-  mkdirSync(RES, { recursive: true })
-  cpSync(src, dst, { recursive: true })
+  if (existsSync(OPENCLAW_RUNTIME_ROOT)) {
+    try {
+      rmSync(OPENCLAW_RUNTIME_ROOT, { recursive: true, force: true, maxRetries: 3 })
+    } catch (err) {
+      console.warn(`Failed to rm, using find/rm...`)
+      execFileSync("find", [OPENCLAW_RUNTIME_ROOT, "-type", "f", "-delete"], { stdio: "pipe" })
+      execFileSync("find", [OPENCLAW_RUNTIME_ROOT, "-depth", "-type", "d", "-exec", "rmdir", "{}", ";"], { stdio: "pipe" })
+    }
+  }
+  // Install openclaw in a clean environment with flat node_modules (no pnpm symlinks).
+  console.log(`Installing openclaw with pnpm (flat mode for bundling)...`)
+  const dstNodeModules = join(OPENCLAW_RUNTIME_ROOT, "node_modules")
+  const tmpInstall = join(OPENCLAW_RUNTIME_ROOT, ".tmp-install")
+  if (existsSync(tmpInstall)) {
+    rmSync(tmpInstall, { recursive: true, force: true })
+  }
+  mkdirSync(tmpInstall, { recursive: true })
+  // Create minimal package.json for openclaw
+  const openclawPkgPath = join(ROOT, "node_modules/openclaw/package.json")
+  const openclawVersion = JSON.parse(readFileSync(openclawPkgPath, "utf8")).version
+  const tmpPkgJson = join(tmpInstall, "package.json")
+  writeFileSync(tmpPkgJson, JSON.stringify({
+    "name": "openclaw-runtime",
+    "version": "1.0.0",
+    "dependencies": {
+      "openclaw": openclawVersion
+    }
+  }, null, 2))
+  // Install with pnpm --shamefully-hoist to create flat node_modules
+  console.log(`  Running pnpm install --shamefully-hoist...`)
+  execFileSync("pnpm", ["install", "--shamefully-hoist", "--prod"], { 
+    cwd: tmpInstall,
+    stdio: "pipe"
+  })
+  // Move the flat node_modules to destination
+  const tmpNodeModules = join(tmpInstall, "node_modules")
+  if (existsSync(dstNodeModules)) {
+    rmSync(dstNodeModules, { recursive: true, force: true })
+  }
+  renameSync(tmpNodeModules, dstNodeModules)
+  rmSync(tmpInstall, { recursive: true, force: true })
+  console.log(`  Installed openclaw with flat node_modules.`)
+  if (!existsSync(dst)) {
+    throw new Error(`openclaw not found at ${dst}`)
+  }
   if (!existsSync(join(dst, "openclaw.mjs"))) {
     throw new Error(`Bundled openclaw missing openclaw.mjs under ${dst}`)
   }
+  const entryJs = join(dst, "dist", "entry.js")
+  const entryMjs = join(dst, "dist", "entry.mjs")
+  if (!existsSync(entryJs) && !existsSync(entryMjs)) {
+    throw new Error(
+      `Bundled openclaw missing dist/entry.js (and entry.mjs) under ${dst}. ` +
+        "Reinstall openclaw (pnpm install) or fix node_modules before tauri build.",
+    )
+  }
+  // Fix package.json exports with null values (Node.js ESM loader crash).
+  console.log(`Fixing null exports in package.json files...`)
+  let fixed = 0
+  const fixExports = (pkgPath) => {
+    try {
+      const pkgJson = JSON.parse(readFileSync(pkgPath, "utf8"))
+      if (pkgJson.exports && typeof pkgJson.exports === "object") {
+        let changed = false
+        const removeNulls = (obj) => {
+          for (const key in obj) {
+            if (obj[key] === null) {
+              delete obj[key]
+              changed = true
+            } else if (typeof obj[key] === "object" && obj[key] !== null) {
+              removeNulls(obj[key])
+            }
+          }
+        }
+        removeNulls(pkgJson.exports)
+        if (changed) {
+          writeFileSync(pkgPath, JSON.stringify(pkgJson, null, 2))
+          fixed++
+        }
+      }
+    } catch {}
+  }
+  const walkAndFix = (dir, depth = 0) => {
+    if (depth > 10) return
+    for (const name of readdirSync(dir)) {
+      const p = join(dir, name)
+      let st
+      try {
+        st = lstatSync(p)
+      } catch {
+        continue
+      }
+      if (st.isDirectory()) {
+        const pkgPath = join(p, "package.json")
+        if (existsSync(pkgPath)) fixExports(pkgPath)
+        walkAndFix(p, depth + 1)
+      }
+    }
+  }
+  walkAndFix(dstNodeModules)
+  console.log(`  Fixed ${fixed} package.json files with null exports.`)
   console.log(`Copied OpenClaw package to ${dst}`)
 }
 

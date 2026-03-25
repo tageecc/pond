@@ -44,11 +44,19 @@ If you use OpenClaw seriously, you already split **profiles** (`~/.openclaw` vs 
 - [Stack](#stack)
 - [FAQ](#faq)
 - [Contributing](#contributing)
+- [Star History](#star-history)
 - [License](#license)
 
 ---
 
 ## Downloads
+
+### Releases
+
+| | |
+|--|--|
+| **All releases** | [github.com/tageecc/pond/releases](https://github.com/tageecc/pond/releases) |
+| **Latest (installers)** | [github.com/tageecc/pond/releases/latest](https://github.com/tageecc/pond/releases/latest) — open **Assets** and pick the file for your OS (macOS arm64 / x86_64 DMG, Windows `.msi`, Linux `.AppImage`). |
 
 Download installers from **[GitHub Releases](https://github.com/tageecc/pond/releases)**: **two macOS DMGs** (Apple Silicon and Intel), **Windows MSI**, and **Linux AppImage** (x64).
 
@@ -132,7 +140,7 @@ We want real UI shots here. Add PNGs under `docs/assets/` and drop them into thi
 ## Quick start
 
 > [!TIP]
-> You need **Rust** for `pnpm tauri dev`. If you only install Node, the build will fail with `cargo metadata` errors. Install Rust via [rustup](https://rustup.rs/), then open a **new** terminal.
+> You need **Rust** for `pnpm tauri:dev`. If you only install Node, the build will fail with `cargo metadata` errors. Install Rust via [rustup](https://rustup.rs/), then open a **new** terminal.
 
 **Prerequisites:** Node.js **20+**, [pnpm](https://pnpm.io), [Rust stable](https://rustup.rs/)
 
@@ -140,7 +148,7 @@ We want real UI shots here. Add PNGs under `docs/assets/` and drop them into thi
 git clone https://github.com/tageecc/pond.git
 cd pond
 pnpm install
-pnpm tauri dev
+pnpm tauri:dev
 ```
 
 If `pnpm install` fails while fetching resources:
@@ -183,7 +191,7 @@ Rust commands: `src-tauri/src/commands/` · Registration: `lib.rs` · UI: `src/c
 
 ## FAQ
 
-**`failed to run 'cargo metadata'`** — Install Rust, restart the terminal, run `pnpm tauri dev` again.
+**`failed to run 'cargo metadata'`** — Install Rust, restart the terminal, run `pnpm tauri:dev` again.
 
 ---
 
@@ -192,6 +200,12 @@ Rust commands: `src-tauri/src/commands/` · Registration: `lib.rs` · UI: `src/c
 Issues and PRs are welcome. Run `pnpm exec tsc --noEmit` before you open a PR. See [CONTRIBUTING.md](./CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md).
 
 **Security:** [SECURITY.md](./SECURITY.md)
+
+---
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=tageecc/pond&type=Date)](https://www.star-history.com/#tageecc/pond&Date)
 
 ---
 

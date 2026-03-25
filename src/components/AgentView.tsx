@@ -1217,7 +1217,6 @@ export function AgentView() {
         useAppStore.setState({ needsOnboarding: true, onboardingChecked: true })
         setTimeout(() => {
           toast.success(t("agentView.toast.instanceDeleted", { name: deletedName }))
-          toast.info(t("agentView.instance.deletedAllOnboarding"))
         }, 100)
         return
       }

@@ -4,6 +4,7 @@ use std::process::Command as StdCommand;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use std::time::Instant;
+use tauri::path::BaseDirectory;
 use tauri::{AppHandle, Emitter, Manager, State};
 use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncSeekExt, BufReader};
 use tokio::process::{Child, Command};
@@ -41,9 +42,15 @@ fn bundled_node_binary_name() -> &'static str {
     if cfg!(target_os = "windows") { "node.exe" } else { "node" }
 }
 
-fn bundled_node_path(res_dir: &std::path::Path) -> Option<std::path::PathBuf> {
-    let node_path = res_dir.join("node").join(bundled_node_platform()).join(bundled_node_binary_name());
-    if node_path.exists() { Some(node_path) } else { None }
+/// Logical path under `bundle.resources` (tauri.conf: `../resources/`). Resolved via [`BaseDirectory::Resource`] like the bundler.
+const BUNDLED_OPENCLAW_CLI_REL: &str = "openclaw-runtime/node_modules/openclaw/openclaw.mjs";
+
+fn bundled_node_resource_rel() -> String {
+    format!(
+        "../resources/node/{}/{}",
+        bundled_node_platform(),
+        bundled_node_binary_name()
+    )
 }
 
 fn clear_openclaw_scope_env(c: &mut std::process::Command) {
@@ -72,25 +79,27 @@ fn build_openclaw_cli(
     subargs: &[&str],
 ) -> Result<std::process::Command, String> {
     let inst = instance_id.trim();
-    let cwd = PathBuf::from(paths::get_home_dir().map_err(|e| e.to_string())?);
-    let res_dir = app_handle
-        .path()
-        .resource_dir()
-        .map_err(|e| format!("resource_dir: {}", e))?;
-    let cli = res_dir.join("openclaw").join("openclaw.mjs");
+    let resolver = app_handle.path();
+    let cli = resolver
+        .resolve(BUNDLED_OPENCLAW_CLI_REL, BaseDirectory::Resource)
+        .map_err(|e| format!("resolve OpenClaw CLI: {}", e))?;
     if !cli.is_file() {
-        return Err(
-            "Bundled OpenClaw missing (resources/openclaw/openclaw.mjs). Run: node scripts/bundle-tauri-resources.mjs"
-                .to_string(),
-        );
+        return Err(format!(
+            "Bundled OpenClaw missing at {}. Run: node scripts/bundle-tauri-resources.mjs before pnpm tauri build / tauri:dev.",
+            cli.display()
+        ));
     }
-    let node_exe = bundled_node_path(&res_dir).ok_or_else(|| {
-        format!(
-            "Bundled Node missing (resources/node/{}/{}). Run: node scripts/bundle-tauri-resources.mjs",
-            bundled_node_platform(),
-            bundled_node_binary_name()
-        )
-    })?;
+    let node_exe = resolver
+        .resolve(bundled_node_resource_rel(), BaseDirectory::Resource)
+        .map_err(|e| format!("resolve bundled Node: {}", e))?;
+    if !node_exe.is_file() {
+        return Err(format!(
+            "Bundled Node missing at {}. Run: node scripts/bundle-tauri-resources.mjs before build.",
+            node_exe.display()
+        ));
+    }
+    // openclaw.mjs uses `import("./dist/entry.js")` — cwd must be the package root (where openclaw.mjs lives).
+    let cwd = cli.parent().ok_or("openclaw.mjs has no parent dir")?;
     let mut c = StdCommand::new(&node_exe);
     c.arg(&cli);
     apply_openclaw_instance_cli_flags(&mut c, inst);
@@ -122,7 +131,7 @@ pub fn build_openclaw_cli_for_instance_sync(
     build_openclaw_cli(app_handle, instance_id, args)
 }
 
-/// Strip lines starting with "npm warn" so npx env warnings are not shown as errors in the UI.
+/// Strip lines starting with "npm warn" from CLI stderr so they are not shown as errors in the UI.
 pub(crate) fn strip_npm_warn_lines(s: &str) -> String {
     s.lines()
         .filter(|line| !line.trim().to_lowercase().starts_with("npm warn"))
@@ -1181,10 +1190,12 @@ pub struct HooksListResult {
     pub hooks: Vec<HookListEntry>,
 }
 
-/// Bundled npm package root (`resources/openclaw/`); must contain `openclaw.mjs`.
+/// Bundled npm package root (`…/openclaw/`); must contain `openclaw.mjs`.
 fn get_bundled_openclaw_root(app_handle: &AppHandle) -> Option<std::path::PathBuf> {
-    let res_dir = app_handle.path().resource_dir().ok()?;
-    let root = res_dir.join("openclaw");
+    let root = app_handle
+        .path()
+        .resolve("openclaw-runtime/node_modules/openclaw", BaseDirectory::Resource)
+        .ok()?;
     root.join("openclaw.mjs").is_file().then_some(root)
 }
 

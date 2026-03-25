@@ -2,7 +2,6 @@
 
 import { Group } from "@visx/group";
 import { ParentSize } from "@visx/responsive";
-// @ts-expect-error d3-shape has no type definitions in the bundle
 import { pie as d3Pie } from "d3-shape";
 import {
   Children,

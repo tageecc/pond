@@ -85,7 +85,6 @@
       "openFolderAria": "Open {{name}} folder"
     },
     "instance": {
-      "deletedAllOnboarding": "All instances removed; returning to onboarding…",
       "openDirTitle": "Click to open instance directory"
     },
     "saving": "Saving…",
