@@ -12,6 +12,12 @@
     "minimizeToTray": "Minimize to tray",
     "minimizeToTrayHint": "Closing the window hides to the tray instead of quitting",
     "stopAgentsOnExit": "Stop agents on quit",
-    "stopAgentsOnExitHint": "Stop all Gateways when quitting the app"
+    "stopAgentsOnExitHint": "Stop all Gateways when quitting the app",
+    "openclawCli": "OpenClaw CLI",
+    "openclawCliHint": "Prefers PATH or global npm/pnpm, then the app bundle. Set POND_FORCE_BUNDLED_OPENCLAW=1 to force bundled.",
+    "openclawCliSource": "Source",
+    "openclawCliPackageRoot": "Package",
+    "openclawCliNeedsNode": "This mode requires Node on PATH.",
+    "openclawCliNoSystemNode": "No system Node required (PATH shim or bundled runtime)."
   }
 }

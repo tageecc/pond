@@ -4,9 +4,10 @@ use std::process::Command;
 use std::sync::Mutex;
 use sysinfo::System;
 use tauri::AppHandle;
-use crate::utils::paths;
 use crate::commands::config;
+use crate::commands::gateway;
 use crate::commands::workspace;
+use crate::utils::paths;
 
 static SYSTEM_CACHE: std::sync::LazyLock<Mutex<System>> =
     std::sync::LazyLock::new(|| Mutex::new(System::new_all()));
@@ -21,8 +22,10 @@ pub struct DiagnosticResult {
 }
 
 #[tauri::command]
-pub fn run_doctor() -> Result<Vec<DiagnosticResult>, String> {
+pub fn run_doctor(app: AppHandle) -> Result<Vec<DiagnosticResult>, String> {
     let mut results = Vec::new();
+
+    let cli_resolution = gateway::get_openclaw_cli_resolution(app.clone());
 
     // Check app data directory
     match paths::get_app_data_dir() {
@@ -49,6 +52,28 @@ pub fn run_doctor() -> Result<Vec<DiagnosticResult>, String> {
                 passed: false,
                 message: format!("无法获取应用数据目录: {}", e),
                 suggestion: Some("检查权限或路径".to_string()),
+            });
+        }
+    }
+
+    match cli_resolution.clone() {
+        Ok(r) => {
+            results.push(DiagnosticResult {
+                name: "OpenClaw CLI".to_string(),
+                passed: true,
+                message: format!("{} — {}", r.source, r.detail),
+                suggestion: None,
+            });
+        }
+        Err(e) => {
+            results.push(DiagnosticResult {
+                name: "OpenClaw CLI".to_string(),
+                passed: false,
+                message: e,
+                suggestion: Some(
+                    "运行 node scripts/bundle-tauri-resources.mjs，或安装全局 openclaw（npm/pnpm），或设置 POND_FORCE_BUNDLED_OPENCLAW=1 强制内置"
+                        .to_string(),
+                ),
             });
         }
     }
@@ -110,7 +135,11 @@ pub fn run_doctor() -> Result<Vec<DiagnosticResult>, String> {
         }
     }
 
-    // Node.js version check
+    // Node.js on PATH (not required when using bundled Node + openclaw.mjs)
+    let needs_system_node = cli_resolution
+        .as_ref()
+        .map(|r| r.needs_system_node)
+        .unwrap_or(true);
     match Command::new("node").arg("-v").output() {
         Ok(out) if out.status.success() => {
             let v = String::from_utf8_lossy(&out.stdout).trim().to_string();
@@ -122,12 +151,24 @@ pub fn run_doctor() -> Result<Vec<DiagnosticResult>, String> {
             });
         }
         _ => {
-            results.push(DiagnosticResult {
-                name: "Node.js".to_string(),
-                passed: false,
-                message: "未检测到 Node.js".to_string(),
-                suggestion: Some("请安装 Node.js 18+ 以运行 Gateway".to_string()),
-            });
+            if !needs_system_node {
+                results.push(DiagnosticResult {
+                    name: "Node.js".to_string(),
+                    passed: true,
+                    message: "未检测到系统 Node（当前使用应用内置 Node 或 PATH 上的 openclaw）".to_string(),
+                    suggestion: None,
+                });
+            } else {
+                results.push(DiagnosticResult {
+                    name: "Node.js".to_string(),
+                    passed: false,
+                    message: "未检测到 Node.js".to_string(),
+                    suggestion: Some(
+                        "全局 openclaw 需要系统 Node；或安装内置资源：node scripts/bundle-tauri-resources.mjs"
+                            .to_string(),
+                    ),
+                });
+            }
         }
     }
 

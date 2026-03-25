@@ -73,20 +73,108 @@ fn apply_openclaw_instance_cli_flags(c: &mut std::process::Command, instance_id:
     }
 }
 
-fn build_openclaw_cli(
-    app_handle: &AppHandle,
-    instance_id: &str,
-    subargs: &[&str],
-) -> Result<std::process::Command, String> {
-    let inst = instance_id.trim();
+fn force_bundled_openclaw() -> bool {
+    std::env::var("POND_FORCE_BUNDLED_OPENCLAW")
+        .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
+        .unwrap_or(false)
+}
+
+fn find_file_in_path(candidate_names: &[&str]) -> Option<PathBuf> {
+    let path_var = std::env::var_os("PATH")?;
+    for base in std::env::split_paths(&path_var) {
+        if base.as_os_str().is_empty() {
+            continue;
+        }
+        for name in candidate_names {
+            let p = base.join(name);
+            if p.is_file() {
+                return Some(p);
+            }
+        }
+    }
+    None
+}
+
+fn openclaw_mjs_under_global_root(root: &str) -> Option<PathBuf> {
+    let mjs = PathBuf::from(root).join("openclaw").join("openclaw.mjs");
+    mjs.is_file().then_some(mjs)
+}
+
+fn npm_global_openclaw_mjs() -> Option<PathBuf> {
+    let o = StdCommand::new("npm").args(["root", "-g"]).output().ok()?;
+    if !o.status.success() {
+        return None;
+    }
+    let root = String::from_utf8_lossy(&o.stdout).trim().to_string();
+    if root.is_empty() {
+        return None;
+    }
+    openclaw_mjs_under_global_root(&root)
+}
+
+fn pnpm_global_openclaw_mjs() -> Option<PathBuf> {
+    let o = StdCommand::new("pnpm").args(["root", "-g"]).output().ok()?;
+    if !o.status.success() {
+        return None;
+    }
+    let root = String::from_utf8_lossy(&o.stdout).trim().to_string();
+    if root.is_empty() {
+        return None;
+    }
+    openclaw_mjs_under_global_root(&root)
+}
+
+fn node_on_path() -> Option<PathBuf> {
+    let name = if cfg!(windows) { "node.exe" } else { "node" };
+    find_file_in_path(&[name])
+}
+
+fn openclaw_shim_on_path() -> Option<PathBuf> {
+    if cfg!(windows) {
+        find_file_in_path(&["openclaw.cmd", "openclaw.exe", "openclaw"])
+    } else {
+        find_file_in_path(&["openclaw"])
+    }
+}
+
+#[derive(Debug, Clone)]
+enum OpenClawCliKind {
+    PathShim(PathBuf),
+    NodeMjs {
+        node: PathBuf,
+        mjs: PathBuf,
+        global_via: &'static str,
+    },
+    Bundled {
+        node: PathBuf,
+        mjs: PathBuf,
+    },
+}
+
+static OPENCLAW_CLI_KIND_CACHE: Mutex<Option<OpenClawCliKind>> = Mutex::new(None);
+
+fn resolve_openclaw_cli_kind_cached(app_handle: &AppHandle) -> Result<OpenClawCliKind, String> {
+    if let Ok(guard) = OPENCLAW_CLI_KIND_CACHE.lock() {
+        if let Some(ref k) = *guard {
+            return Ok(k.clone());
+        }
+    }
+    let k = resolve_openclaw_cli_kind_uncached(app_handle)?;
+    if let Ok(mut guard) = OPENCLAW_CLI_KIND_CACHE.lock() {
+        *guard = Some(k.clone());
+    }
+    Ok(k)
+}
+
+fn resolve_bundled_openclaw_cli(app_handle: &AppHandle) -> Result<OpenClawCliKind, String> {
     let resolver = app_handle.path();
-    let cli = resolver
+    let mjs = resolver
         .resolve(BUNDLED_OPENCLAW_CLI_REL, BaseDirectory::Resource)
         .map_err(|e| format!("resolve OpenClaw CLI: {}", e))?;
-    if !cli.is_file() {
+    if !mjs.is_file() {
         return Err(format!(
             "Bundled OpenClaw missing at {}. Run: node scripts/bundle-tauri-resources.mjs before pnpm tauri build / tauri:dev.",
-            cli.display()
+            mjs.display()
         ));
     }
     let node_exe = resolver
@@ -98,13 +186,124 @@ fn build_openclaw_cli(
             node_exe.display()
         ));
     }
-    // openclaw.mjs uses `import("./dist/entry.js")` — cwd must be the package root (where openclaw.mjs lives).
-    let cwd = cli.parent().ok_or("openclaw.mjs has no parent dir")?;
-    let mut c = StdCommand::new(&node_exe);
-    c.arg(&cli);
-    apply_openclaw_instance_cli_flags(&mut c, inst);
-    c.args(subargs).current_dir(cwd);
-    Ok(c)
+    Ok(OpenClawCliKind::Bundled {
+        node: node_exe,
+        mjs,
+    })
+}
+
+fn resolve_openclaw_cli_kind_uncached(app_handle: &AppHandle) -> Result<OpenClawCliKind, String> {
+    if force_bundled_openclaw() {
+        return resolve_bundled_openclaw_cli(app_handle);
+    }
+    if let Some(shim) = openclaw_shim_on_path() {
+        return Ok(OpenClawCliKind::PathShim(shim));
+    }
+    if let Some(node) = node_on_path() {
+        if let Some(mjs) = npm_global_openclaw_mjs() {
+            return Ok(OpenClawCliKind::NodeMjs {
+                node,
+                mjs,
+                global_via: "npm",
+            });
+        }
+        if let Some(mjs) = pnpm_global_openclaw_mjs() {
+            return Ok(OpenClawCliKind::NodeMjs {
+                node,
+                mjs,
+                global_via: "pnpm",
+            });
+        }
+    }
+    resolve_bundled_openclaw_cli(app_handle)
+}
+
+fn package_root_from_openclaw_kind(kind: &OpenClawCliKind) -> Option<PathBuf> {
+    match kind {
+        OpenClawCliKind::PathShim(_) => npm_global_openclaw_mjs()
+            .or_else(pnpm_global_openclaw_mjs)
+            .and_then(|m| m.parent().map(|p| p.to_path_buf())),
+        OpenClawCliKind::NodeMjs { mjs, .. } | OpenClawCliKind::Bundled { mjs, .. } => {
+            mjs.parent().map(|p| p.to_path_buf())
+        }
+    }
+}
+
+/// Same OpenClaw package as the active CLI (for skills / hook schemas).
+fn active_openclaw_package_root(app_handle: &AppHandle) -> Option<PathBuf> {
+    resolve_openclaw_cli_kind_cached(app_handle)
+        .ok()
+        .and_then(|k| package_root_from_openclaw_kind(&k))
+}
+
+/// How the app runs OpenClaw CLI (for diagnostics / UI).
+#[derive(Debug, Clone, Serialize)]
+pub struct OpenClawCliResolution {
+    pub source: String,
+    pub detail: String,
+    /// When true, system `node` on PATH is required (global npm/pnpm install).
+    pub needs_system_node: bool,
+    /// Resolved `openclaw` npm package directory (for skills / hooks), if known.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub package_root: Option<String>,
+}
+
+#[tauri::command]
+pub fn get_openclaw_cli_resolution(app: AppHandle) -> Result<OpenClawCliResolution, String> {
+    let k = resolve_openclaw_cli_kind_cached(&app)?;
+    let package_root = package_root_from_openclaw_kind(&k).map(|p| p.to_string_lossy().to_string());
+    let (source, detail, needs_system_node) = match &k {
+        OpenClawCliKind::PathShim(p) => (
+            "path".to_string(),
+            p.display().to_string(),
+            false,
+        ),
+        OpenClawCliKind::NodeMjs {
+            node,
+            mjs,
+            global_via,
+        } => (
+            format!("global_{global_via}"),
+            format!("{} {}", node.display(), mjs.display()),
+            true,
+        ),
+        OpenClawCliKind::Bundled { node, mjs } => (
+            "bundled".to_string(),
+            format!("{} {}", node.display(), mjs.display()),
+            false,
+        ),
+    };
+    Ok(OpenClawCliResolution {
+        source,
+        detail,
+        needs_system_node,
+        package_root,
+    })
+}
+
+fn build_openclaw_cli(
+    app_handle: &AppHandle,
+    instance_id: &str,
+    subargs: &[&str],
+) -> Result<std::process::Command, String> {
+    let inst = instance_id.trim();
+    match resolve_openclaw_cli_kind_cached(app_handle)? {
+        OpenClawCliKind::PathShim(exe) => {
+            let mut c = StdCommand::new(&exe);
+            apply_openclaw_instance_cli_flags(&mut c, inst);
+            c.args(subargs);
+            Ok(c)
+        }
+        OpenClawCliKind::NodeMjs { node, mjs, .. } | OpenClawCliKind::Bundled { node, mjs } => {
+            // openclaw.mjs uses `import("./dist/entry.js")` — cwd must be the package root.
+            let cwd = mjs.parent().ok_or("openclaw.mjs has no parent dir")?;
+            let mut c = StdCommand::new(&node);
+            c.arg(&mjs);
+            apply_openclaw_instance_cli_flags(&mut c, inst);
+            c.args(subargs).current_dir(cwd);
+            Ok(c)
+        }
+    }
 }
 
 fn openclaw_gateway_service_teardown_sync(app_handle: &AppHandle, instance_key: &str) {
@@ -830,9 +1029,9 @@ pub fn count_openclaw_instances() -> Result<usize, String> {
     Ok(config::list_openclaw_instances()?.len())
 }
 
-/// Scan `~/.openclaw-*` for dirs not yet in the managed list (have `openclaw.json`, id not managed).
-///
-/// Returns [{id, name, configPath}] for the UI import prompt.
+/// Scan `~/.openclaw-*` for profile dirs that are **not** yet listed by [`config::list_openclaw_instances`]
+/// (typically missing `openclaw.json`). Instances with `openclaw.json` under `~/.openclaw` or `~/.openclaw-*`
+/// are already returned by `list_openclaw_instances` — use that list directly; import is only for incomplete dirs.
 #[tauri::command]
 pub fn discover_system_agents() -> Result<Vec<Value>, String> {
     let home = PathBuf::from(paths::get_home_dir().map_err(|e| e.to_string())?);
@@ -1190,7 +1389,7 @@ pub struct HooksListResult {
     pub hooks: Vec<HookListEntry>,
 }
 
-/// Bundled npm package root (`…/openclaw/`); must contain `openclaw.mjs`.
+/// App resource copy of openclaw (`openclaw-runtime/.../openclaw/`).
 fn get_bundled_openclaw_root(app_handle: &AppHandle) -> Option<std::path::PathBuf> {
     let root = app_handle
         .path()
@@ -1199,7 +1398,7 @@ fn get_bundled_openclaw_root(app_handle: &AppHandle) -> Option<std::path::PathBu
     root.join("openclaw.mjs").is_file().then_some(root)
 }
 
-/// Candidate OpenClaw install roots: app resources, global `npm i -g openclaw`, repo `node_modules/openclaw`.
+/// Candidate OpenClaw install roots for bundled skills lookup: active CLI package first, then fallbacks.
 fn openclaw_package_roots(app_handle: &AppHandle) -> Vec<PathBuf> {
     use std::collections::HashSet;
     let mut seen: HashSet<String> = HashSet::new();
@@ -1213,6 +1412,9 @@ fn openclaw_package_roots(app_handle: &AppHandle) -> Vec<PathBuf> {
         }
     };
     let mut out = Vec::new();
+    if let Some(r) = active_openclaw_package_root(app_handle) {
+        push(r, &mut out);
+    }
     if let Some(r) = get_bundled_openclaw_root(app_handle) {
         push(r, &mut out);
     }
@@ -1221,12 +1423,14 @@ fn openclaw_package_roots(app_handle: &AppHandle) -> Vec<PathBuf> {
             push(parent.join("node_modules").join("openclaw"), &mut out);
         }
     }
-    if let Ok(o) = StdCommand::new("npm").args(["root", "-g"]).output() {
-        if o.status.success() {
-            let root = String::from_utf8_lossy(&o.stdout).trim().to_string();
-            if !root.is_empty() {
-                push(PathBuf::from(root).join("openclaw"), &mut out);
-            }
+    if let Some(mjs) = npm_global_openclaw_mjs() {
+        if let Some(p) = mjs.parent() {
+            push(p.to_path_buf(), &mut out);
+        }
+    }
+    if let Some(mjs) = pnpm_global_openclaw_mjs() {
+        if let Some(p) = mjs.parent() {
+            push(p.to_path_buf(), &mut out);
         }
     }
     out
@@ -1354,9 +1558,13 @@ fn run_cli_hooks_list_sync(app_handle: &AppHandle, id: &str) -> Option<HooksList
     Some(result)
 }
 
-/// For bundled hooks with empty config_schema, parse HOOK.md from bundled OpenClaw package when present.
+/// For bundled hooks with empty config_schema, parse HOOK.md from the active OpenClaw package when present.
 fn apply_bundled_config_schema(app_handle: &AppHandle, result: &mut HooksListResult) {
-    let Some(root) = get_bundled_openclaw_root(app_handle) else { return };
+    let Some(root) = active_openclaw_package_root(app_handle)
+        .or_else(|| get_bundled_openclaw_root(app_handle))
+    else {
+        return;
+    };
     let candidates = [
         root.join("dist/hooks/bundled"),
         root.join("hooks/bundled"),

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { getVersion } from "@tauri-apps/api/app"
+import { invoke } from "@tauri-apps/api/core"
 import { useAppStore } from "../stores/appStore"
 import { loadAppConfig, saveAppConfig, type AppLocale } from "../lib/appStore"
 import { Button } from "./ui/button"
@@ -17,12 +18,35 @@ export function Settings() {
   const [minimizeToTray, setMinimizeToTray] = useState(true)
   const [appVersion, setAppVersion] = useState("")
   const [ready, setReady] = useState(false)
+  const [openclawCli, setOpenclawCli] = useState<{
+    source: string
+    detail: string
+    needs_system_node: boolean
+    package_root?: string | null
+  } | null>(null)
+  const [openclawCliError, setOpenclawCliError] = useState<string | null>(null)
 
   useEffect(() => {
     loadConfigs()
   }, [loadConfigs])
   useEffect(() => {
     void getVersion().then(setAppVersion).catch(() => setAppVersion(""))
+  }, [])
+  useEffect(() => {
+    invoke<{
+      source: string
+      detail: string
+      needs_system_node: boolean
+      package_root?: string | null
+    }>("get_openclaw_cli_resolution")
+      .then((r) => {
+        setOpenclawCli(r)
+        setOpenclawCliError(null)
+      })
+      .catch((e) => {
+        setOpenclawCli(null)
+        setOpenclawCliError(e instanceof Error ? e.message : String(e))
+      })
   }, [])
   useEffect(() => {
     loadAppConfig()
@@ -158,6 +182,36 @@ export function Settings() {
             }
           }}
         />
+      </div>
+      <div className="h-px bg-app-border" />
+
+      <div className="py-3">
+        <p className="text-sm font-medium text-app-text">{t("settings.openclawCli")}</p>
+        <p className="text-xs text-app-muted mt-0.5">{t("settings.openclawCliHint")}</p>
+        {openclawCliError ? (
+          <p className="text-xs text-red-500 mt-2 break-all">{openclawCliError}</p>
+        ) : openclawCli ? (
+          <div className="mt-2 space-y-1 text-xs text-app-muted">
+            <p>
+              <span className="text-app-text/80">{t("settings.openclawCliSource")}</span>{" "}
+              <code className="rounded bg-app-border/60 px-1 py-0.5 text-[11px]">{openclawCli.source}</code>
+            </p>
+            <p className="break-all font-mono text-[11px] leading-relaxed">{openclawCli.detail}</p>
+            {openclawCli.package_root ? (
+              <p className="break-all font-mono text-[11px] leading-relaxed">
+                <span className="text-app-text/80">{t("settings.openclawCliPackageRoot")}</span>{" "}
+                {openclawCli.package_root}
+              </p>
+            ) : null}
+            <p>
+              {openclawCli.needs_system_node
+                ? t("settings.openclawCliNeedsNode")
+                : t("settings.openclawCliNoSystemNode")}
+            </p>
+          </div>
+        ) : (
+          <p className="text-xs text-app-muted mt-2">…</p>
+        )}
       </div>
       <div className="h-px bg-app-border" />
 

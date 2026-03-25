@@ -139,6 +139,7 @@ pub fn run() {
             gateway::get_all_gateway_statuses,
             gateway::probe_running_gateways,
             gateway::discover_system_agents,
+            gateway::get_openclaw_cli_resolution,
             gateway::count_openclaw_instances,
             gateway::delete_system_agent_dir,
             gateway::get_agent_port,

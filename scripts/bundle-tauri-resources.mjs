@@ -14,6 +14,7 @@ import {
   readdirSync,
   readFileSync,
   realpathSync,
+  renameSync,
   rmSync,
   statSync,
   writeFileSync,
@@ -215,9 +216,9 @@ function copyOpenclaw(src) {
   }, null, 2))
   // Install with pnpm --shamefully-hoist to create flat node_modules
   console.log(`  Running pnpm install --shamefully-hoist...`)
-  execFileSync("pnpm", ["install", "--shamefully-hoist", "--prod"], { 
+  execFileSync("pnpm", ["install", "--shamefully-hoist", "--prod", "--ignore-workspace"], {
     cwd: tmpInstall,
-    stdio: "pipe"
+    stdio: "pipe",
   })
   // Move the flat node_modules to destination
   const tmpNodeModules = join(tmpInstall, "node_modules")

@@ -12,6 +12,12 @@
     "minimizeToTray": "最小化到托盘",
     "minimizeToTrayHint": "点击关闭按钮时最小化到托盘而非退出",
     "stopAgentsOnExit": "退出时停止 Agent",
-    "stopAgentsOnExitHint": "关闭应用后停止所有 Gateway"
+    "stopAgentsOnExitHint": "关闭应用后停止所有 Gateway",
+    "openclawCli": "OpenClaw CLI",
+    "openclawCliHint": "优先使用 PATH 或全局 npm/pnpm，其次使用应用内置；环境变量 POND_FORCE_BUNDLED_OPENCLAW=1 可强制内置。",
+    "openclawCliSource": "来源",
+    "openclawCliPackageRoot": "包目录",
+    "openclawCliNeedsNode": "当前模式需要系统已安装 Node 并在 PATH 中。",
+    "openclawCliNoSystemNode": "当前模式不依赖系统 Node（PATH 上的 openclaw 或应用内置运行时）。"
   }
 }
