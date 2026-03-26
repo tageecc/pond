@@ -93,7 +93,10 @@ import type {
   MultiAgentActivityRow,
 } from "../types"
 import { isValidOpenClawAgentId, normalizeAgentsListOrder } from "../lib/agentsList"
-import { isUnifiedDmContinuity } from "../lib/chatSessionKeys"
+import {
+  isUnifiedDmContinuity,
+  SESSION_RESET_LONG_IDLE_MINUTES,
+} from "../lib/chatSessionKeys"
 import {
   normalizeAgentListModelForPersist,
   primaryRefToFlatModelInstanceId,
@@ -506,13 +509,23 @@ export function AgentView() {
     if (s && typeof s === "object") {
       const dm = (s.dmScope as string) ?? "main"
       const rm = s.reset?.mode
+      const idleMin = s.reset?.idleMinutes ?? 0
       const resetMode: "off" | "never" | "daily" | "idle" =
-        rm === "off" ? "never" : rm === "daily" ? "daily" : rm === "idle" ? "idle" : "off"
+        rm === "daily"
+          ? "daily"
+          : rm === "idle" && idleMin >= SESSION_RESET_LONG_IDLE_MINUTES
+            ? "never"
+            : rm === "idle"
+              ? "idle"
+              : "off"
       setAgentSession({
         dmScope: dm,
         resetMode,
         atHour: s.reset?.atHour ?? 4,
-        idleMinutes: s.reset?.idleMinutes ?? 120,
+        idleMinutes:
+          rm === "idle" && idleMin >= SESSION_RESET_LONG_IDLE_MINUTES
+            ? SESSION_RESET_LONG_IDLE_MINUTES
+            : idleMin || 120,
       })
       setSessionUnifiedContinuity(isUnifiedDmContinuity(s))
     } else {
@@ -1748,7 +1761,10 @@ export function AgentView() {
                           onClick={async () => {
                             const reset =
                               sessionUnifiedContinuity || agentSession.resetMode === "never"
-                                ? { mode: "off" as const }
+                                ? {
+                                    mode: "idle" as const,
+                                    idleMinutes: SESSION_RESET_LONG_IDLE_MINUTES,
+                                  }
                                 : agentSession.resetMode === "off"
                                   ? undefined
                                   : {

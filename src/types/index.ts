@@ -107,7 +107,7 @@ export interface OpenClawModelsShape {
 export interface SessionConfig {
   dmScope?: 'main' | 'per-peer' | 'per-channel-peer' | 'per-account-channel-peer'
   reset?: {
-    mode?: 'daily' | 'idle' | 'off'
+    mode?: 'daily' | 'idle'
     atHour?: number
     idleMinutes?: number
   }

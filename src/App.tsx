@@ -14,6 +14,7 @@ import { AppTitleBar } from "./components/AppTitleBar"
 import { InstanceSidebar } from "./components/InstanceSidebar"
 import { Dialog, DialogContent, DialogTitle } from "./components/ui/dialog"
 import { installTauriAppMenu } from "@/lib/tauriAppMenu"
+import { Loader2 } from "lucide-react"
 import "./styles/globals.css"
 
 function isTauri(): boolean {
@@ -21,6 +22,16 @@ function isTauri(): boolean {
     typeof window !== "undefined" &&
     !!(window as unknown as { __TAURI_INTERNALS__?: unknown })
       .__TAURI_INTERNALS__
+  )
+}
+
+function AppBootstrapShell() {
+  const { t } = useTranslation()
+  return (
+    <div className="flex h-screen w-screen flex-col items-center justify-center gap-3 bg-app-bg text-app-muted">
+      <Loader2 className="h-8 w-8 animate-spin text-claw-500" aria-hidden />
+      <p className="text-sm">{t("common.loadingConfig")}</p>
+    </div>
   )
 }
 
@@ -56,6 +67,7 @@ function App() {
   const { t } = useTranslation()
   const locale = useAppStore((s) => s.locale)
   const needsOnboarding = useAppStore((s) => s.needsOnboarding)
+  const onboardingChecked = useAppStore((s) => s.onboardingChecked)
   const pendingAgentId = useAppStore((s) => s.pendingAgentId)
   const switchInstance = useAppStore((s) => s.switchInstance)
   const preferencesOpen = useAppStore((s) => s.preferencesOpen)
@@ -120,7 +132,13 @@ function App() {
         richColors={false}
         closeButton={false}
       />
-      {needsOnboarding ? <Onboarding /> : <MainApp />}
+      {!onboardingChecked ? (
+        <AppBootstrapShell />
+      ) : needsOnboarding ? (
+        <Onboarding />
+      ) : (
+        <MainApp />
+      )}
       <Dialog open={preferencesOpen} onOpenChange={setPreferencesOpen}>
         <DialogContent className="max-w-lg max-h-[85vh] flex flex-col p-0 gap-0">
           <DialogTitle className="sr-only">{t("settings.title")}</DialogTitle>

@@ -180,6 +180,34 @@ async function ensureBundledNode(triple) {
   }
 }
 
+/**
+ * Full flat `pnpm install` is slow; skip when the bundled tree already matches root lockfile openclaw version.
+ * Set POND_FORCE_BUNDLE=1 to always rebuild (e.g. after manual edits under openclaw-runtime).
+ */
+function openclawFlatBundleIsCurrent(srcMod) {
+  if (process.env.POND_FORCE_BUNDLE === "1" || process.env.POND_FORCE_BUNDLE === "true") {
+    return false
+  }
+  const dst = OPENCLAW_DST
+  const srcPkg = join(srcMod, "package.json")
+  const dstPkg = join(dst, "package.json")
+  if (!existsSync(dstPkg) || !existsSync(srcPkg)) return false
+  let srcVer
+  let dstVer
+  try {
+    srcVer = JSON.parse(readFileSync(srcPkg, "utf8")).version
+    dstVer = JSON.parse(readFileSync(dstPkg, "utf8")).version
+  } catch {
+    return false
+  }
+  if (srcVer !== dstVer) return false
+  if (!existsSync(join(dst, "openclaw.mjs"))) return false
+  const entryJs = join(dst, "dist", "entry.js")
+  const entryMjs = join(dst, "dist", "entry.mjs")
+  if (!existsSync(entryJs) && !existsSync(entryMjs)) return false
+  return true
+}
+
 function copyOpenclaw(src) {
   const dst = OPENCLAW_DST
   const legacy = join(RES, "openclaw")
@@ -295,7 +323,14 @@ async function main() {
   console.log(
     `Bundle Node dist triple: ${triple} (host ${process.platform}/${process.arch}; POND_NODE_DIST_TRIPLE=${process.env.POND_NODE_DIST_TRIPLE ?? ""} TARGET=${process.env.TARGET ?? ""})`,
   )
-  copyOpenclaw(resolveOpenclawSource())
+  const srcMod = resolveOpenclawSource()
+  if (openclawFlatBundleIsCurrent(srcMod)) {
+    console.log(
+      `OpenClaw flat bundle already matches root dependency version; skipping pnpm install (set POND_FORCE_BUNDLE=1 to rebuild).`,
+    )
+  } else {
+    copyOpenclaw(srcMod)
+  }
   await ensureBundledNode(triple)
   const n = bundledNodeExePath(triple)
   if (!existsSync(n)) throw new Error(`Bundled Node not found at ${n}`)

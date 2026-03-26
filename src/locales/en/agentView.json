@@ -93,7 +93,7 @@
       "configHelpAria": "Configuration help",
       "saved": "Session settings saved",
       "longContinuity": "Cross-channel long continuity",
-      "saveNote": "On save, writes OpenClaw: session.dmScope=main (DM across channels), session.reset.mode=off (no idle/daily rotation).",
+      "saveNote": "Writes session.dmScope=main and session.reset with mode=idle and a very large idleMinutes (~10 years). OpenClaw often only allows daily|idle for reset.mode, so we use an extreme idle window instead of mode=off.",
       "warning": "Multiple users share context; very long chats may still compress on the model side.",
       "dmScope": "DM scope",
       "dm": {
@@ -105,7 +105,7 @@
       "resetMode": "Auto reset mode",
       "reset": {
         "off": "Default (no explicit reset; includes official idle expiry)",
-        "never": "Explicit off (session.reset.mode=off)",
+        "never": "Effectively no idle rotation (idle + very long minutes)",
         "daily": "Daily reset",
         "idle": "Reset after idle"
       },

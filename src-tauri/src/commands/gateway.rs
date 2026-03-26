@@ -64,11 +64,27 @@ fn clear_openclaw_scope_env(c: &mut std::process::Command) {
     }
 }
 
-/// Global `--profile <id>` (not `default`); clears inherited OPENCLAW_* to avoid cross-instance bleed.
+/// Per-instance OpenClaw CLI env/args. Clears inherited OPENCLAW_* first.
+///
+/// **Default Pond instance (`default`):** set `OPENCLAW_STATE_DIR` / `OPENCLAW_CONFIG_PATH` and
+/// **`--profile default`**. Without an explicit profile, `openclaw agents add main` maps the agent id
+/// `main` to a **separate home-level directory** `~/.openclaw-main` (sibling of `~/.openclaw`), which is
+/// not a second Pond instance — it is OpenClaw's on-disk profile slot for the name `main`.
+///
+/// **Other instances:** `--profile <id>` only → `~/.openclaw-{id}` (unchanged).
 fn apply_openclaw_instance_cli_flags(c: &mut std::process::Command, instance_id: &str) {
     clear_openclaw_scope_env(c);
     let k = instance_id.trim();
-    if !k.is_empty() && !k.eq_ignore_ascii_case("default") {
+    if k.is_empty() || k.eq_ignore_ascii_case("default") {
+        if let Ok(dir) = paths::instance_home("default") {
+            c.env("OPENCLAW_STATE_DIR", dir.as_os_str());
+            c.env(
+                "OPENCLAW_CONFIG_PATH",
+                dir.join("openclaw.json").as_os_str(),
+            );
+        }
+        c.arg("--profile").arg("default");
+    } else if !k.is_empty() {
         c.arg("--profile").arg(k);
     }
 }

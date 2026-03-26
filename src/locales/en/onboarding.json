@@ -21,6 +21,10 @@
     "overwriteDesc": "Manual setup will overwrite model and Agent settings in ~/.openclaw/openclaw.json. To keep the existing config, use the import button above.",
     "confirmOverwrite": "Confirm overwrite",
     "browserOpenFailed": "Could not open browser. Visit manually: {{url}}",
-    "apiKeyRequired": "Please enter your API Key"
+    "apiKeyRequired": "Please enter your API Key",
+    "settingUp": "Finishing setup…",
+    "settingUpHint": "Saving configuration and preparing OpenClaw. This may take a while. The Gateway keeps starting in the background.",
+    "importingSetup": "Importing…",
+    "importingHint": "Merging your system OpenClaw configuration."
   }
 }

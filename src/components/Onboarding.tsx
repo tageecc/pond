@@ -34,6 +34,15 @@ import {
   TITLE_BAR_LEFT_INSET,
 } from "../lib/tauriTitleBarDrag"
 
+/** Let React commit `saving` so the loading UI paints before heavy Tauri work. */
+function yieldToPaint(): Promise<void> {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => resolve())
+    })
+  })
+}
+
 export function Onboarding() {
   const { t } = useTranslation()
   const { completeOnboarding, importSystemOpenClaw } = useAppStore()
@@ -70,6 +79,7 @@ export function Onboarding() {
   const handleOneClickImport = async () => {
     setError(null)
     setImporting(true)
+    await yieldToPaint()
     try {
       // Import system ~/.openclaw into Pond
       await importSystemOpenClaw()
@@ -108,6 +118,7 @@ export function Onboarding() {
     const key = apiKey.trim()
     setError(null)
     setSaving(true)
+    await yieldToPaint()
     try {
       await completeOnboarding(
         providerId,
@@ -145,8 +156,10 @@ export function Onboarding() {
     }
   }
 
+  const blocking = saving || importing
+
   return (
-    <div className="flex min-h-screen w-full flex-col items-center overflow-y-auto bg-gradient-to-b from-app-bg to-app-bg/95">
+    <div className="relative flex min-h-screen w-full flex-col items-center overflow-y-auto bg-gradient-to-b from-app-bg to-app-bg/95">
       <div
         className="titlebar-drag relative z-20 mt-4 mb-1 w-full shrink-0 cursor-default safe-area-inset-top"
         style={{
@@ -311,11 +324,21 @@ export function Onboarding() {
                 <Button
                   type="button"
                   size="sm"
-                  className={cn("flex-1 rounded-lg h-9 bg-claw-500 hover:bg-claw-600 text-white text-sm", saving && "opacity-90")}
+                  className={cn(
+                    "flex-1 gap-2 rounded-lg h-9 bg-claw-500 hover:bg-claw-600 text-white text-sm",
+                    saving && "opacity-95",
+                  )}
                   onClick={handleComplete}
                   disabled={saving}
                 >
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : t("onboarding.done")}
+                  {saving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 shrink-0 animate-spin" aria-hidden />
+                      <span>{t("onboarding.settingUp")}</span>
+                    </>
+                  ) : (
+                    t("onboarding.done")
+                  )}
                 </Button>
               </div>
             </CardContent>
@@ -335,9 +358,10 @@ export function Onboarding() {
             <AlertDialogCancel className="rounded-lg border-app-border text-app-muted hover:bg-app-hover">{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className="rounded-lg bg-claw-500 text-white hover:bg-claw-600"
-              onClick={() => {
+              onClick={(e) => {
+                e.preventDefault()
                 setShowOverwriteConfirm(false)
-                doComplete()
+                void doComplete()
               }}
             >
               {t("onboarding.confirmOverwrite")}
@@ -345,6 +369,24 @@ export function Onboarding() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {blocking && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-app-bg/70 backdrop-blur-[2px]"
+          aria-busy="true"
+          aria-live="polite"
+        >
+          <div className="mx-6 flex max-w-sm flex-col items-center gap-3 rounded-2xl border border-app-border bg-app-surface px-8 py-7 shadow-lg">
+            <Loader2 className="h-9 w-9 shrink-0 animate-spin text-claw-500" aria-hidden />
+            <p className="text-center text-sm font-medium text-app-text">
+              {importing ? t("onboarding.importingSetup") : t("onboarding.settingUp")}
+            </p>
+            <p className="text-center text-xs leading-relaxed text-app-muted">
+              {importing ? t("onboarding.importingHint") : t("onboarding.settingUpHint")}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

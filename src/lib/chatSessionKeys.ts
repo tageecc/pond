@@ -36,9 +36,20 @@ export function sessionKeyBelongsToOpenClawRole(
   return parts.length >= 3 && parts[0] === "agent" && parts[1] === role
 }
 
-/** Unified DM continuity: `dmScope=main` and `reset.mode=off` */
+/**
+ * OpenClaw schema often only allows `reset.mode` daily|idle (not `off`).
+ * We treat an extreme idle window as "effectively no rotation".
+ */
+export const SESSION_RESET_LONG_IDLE_MINUTES = 10 * 365 * 24 * 60
+
+/** Unified DM continuity: `dmScope=main` + long-idle reset (see SESSION_RESET_LONG_IDLE_MINUTES) */
 export function isUnifiedDmContinuity(session: unknown): boolean {
   if (typeof session !== "object" || session === null) return false
   const s = session as SessionConfig
-  return (s.dmScope ?? "main") === "main" && s.reset?.mode === "off"
+  const idle = s.reset?.idleMinutes ?? 0
+  return (
+    (s.dmScope ?? "main") === "main" &&
+    s.reset?.mode === "idle" &&
+    idle >= SESSION_RESET_LONG_IDLE_MINUTES
+  )
 }

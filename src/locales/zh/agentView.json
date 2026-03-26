@@ -93,7 +93,7 @@
       "configHelpAria": "配置说明",
       "saved": "会话配置已保存",
       "longContinuity": "跨渠道长期续聊",
-      "saveNote": "保存时写入 OpenClaw：session.dmScope=main（多渠道私聊走同一会话键）、session.reset.mode=off（关闭空闲与定时自动换新 session）。",
+      "saveNote": "保存时写入 OpenClaw：session.dmScope=main；session.reset 为 mode=idle 且 idleMinutes 为极大值（约 10 年），因当前 CLI 仅允许 daily/idle，用超长空闲窗口达到「几乎不因空闲换新 session」。",
       "warning": "多人同时使用同一 Agent 会共用上下文；对话过长时仍可能触发模型侧的压缩或截断。",
       "dmScope": "DM 会话作用域",
       "dm": {
@@ -105,7 +105,7 @@
       "resetMode": "自动重置模式",
       "reset": {
         "off": "默认（不写 reset，含官方空闲过期等）",
-        "never": "显式关闭轮换（session.reset.mode=off）",
+        "never": "几乎不因空闲轮换（idle + 超长分钟）",
         "daily": "每日重置",
         "idle": "空闲后重置"
       },

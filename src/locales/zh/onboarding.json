@@ -21,6 +21,10 @@
     "overwriteDesc": "手动配置将覆盖本机已有的 OpenClaw 配置（~/.openclaw/openclaw.json）中的模型与 Agent 设置。如需保留原配置，请点击上方「一键导入」。",
     "confirmOverwrite": "确认覆盖",
     "browserOpenFailed": "无法打开浏览器，请手动访问：{{url}}",
-    "apiKeyRequired": "请填写 API Key"
+    "apiKeyRequired": "请填写 API Key",
+    "settingUp": "正在初始化…",
+    "settingUpHint": "正在保存配置并准备 OpenClaw，可能需要数十秒。Gateway 会在后台继续启动。",
+    "importingSetup": "正在导入…",
+    "importingHint": "正在合并本机 OpenClaw 配置，请稍候。"
   }
 }

@@ -701,7 +701,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   createOpenClawInstance: async () => {
     let id = Math.random().toString(36).slice(2, 7)
-    while (id.toLowerCase() === 'default') {
+    while (id.toLowerCase() === 'default' || id.toLowerCase() === 'main') {
       id = Math.random().toString(36).slice(2, 7)
     }
     const toastId = `create-instance-${id}`
@@ -749,11 +749,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     
     set({ needsOnboarding: false })
     await get().loadConfigs()
-    try {
-      await get().restartAgentGateway('default')
-    } catch {
-      // Gateway start can be retried from dashboard
-    }
+    void get().restartAgentGateway('default').catch(() => {})
   },
 
   initialize: async () => {
