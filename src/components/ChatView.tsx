@@ -431,7 +431,7 @@ export function ChatView() {
   const selectedInstanceId = useAppStore((s) => s.selectedInstanceId);
   /** Current Pond profile (gateway, tokens, workspace) */
   const pondInstanceId =
-    resolvePondInstanceId(instanceIds, selectedInstanceId, openclawConfig) ??
+    resolvePondInstanceId(instanceIds, selectedInstanceId) ??
     "default";
   const agentsListForRoles = openclawConfig?.agents?.list ?? [];
   const roleIds = useMemo(

@@ -49,9 +49,8 @@ pub fn get_app_data_dir() -> Result<PathBuf> {
 
 /// Pond instance root: primary instance is **only** `~/.openclaw` (instance id `default`, case-insensitive).
 /// Secondary instances use `~/.openclaw-{id}` (`id` is never empty). Do not use instance id `main` (reserved / confusing).
-/// Note: a **sibling** `~/.openclaw-main` next to `~/.openclaw` is usually OpenClaw's **profile slot** for the name `main`
-/// (from `openclaw agents add main`), not a second Pond instance — Gateway/CLI must use `--profile default` + state env
-/// so the primary profile stays under `~/.openclaw` only. Never use `~/.openclaw-default` (not a Pond convention).
+/// Note: if you see `~/.openclaw-main` directory, it was created by mistake in older versions (when `openclaw agents add main`
+/// was incorrectly called without proper instance scoping). It can be safely deleted. Never use `~/.openclaw-default` (not a Pond convention).
 pub fn instance_home(instance_id: &str) -> Result<PathBuf, String> {
     let id = instance_id.trim();
     if id.is_empty() {

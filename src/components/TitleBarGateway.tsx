@@ -11,7 +11,6 @@ export function TitleBarGateway() {
   const { t } = useTranslation()
   const instanceIds = useAppStore((s) => s.instanceIds)
   const selectedInstanceId = useAppStore((s) => s.selectedInstanceId)
-  const openclawConfig = useAppStore((s) => s.openclawConfig)
   const startAgentGateway = useAppStore((s) => s.startAgentGateway)
   const stopAgentGateway = useAppStore((s) => s.stopAgentGateway)
   const restartAgentGateway = useAppStore((s) => s.restartAgentGateway)
@@ -22,7 +21,7 @@ export function TitleBarGateway() {
   )
 
   const instanceId =
-    resolvePondInstanceId(instanceIds, selectedInstanceId, openclawConfig) ??
+    resolvePondInstanceId(instanceIds, selectedInstanceId) ??
     "default"
 
   const gatewayKey =

@@ -30,7 +30,6 @@ fn require_inst_ch<'a>(inst: &'a str, ch: &'a str) -> Result<(&'a str, &'a str),
 }
 
 fn sync_agents_and_validate(app: &AppHandle, instance_id: &str) -> Result<(), String> {
-    workspace::sync_agents_list_with_openclaw_cli(app, instance_id)?;
     assert_config_valid_cli(app, instance_id)
 }
 

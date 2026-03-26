@@ -148,7 +148,7 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
   const pondInstanceId = resolvePondInstanceId(
     instanceIds,
     selectedInstanceId,
-    openclawConfig,
+    
   );
   const openclawInstanceId = pondInstanceId ?? "default";
   const channelTypeLabel = (id: ChannelTypeId) => t(`channelTypes.${id}`);
@@ -1119,7 +1119,7 @@ export function HooksManager({ embedded }: { embedded?: boolean }) {
   const pondInstanceId = resolvePondInstanceId(
     instanceIds,
     selectedInstanceId,
-    openclawConfig,
+    
   );
   const currentInstanceId = pondInstanceId ?? "default";
   const list = hooksListCache[currentInstanceId] ?? null;

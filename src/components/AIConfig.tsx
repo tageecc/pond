@@ -133,7 +133,7 @@ export function AIConfig() {
   const pondInstanceId = resolvePondInstanceId(
     instanceIds,
     selectedInstanceId,
-    openclawConfig,
+    
   )
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [provider, setProvider] = useState("openai")

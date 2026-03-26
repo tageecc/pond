@@ -20,12 +20,11 @@ export function GlobalInstanceSwitcher() {
   const instanceDisplayNames = useAppStore((s) => s.instanceDisplayNames) ?? {}
   const selectedInstanceId = useAppStore((s) => s.selectedInstanceId)
   const switchInstance = useAppStore((s) => s.switchInstance)
-  const openclawConfig = useAppStore((s) => s.openclawConfig)
 
   const [createOpen, setCreateOpen] = useState(false)
 
-  const agents = pondInstanceIdsList(instanceIds, openclawConfig)
-  const currentId = resolvePondInstanceId(instanceIds, selectedInstanceId, openclawConfig)
+  const agents = pondInstanceIdsList(instanceIds)
+  const currentId = resolvePondInstanceId(instanceIds, selectedInstanceId)
   const displayNames = instanceDisplayNames as Record<string, string>
 
   return (

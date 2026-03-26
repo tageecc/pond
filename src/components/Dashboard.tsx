@@ -17,7 +17,6 @@ import {
 } from "lucide-react"
 import { LineChart, Line } from "./charts"
 import { cn, getAgentDisplayName } from "../lib/utils"
-import { getAgentIds } from "../lib/openclawAgentsModels"
 import { prettyTokens } from "../lib/format"
 import { useCurrency } from "../hooks/useCurrency"
 import { PageHeader } from "./PageHeader"
@@ -52,7 +51,6 @@ export function Dashboard() {
     refreshAgentGatewayInfo,
     loadAllGatewayStatuses,
     setGatewayError,
-    openclawConfig,
     setCurrentView,
     todaySpend,
     cronJobs,
@@ -159,7 +157,7 @@ export function Dashboard() {
   const handleStartAll = async () => {
     await useAppStore.getState().loadAllGatewayStatuses()
     const latest = useAppStore.getState()
-    const ids = latest.instanceIds.length > 0 ? latest.instanceIds : (getAgentIds(latest.openclawConfig).length ? getAgentIds(latest.openclawConfig) : ["default"])
+    const ids = latest.instanceIds.length > 0 ? latest.instanceIds : ["default"]
     let started = 0
     for (const id of ids) {
       const gw = latest.agentGateways[id ?? 'default']
@@ -189,7 +187,7 @@ export function Dashboard() {
 
   const instanceIds = useAppStore((s) => s.instanceIds)
   const instanceDisplayNames = useAppStore((s) => s.instanceDisplayNames)
-  const agents = instanceIds.length > 0 ? instanceIds : (getAgentIds(openclawConfig).length ? getAgentIds(openclawConfig) : ["default"])
+  const agents = instanceIds.length > 0 ? instanceIds : ["default"]
   const displayNames = (instanceDisplayNames ?? {}) as Record<string, string>
   const totalAgents = agents.length
   const runningGwCount = Object.values(agentGateways).filter(g => g.status === 'running').length

@@ -404,7 +404,7 @@ pub fn sync_skills_disabled_with_openclaw_cli(
     Ok(())
 }
 
-/// Run `openclaw setup --workspace <instance>/workspace` under the instance dir (skip if `openclaw.json` exists).
+/// Run `openclaw setup` to init instance directory (creates openclaw.json if missing).
 #[tauri::command]
 pub async fn run_openclaw_agents_add(app_handle: AppHandle, agent_id: String) -> Result<(), String> {
     let id_trim = agent_id.trim().to_string();
@@ -419,6 +419,7 @@ pub async fn run_openclaw_agents_add(app_handle: AppHandle, agent_id: String) ->
     Ok(())
 }
 
+#[allow(dead_code)]
 pub(crate) fn openclaw_cli_registered_agent_ids(
     app_handle: &AppHandle,
     instance_id: &str,
@@ -453,6 +454,7 @@ pub(crate) fn openclaw_cli_registered_agent_ids(
     Ok(set)
 }
 
+#[allow(dead_code)]
 pub fn run_openclaw_agents_add_sync(
     app_handle: &AppHandle,
     instance_id: &str,
@@ -494,7 +496,8 @@ pub fn run_openclaw_agents_add_sync(
     Ok(())
 }
 
-/// After `openclaw.json` is on disk: for each id in `agents.list` missing from `openclaw agents list`, run official `openclaw agents add` (matches CLI; does not create dirs ad hoc).
+/// DEPRECATED: No longer needed. Agents in `agents.list` are automatically recognized by OpenClaw without running `openclaw agents add`.
+#[allow(dead_code)]
 pub fn sync_agents_list_with_openclaw_cli(
     app_handle: &AppHandle,
     instance_id: &str,

@@ -53,40 +53,19 @@ fn bundled_node_resource_rel() -> String {
     )
 }
 
-fn clear_openclaw_scope_env(c: &mut std::process::Command) {
-    for k in [
-        "OPENCLAW_HOME",
-        "OPENCLAW_CONFIG_PATH",
-        "OPENCLAW_STATE_DIR",
-        "OPENCLAW_PROFILE",
-    ] {
-        c.env_remove(k);
-    }
-}
 
-/// Per-instance OpenClaw CLI env/args. Clears inherited OPENCLAW_* first.
-///
-/// **Default Pond instance (`default`):** set `OPENCLAW_STATE_DIR` / `OPENCLAW_CONFIG_PATH` and
-/// **`--profile default`**. Without an explicit profile, `openclaw agents add main` maps the agent id
-/// `main` to a **separate home-level directory** `~/.openclaw-main` (sibling of `~/.openclaw`), which is
-/// not a second Pond instance — it is OpenClaw's on-disk profile slot for the name `main`.
-///
-/// **Other instances:** `--profile <id>` only → `~/.openclaw-{id}` (unchanged).
-fn apply_openclaw_instance_cli_flags(c: &mut std::process::Command, instance_id: &str) {
-    clear_openclaw_scope_env(c);
+/// Build CLI args: default instance uses no --profile, others use --profile <id>
+/// CRITICAL: --profile is a global flag and must come BEFORE the subcommand!
+fn build_cli_args_with_profile<'a>(instance_id: &'a str, subargs: &'a [&'a str]) -> Vec<&'a str> {
     let k = instance_id.trim();
-    if k.is_empty() || k.eq_ignore_ascii_case("default") {
-        if let Ok(dir) = paths::instance_home("default") {
-            c.env("OPENCLAW_STATE_DIR", dir.as_os_str());
-            c.env(
-                "OPENCLAW_CONFIG_PATH",
-                dir.join("openclaw.json").as_os_str(),
-            );
-        }
-        c.arg("--profile").arg("default");
-    } else if !k.is_empty() {
-        c.arg("--profile").arg(k);
+    let mut args = Vec::new();
+    // ONLY add --profile for non-default instances
+    if !k.is_empty() && !k.eq_ignore_ascii_case("default") {
+        args.push("--profile");
+        args.push(k);
     }
+    args.extend_from_slice(subargs);
+    args
 }
 
 fn force_bundled_openclaw() -> bool {
@@ -306,8 +285,7 @@ fn build_openclaw_cli(
     match resolve_openclaw_cli_kind_cached(app_handle)? {
         OpenClawCliKind::PathShim(exe) => {
             let mut c = StdCommand::new(&exe);
-            apply_openclaw_instance_cli_flags(&mut c, inst);
-            c.args(subargs);
+            c.args(build_cli_args_with_profile(inst, subargs));
             Ok(c)
         }
         OpenClawCliKind::NodeMjs { node, mjs, .. } | OpenClawCliKind::Bundled { node, mjs } => {
@@ -315,8 +293,8 @@ fn build_openclaw_cli(
             let cwd = mjs.parent().ok_or("openclaw.mjs has no parent dir")?;
             let mut c = StdCommand::new(&node);
             c.arg(&mjs);
-            apply_openclaw_instance_cli_flags(&mut c, inst);
-            c.args(subargs).current_dir(cwd);
+            c.args(build_cli_args_with_profile(inst, subargs));
+            c.current_dir(cwd);
             Ok(c)
         }
     }
@@ -455,10 +433,9 @@ pub fn stop_all_gateways_on_exit(app: &tauri::AppHandle) {
 }
 
 /// Normalize instance id: empty or "main" -> "default".
-fn resolve_key(agent_id: &Option<String>) -> String {
-    match agent_id.as_deref() {
-        None | Some("") => "default".to_string(),
-        Some("default") | Some("main") => "default".to_string(),
+fn resolve_instance_id(instance_id: &Option<String>) -> String {
+    match instance_id.as_deref() {
+        None | Some("") | Some("default") => "default".to_string(),
         Some(id) => id.to_string(),
     }
 }
@@ -556,10 +533,10 @@ fn detach_process_group(_cmd: &mut Command) {}
 pub async fn start_gateway(
     state: State<'_, GatewayState>,
     app_handle: AppHandle,
-    agent_id: Option<String>,
+    instance_id: Option<String>,
     port: Option<u16>,
 ) -> Result<(), String> {
-    let key = resolve_key(&agent_id);
+    let key = resolve_instance_id(&instance_id);
     ensure_profile_config(&key, &app_handle)?;
     let gw_port = resolve_port(&key, port, &app_handle)?;
 
@@ -613,7 +590,6 @@ pub async fn start_gateway(
 
     let cfg = config::load_openclaw_config_for_instance(key.clone())?;
     config::merge_write_openclaw_config(&key, cfg, &app_handle, None)?;
-    workspace::sync_agents_list_with_openclaw_cli(&app_handle, &key)?;
     config::ensure_gateway_tokens_for_instance(app_handle.clone(), key.clone())?;
 
     let port_s = gw_port.to_string();
@@ -749,9 +725,9 @@ pub async fn start_gateway(
 pub async fn stop_gateway(
     state: State<'_, GatewayState>,
     app_handle: AppHandle,
-    agent_id: Option<String>,
+    instance_id: Option<String>,
 ) -> Result<(), String> {
-    let key = resolve_key(&agent_id);
+    let key = resolve_instance_id(&instance_id);
     let (child_opt, port) = {
         let mut map = state.agents.lock().map_err(|e| e.to_string())?;
         match map.get_mut(&key) {
@@ -787,9 +763,9 @@ pub async fn stop_gateway(
 pub async fn restart_gateway(
     state: State<'_, GatewayState>,
     app_handle: AppHandle,
-    agent_id: Option<String>,
+    instance_id: Option<String>,
 ) -> Result<(), String> {
-    let key = resolve_key(&agent_id);
+    let key = resolve_instance_id(&instance_id);
     
     // Stop Gateway first
     stop_gateway(state.clone(), app_handle.clone(), Some(key.clone())).await?;
@@ -809,7 +785,7 @@ pub async fn restart_gateway(
     tokio::time::sleep(tokio::time::Duration::from_millis(1500)).await;
     
     // Restart
-    start_gateway(state, app_handle, Some(key), None).await?;
+    start_gateway(state, app_handle, instance_id, None).await?;
     Ok(())
 }
 
@@ -826,8 +802,8 @@ pub struct AgentGatewayInfo {
 }
 
 #[tauri::command]
-pub fn get_gateway_status(state: State<'_, GatewayState>, agent_id: Option<String>) -> Result<GatewayStatus, String> {
-    let key = resolve_key(&agent_id);
+pub fn get_gateway_status(state: State<'_, GatewayState>, instance_id: Option<String>) -> Result<GatewayStatus, String> {
+    let key = resolve_instance_id(&instance_id);
     let map = state.agents.lock().map_err(|e| e.to_string())?;
     Ok(map.get(&key).map(|e| e.status.clone()).unwrap_or(GatewayStatus::Stopped))
 }
@@ -836,9 +812,9 @@ pub fn get_gateway_status(state: State<'_, GatewayState>, agent_id: Option<Strin
 pub fn get_gateway_port(
     state: State<'_, GatewayState>,
     app_handle: AppHandle,
-    agent_id: Option<String>,
+    instance_id: Option<String>,
 ) -> Result<u16, String> {
-    let key = resolve_key(&agent_id);
+    let key = resolve_instance_id(&instance_id);
     let map = state.agents.lock().map_err(|e| e.to_string())?;
     if let Some(e) = map.get(&key) {
         Ok(e.port)
@@ -848,22 +824,22 @@ pub fn get_gateway_port(
 }
 
 #[tauri::command]
-pub fn get_gateway_pid(state: State<'_, GatewayState>, agent_id: Option<String>) -> Result<Option<u32>, String> {
-    let key = resolve_key(&agent_id);
+pub fn get_gateway_pid(state: State<'_, GatewayState>, instance_id: Option<String>) -> Result<Option<u32>, String> {
+    let key = resolve_instance_id(&instance_id);
     let map = state.agents.lock().map_err(|e| e.to_string())?;
     Ok(map.get(&key).and_then(|e| e.pid))
 }
 
 #[tauri::command]
-pub fn get_gateway_uptime_seconds(state: State<'_, GatewayState>, agent_id: Option<String>) -> Result<Option<u64>, String> {
-    let key = resolve_key(&agent_id);
+pub fn get_gateway_uptime_seconds(state: State<'_, GatewayState>, instance_id: Option<String>) -> Result<Option<u64>, String> {
+    let key = resolve_instance_id(&instance_id);
     let map = state.agents.lock().map_err(|e| e.to_string())?;
     Ok(map.get(&key).and_then(|e| e.started_at.map(|t| t.elapsed().as_secs())))
 }
 
 #[tauri::command]
-pub fn get_gateway_memory_mb(state: State<'_, GatewayState>, agent_id: Option<String>) -> Result<Option<f64>, String> {
-    let key = resolve_key(&agent_id);
+pub fn get_gateway_memory_mb(state: State<'_, GatewayState>, instance_id: Option<String>) -> Result<Option<f64>, String> {
+    let key = resolve_instance_id(&instance_id);
     let pid = {
         let map = state.agents.lock().map_err(|e| e.to_string())?;
         map.get(&key).and_then(|e| e.pid)
@@ -1112,15 +1088,15 @@ pub fn delete_system_agent_dir(profile_id: String) -> Result<(), String> {
 
 /// Port assigned to agent (allocate via OpenClaw CLI and persist if missing).
 #[tauri::command]
-pub fn get_agent_port(app_handle: AppHandle, agent_id: Option<String>) -> Result<u16, String> {
-    let key = resolve_key(&agent_id);
+pub fn get_agent_port(app_handle: AppHandle, instance_id: Option<String>) -> Result<u16, String> {
+    let key = resolve_instance_id(&instance_id);
     resolve_port(&key, None, &app_handle)
 }
 
 /// Set Gateway port manually (same as auto: `openclaw config set gateway.port --strict-json`).
 #[tauri::command]
-pub fn set_agent_port(app_handle: AppHandle, agent_id: String, port: u16) -> Result<(), String> {
-    let key = resolve_key(&Some(agent_id));
+pub fn set_agent_port(app_handle: AppHandle, instance_id: String, port: u16) -> Result<(), String> {
+    let key = resolve_instance_id(&Some(instance_id));
     if port < 1024 {
         return Err("端口号必须 >= 1024".to_string());
     }
@@ -1132,9 +1108,9 @@ pub fn set_agent_port(app_handle: AppHandle, agent_id: String, port: u16) -> Res
 pub async fn delete_agent_cleanup(
     state: State<'_, GatewayState>,
     app_handle: AppHandle,
-    agent_id: String,
+    instance_id: String,
 ) -> Result<(), String> {
-    let key = resolve_key(&Some(agent_id.clone()));
+    let key = resolve_instance_id(&Some(instance_id.clone()));
 
     let profile_dir = paths::instance_home(&key)?;
     let home_match = instance_cleanup::openclaw_home_match_string(&profile_dir);
@@ -1323,7 +1299,7 @@ pub async fn start_tail_gateway_log(
     app_handle: AppHandle,
     instance_id: Option<String>,
 ) -> Result<(), String> {
-    let key = resolve_key(&instance_id);
+    let key = resolve_instance_id(&instance_id);
     let path = config::get_gateway_log_file_path(&key)?;
     let (cancel_tx, cancel_rx) = oneshot::channel::<()>();
 

@@ -312,7 +312,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       resolvePondInstanceId(
         get().instanceIds,
         get().selectedInstanceId,
-        get().openclawConfig,
       ) ??
       'default'
     try {
@@ -336,7 +335,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         agentGateways: { ...s.agentGateways, [key]: { ...s.agentGateways[key], status: 'starting' as GatewayStatus, port: port ?? s.agentGateways[key]?.port ?? 18789, pid: null, uptimeSeconds: null, memoryMb: null } },
         gatewayError: null,
       }))
-      await invoke('start_gateway', { agentId, port: port ?? null })
+      await invoke('start_gateway', { instanceId: agentId, port: port ?? null })
       // Brief delay after invoke so events propagate; then sync (recovery or normal start)
       await new Promise(r => setTimeout(r, 300))
       await get().loadAllGatewayStatuses()
@@ -354,7 +353,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const key = agentId ?? 'default'
     set({ gatewayError: null })
     try {
-      await invoke('stop_gateway', { agentId })
+      await invoke('stop_gateway', { instanceId: agentId })
       set((s) => ({
         agentGateways: { ...s.agentGateways, [key]: { ...s.agentGateways[key], status: 'stopped' as GatewayStatus, pid: null, uptimeSeconds: null, memoryMb: null } },
       }))
@@ -371,7 +370,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         agentGateways: { ...s.agentGateways, [agentId ?? 'default']: { ...s.agentGateways[agentId ?? 'default'], status: 'starting' as GatewayStatus } },
         gatewayError: null,
       }))
-      await invoke('restart_gateway', { agentId })
+      await invoke('restart_gateway', { instanceId: agentId })
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error)
       set((s) => ({
@@ -524,7 +523,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       resolvePondInstanceId(
         get().instanceIds,
         get().selectedInstanceId,
-        get().openclawConfig,
       ) ?? 'default'
     try {
       const forInstance = await invoke<import('../types').SkillsForInstance>('list_skills_for_instance', {
@@ -567,7 +565,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       resolvePondInstanceId(
         get().instanceIds,
         get().selectedInstanceId,
-        get().openclawConfig,
       ) ??
       'default'
     try {
@@ -597,7 +594,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       resolvePondInstanceId(
         get().instanceIds,
         get().selectedInstanceId,
-        get().openclawConfig,
       ) ?? 'default'
     const { port, agentGatewayStatus } = get().getEffectiveGatewayInfo(instanceId)
     if (agentGatewayStatus !== 'running') {

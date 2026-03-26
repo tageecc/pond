@@ -289,7 +289,7 @@ pub struct InstallSkillViaAgentResult {
 pub async fn install_skill_via_agent(
     app_handle: AppHandle,
     skill_input: String,
-    agent_id: String,
+    instance_id: String,
 ) -> Result<InstallSkillViaAgentResult, String> {
     let input = skill_input.trim();
     if input.is_empty() {
@@ -300,8 +300,11 @@ pub async fn install_skill_via_agent(
         return Err(format!("输入过长，请不超过 {} 个字符", MAX_INPUT_LEN));
     }
 
-    let skills_dir = paths::skills_dir(Some(agent_id.as_str()))?;
+    let inst = instance_id.trim();
+    let skills_dir = paths::skills_dir(Some(inst))?;
     let skills_path = skills_dir.display().to_string();
+
+    let agent_id = config::get_default_agent_id_for_instance(inst)?;
 
     let prompt = format!(
         r#"你是一个技能安装助手。请将用户提供的「技能来源」安装到当前实例的技能目录中。
@@ -334,7 +337,7 @@ pub async fn install_skill_via_agent(
         "120".to_string(),
     ];
     let refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
-    let mut cmd = gateway::build_openclaw_cli_for_instance_sync(&app_handle, &agent_id, &refs)
+    let mut cmd = gateway::build_openclaw_cli_for_instance_sync(&app_handle, inst, &refs)
         .map_err(|e| format!("无法构建 OpenClaw 命令: {}", e))?;
 
     let run_result = tokio::time::timeout(

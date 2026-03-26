@@ -483,7 +483,7 @@ pub(crate) fn merge_write_openclaw_config(
     Ok(())
 }
 
-/// Save config then run official `openclaw agents list` / `agents add` sync (new roles via CLI).
+/// Save openclaw.json for instance.
 #[tauri::command]
 pub fn save_openclaw_config_for_instance(
     app_handle: AppHandle,
@@ -492,7 +492,6 @@ pub fn save_openclaw_config_for_instance(
 ) -> Result<(), String> {
     let id = instance_id.trim();
     merge_write_openclaw_config(id, config, &app_handle, None)?;
-    workspace::sync_agents_list_with_openclaw_cli(&app_handle, id)?;
     let _ = sync_pond_team_skill_artifacts_if_initialized(id);
     Ok(())
 }
@@ -521,7 +520,6 @@ pub fn save_openclaw_bindings_for_instance(
             serde_json::to_string(&v).unwrap_or_else(|_| "{}".to_string())
         ));
     }
-    workspace::sync_agents_list_with_openclaw_cli(&app_handle, id)?;
     Ok(())
 }
 
@@ -633,40 +631,44 @@ pub fn detect_system_openclaw() -> Result<serde_json::Value, String> {
     }))
 }
 
-/// If `agents.list` has no `main` and CLI has not registered it, run `openclaw agents add main`.
+/// Import system ~/.openclaw into Pond.
 #[tauri::command]
-pub fn import_system_openclaw_config(app_handle: AppHandle) -> Result<(), String> {
+pub fn import_system_openclaw_config() -> Result<(), String> {
     let config_path = paths::instance_config_path("default")?;
     if !config_path.exists() {
         return Err("未找到 default 实例配置（~/.openclaw/openclaw.json）".to_string());
     }
-
-    let content = fs::read_to_string(&config_path).map_err(|e| format!("读取配置失败: {}", e))?;
-    let root: Value = serde_json::from_str(&content).map_err(|e| format!("解析配置失败: {}", e))?;
-    let has_main = root
-        .get("agents")
-        .and_then(|a| a.get("list"))
-        .and_then(Value::as_array)
-        .map_or(false, |arr| {
-            arr.iter()
-                .any(|e| e.get("id").and_then(Value::as_str) == Some("main"))
-        });
-    if has_main {
-        return Ok(());
-    }
-    let registered = workspace::openclaw_cli_registered_agent_ids(&app_handle, "default")?;
-    if registered.contains("main") {
-        return Ok(());
-    }
-    let ws = paths::workspace_dir(Some("default"))?;
-    let ws_str = ws.to_string_lossy().to_string();
-    workspace::run_openclaw_agents_add_sync(&app_handle, "default", "main", &ws_str, None)?;
     Ok(())
 }
 
 /// Absolute path to instance `openclaw.json`.
 fn agent_openclaw_config_path(agent_id: &str) -> Result<std::path::PathBuf, String> {
     paths::instance_config_path(agent_id)
+}
+
+/// Get default agent id from instance config (fallback to "main").
+pub fn get_default_agent_id_for_instance(instance_id: &str) -> Result<String, String> {
+    let config = load_openclaw_config_for_instance(instance_id.to_string())?;
+    if let Some(list_arr) = config.agents.get("list").and_then(|v| v.as_array()) {
+        for item in list_arr {
+            if let Some(obj) = item.as_object() {
+                let is_default = obj.get("default").and_then(|v| v.as_bool()).unwrap_or(false);
+                if is_default {
+                    if let Some(id) = obj.get("id").and_then(|v| v.as_str()) {
+                        return Ok(id.to_string());
+                    }
+                }
+            }
+        }
+        if let Some(first) = list_arr.first() {
+            if let Some(obj) = first.as_object() {
+                if let Some(id) = obj.get("id").and_then(|v| v.as_str()) {
+                    return Ok(id.to_string());
+                }
+            }
+        }
+    }
+    Ok("main".to_string())
 }
 
 /// Read raw openclaw.json string for an instance id (raw editor).
@@ -682,7 +684,7 @@ pub fn load_agent_raw_config(agent_id: String) -> Result<String, String> {
 /// Write raw JSON; strip unknown keys before save to avoid invalid config.
 #[tauri::command]
 pub fn save_agent_raw_config(
-    app_handle: AppHandle,
+    _app_handle: AppHandle,
     agent_id: String,
     raw_json: String,
 ) -> Result<(), String> {
@@ -694,13 +696,12 @@ pub fn save_agent_raw_config(
     }
     let mut root = val.as_object().ok_or("配置必须是 JSON 对象")?.clone();
     prepare_raw_root_for_openclaw(&mut root);
-    let id = agent_id.trim();
+    let _id = agent_id.trim();
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent).map_err(|e| format!("创建目录失败: {}", e))?;
     }
     let pretty = serde_json::to_string_pretty(&Value::Object(root)).map_err(|e| e.to_string())?;
     fs::write(&path, pretty).map_err(|e| format!("写入 Agent 配置失败: {}", e))?;
-    workspace::sync_agents_list_with_openclaw_cli(&app_handle, id)?;
     Ok(())
 }
 

@@ -102,8 +102,7 @@ import {
   primaryRefToFlatModelInstanceId,
 } from "../lib/openclawAgentModelRef"
 import { resolveTeamLeaderAgentId, TEAM_LEADER_AGENT_ID } from "../lib/teamLeader"
-import { getAgentIds } from "../lib/openclawAgentsModels"
-import { agentsModelsToFlatView, flatViewToAgentsModels } from "../lib/openclawAgentsModels"
+import { getAgentIds, agentsModelsToFlatView, flatViewToAgentsModels } from "../lib/openclawAgentsModels"
 import { PROVIDERS, getProvider } from "../constants/providers"
 import { ModelIdField } from "./ModelIdField"
 import { CreateOpenClawInstanceDialog } from "./CreateOpenClawInstanceDialog"
@@ -276,7 +275,7 @@ export function AgentView() {
   const setTeamSpaceTab = useAppStore((s) => s.setTeamSpaceTab)
   const setAgentConfigSection = useAppStore((s) => s.setAgentConfigSection)
   const switchInstance = useAppStore((s) => s.switchInstance)
-  const agents = instanceIds.length > 0 ? instanceIds : (getAgentIds(openclawConfig).length ? getAgentIds(openclawConfig) : ["default"])
+  const agents = instanceIds.length > 0 ? instanceIds : ["default"]
   const displayNames = (instanceDisplayNames ?? {}) as Record<string, string>
   const selectedId = (selectedInstanceId && agents.includes(selectedInstanceId)) ? selectedInstanceId : (agents[0] ?? null)
 
@@ -300,7 +299,7 @@ export function AgentView() {
   )
 
   const heartbeatRoleIds = useMemo(
-    () => getAgentIds(openclawConfig ?? undefined),
+    () => getAgentIds(openclawConfig),
     [openclawConfig],
   )
 
@@ -1190,7 +1189,7 @@ export function AgentView() {
     try {
       const result = await invoke<{ skill_id?: string; message: string }>("install_skill_via_agent", {
         skillInput: raw,
-        agentId: selectedId,
+        instanceId: selectedId,
       })
       await loadSkills()
       await loadConfigs()
@@ -1240,9 +1239,7 @@ export function AgentView() {
       refreshDiscoveredAgents()
       setConfirmDelete(false)
       
-      const updatedConfig = useAppStore.getState().openclawConfig
-      const remainingAgents = getAgentIds(updatedConfig)
-      const nextId = remainingAgents[0] ?? null
+      const nextId = useAppStore.getState().instanceIds[0] ?? null
       if (nextId) {
         switchInstance(nextId).catch(() => {})
       } else {
