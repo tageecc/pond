@@ -8,11 +8,6 @@
 [![License](https://img.shields.io/github/license/tageecc/pond)](https://github.com/tageecc/pond/blob/main/LICENSE)
 [![GitHub Stars](https://img.shields.io/github/stars/tageecc/pond)](https://github.com/tageecc/pond/stargazers)
 
-[![Tauri](https://img.shields.io/badge/Tauri-2-24C8D8?logo=tauri&logoColor=white)](https://tauri.app/)
-[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Rust](https://img.shields.io/badge/Rust-stable-dea582?logo=rust&logoColor=white)](https://www.rust-lang.org/)
-
 [下载安装包](https://github.com/tageecc/pond/releases/latest) · [快速开始](#快速开始) · [功能特性](#功能特性)
 
 **[English](./README.md)** | 简体中文

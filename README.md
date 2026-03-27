@@ -8,11 +8,6 @@
 [![License](https://img.shields.io/github/license/tageecc/pond)](https://github.com/tageecc/pond/blob/main/LICENSE)
 [![GitHub Stars](https://img.shields.io/github/stars/tageecc/pond)](https://github.com/tageecc/pond/stargazers)
 
-[![Tauri](https://img.shields.io/badge/Tauri-2-24C8D8?logo=tauri&logoColor=white)](https://tauri.app/)
-[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Rust](https://img.shields.io/badge/Rust-stable-dea582?logo=rust&logoColor=white)](https://www.rust-lang.org/)
-
 [Download](https://github.com/tageecc/pond/releases/latest) · [Quick Start](#quick-start) · [Features](#features)
 
 English | **[简体中文](./README_zh.md)**
