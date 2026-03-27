@@ -168,6 +168,9 @@ importers:
       '@tauri-apps/cli':
         specifier: ^2
         version: 2.10.1
+      '@types/d3-shape':
+        specifier: ^3.1.8
+        version: 3.1.8
       '@types/node':
         specifier: ^25.3.5
         version: 25.3.5
