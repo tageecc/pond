@@ -1008,16 +1008,6 @@ export function ChatView() {
         sending: false,
       });
 
-      if (executionTime && executionTime > 2000) {
-        toast.success(
-          i18n.t("chat.executionDoneToast", {
-            seconds: (executionTime / 1000).toFixed(1),
-          }),
-          {
-            duration: 3000,
-          },
-        );
-      }
       setTimeout(() => {
         updateChatSession(chatStoreKey, { executionState: "idle" });
         updateAgentExecutionState(pondInstanceId, "idle");
