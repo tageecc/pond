@@ -120,6 +120,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           POND_NODE_DIST_TRIPLE: ${{ matrix.node-dist-triple }}
+          RUST_BACKTRACE: 1
+          VERBOSE: 1
         with:
           tagName: v__VERSION__
           releaseName: 'Pond v__VERSION__'

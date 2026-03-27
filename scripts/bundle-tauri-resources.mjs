@@ -218,9 +218,9 @@ function copyOpenclaw(src) {
     try {
       rmSync(OPENCLAW_RUNTIME_ROOT, { recursive: true, force: true, maxRetries: 3 })
     } catch (err) {
-      console.warn(`Failed to rm, using find/rm...`)
-      execFileSync("find", [OPENCLAW_RUNTIME_ROOT, "-type", "f", "-delete"], { stdio: "pipe" })
-      execFileSync("find", [OPENCLAW_RUNTIME_ROOT, "-depth", "-type", "d", "-exec", "rmdir", "{}", ";"], { stdio: "pipe" })
+      console.warn(`Failed to rm on first attempt, retrying...`)
+      // Retry with higher maxRetries instead of using find (Windows incompatible)
+      rmSync(OPENCLAW_RUNTIME_ROOT, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 })
     }
   }
   // Install openclaw in a clean environment with flat node_modules (no pnpm symlinks).
@@ -269,10 +269,25 @@ function copyOpenclaw(src) {
   // Remove all .bin directories (contain symlinks and are not needed at runtime)
   const tmpNodeModules = join(tmpInstall, "node_modules")
   console.log(`  Removing .bin directories...`)
-  execFileSync("find", [tmpNodeModules, "-type", "d", "-name", ".bin", "-exec", "rm", "-rf", "{}", "+"], {
-    stdio: "pipe",
-    shell: false
-  })
+  // Use Node.js fs instead of find command (Windows incompatible)
+  function removeBinDirs(dir) {
+    try {
+      const entries = readdirSync(dir, { withFileTypes: true })
+      for (const entry of entries) {
+        const fullPath = join(dir, entry.name)
+        if (entry.isDirectory()) {
+          if (entry.name === ".bin") {
+            rmSync(fullPath, { recursive: true, force: true })
+          } else {
+            removeBinDirs(fullPath)
+          }
+        }
+      }
+    } catch (err) {
+      // Ignore errors
+    }
+  }
+  removeBinDirs(tmpNodeModules)
   
   // Move node_modules directly
   if (existsSync(dstNodeModules)) {
