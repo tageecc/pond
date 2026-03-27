@@ -30,6 +30,13 @@
   <p><em>实时监控 Token 消费、会话状态与系统资源</em></p>
 </div>
 
+### 角色管理
+
+<div align="center">
+  <img src="docs/assets/screenshot-roles-zh.png" alt="角色管理" width="100%" />
+  <p><em>多智能体角色管理，Team Leader 与成员配置</em></p>
+</div>
+
 ### 团队任务管理
 
 <div align="center">

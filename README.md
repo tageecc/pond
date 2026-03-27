@@ -30,6 +30,13 @@ English | **[简体中文](./README_zh.md)**
   <p><em>Real-time monitoring of token consumption, session states, and system resources</em></p>
 </div>
 
+### Role Management
+
+<div align="center">
+  <img src="docs/assets/screenshot-roles.png" alt="Role Management" width="100%" />
+  <p><em>Multi-agent role management with Team Leader and member configuration</em></p>
+</div>
+
 ### Team Task Management
 
 <div align="center">
