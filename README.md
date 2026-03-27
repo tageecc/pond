@@ -23,13 +23,24 @@ English | **[简体中文](./README_zh.md)**
 
 ## Screenshots
 
+### Analytics Dashboard
+
 <div align="center">
   <img src="docs/assets/screenshot-analytics.png" alt="Analytics Dashboard" width="100%" />
   <p><em>Real-time monitoring of token consumption, session states, and system resources</em></p>
 </div>
 
+### Team Task Management
+
 <div align="center">
-  <img src="docs/assets/screenshot-chat.png" alt="Chat Interface" width="100%" />
+  <img src="docs/assets/screenshot-team-tasks.png" alt="Team Task Management" width="100%" />
+  <p><em>Task orchestration with state machine (open → claimed → done/failed) and real-time notifications</em></p>
+</div>
+
+### Agent Chat Interface
+
+<div align="center">
+  <img src="docs/assets/screenshot-chat.png" alt="Agent Chat Interface" width="100%" />
   <p><em>Streaming chat with tool execution timeline and reasoning visualization</em></p>
 </div>
 

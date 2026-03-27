@@ -23,13 +23,24 @@
 
 ## 界面预览
 
+### 数据分析面板
+
 <div align="center">
-  <img src="docs/assets/screenshot-analytics.png" alt="数据分析面板" width="100%" />
+  <img src="docs/assets/screenshot-analytics-zh.png" alt="数据分析面板" width="100%" />
   <p><em>实时监控 Token 消费、会话状态与系统资源</em></p>
 </div>
 
+### 团队任务管理
+
 <div align="center">
-  <img src="docs/assets/screenshot-chat.png" alt="对话界面" width="100%" />
+  <img src="docs/assets/screenshot-team-tasks-zh.png" alt="团队任务管理" width="100%" />
+  <p><em>任务状态机（待领取 → 进行中 → 完成/失败）与实时通知</em></p>
+</div>
+
+### 智能体对话界面
+
+<div align="center">
+  <img src="docs/assets/screenshot-chat-zh.png" alt="智能体对话界面" width="100%" />
   <p><em>流式对话、工具执行时间线与推理过程可视化</em></p>
 </div>
 
