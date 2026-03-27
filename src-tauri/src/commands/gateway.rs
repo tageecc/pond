@@ -1103,7 +1103,7 @@ pub fn set_agent_port(app_handle: AppHandle, instance_id: String, port: u16) -> 
     persist_gateway_port_cli(&app_handle, &key, port)
 }
 
-/// Delete instance: stop Gateway, uninstall OpenClaw daemon for that profile, free port, remove dir and local chat data.
+/// Delete instance: stop Gateway, kill processes, remove dir completely.
 #[tauri::command]
 pub async fn delete_agent_cleanup(
     state: State<'_, GatewayState>,
@@ -1111,41 +1111,39 @@ pub async fn delete_agent_cleanup(
     instance_id: String,
 ) -> Result<(), String> {
     let key = resolve_instance_id(&Some(instance_id.clone()));
-
     let profile_dir = paths::instance_home(&key)?;
     let home_match = instance_cleanup::openclaw_home_match_string(&profile_dir);
-    let mut ports: Vec<u16> = Vec::new();
-    if let Some(p) = config::get_instance_gateway_port(&key) {
-        ports.push(p);
-        ports.push(p.saturating_add(2));
-    }
+    
+    let ports: Vec<u16> = config::get_instance_gateway_port(&key)
+        .map(|p| vec![p, p.saturating_add(2)])
+        .unwrap_or_default();
 
+    // Stop Gateway (Pond-managed process)
     let _ = stop_gateway(state.clone(), app_handle.clone(), Some(key.clone())).await;
-    process::terminate_tcp_listeners_on_ports(&ports);
 
+    // Stop system services
     openclaw_gateway_service_teardown_sync(&app_handle, &key);
-
     let _ = instance_cleanup::remove_installed_services_for_openclaw_home(&home_match);
 
-    tokio::time::sleep(tokio::time::Duration::from_millis(1500)).await;
+    // Wait for processes to exit and release file handles
+    tokio::time::sleep(tokio::time::Duration::from_millis(2000)).await;
 
-    process::terminate_tcp_listeners_on_ports(&ports);
+    // Force kill any remaining processes holding ports
+    if !ports.is_empty() {
+        process::terminate_tcp_listeners_on_ports(&ports);
+        tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+    }
 
+    // Remove from state
     {
         let mut map = state.agents.lock().map_err(|e| e.to_string())?;
         map.remove(&key);
     }
 
+    // Delete instance directory
     if profile_dir.exists() {
         std::fs::remove_dir_all(&profile_dir)
-            .map_err(|e| format!("删除目录 {} 失败: {}", profile_dir.display(), e))?;
-    }
-
-    if let Ok(app_data) = paths::get_app_data_dir() {
-        let chat_file = app_data.join("chat").join(format!("{}.json", key));
-        if chat_file.exists() {
-            let _ = std::fs::remove_file(&chat_file);
-        }
+            .map_err(|e| format!("删除实例目录失败: {} - 可能有进程仍在占用文件", e))?;
     }
 
     Ok(())
