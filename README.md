@@ -90,7 +90,19 @@ Pond does **not** replace the OpenClaw runtime; it **operates** it: same `opencl
 
 ## Screenshots
 
-We want real UI shots here. Add PNGs under `docs/assets/` and drop them into this section—**PRs welcome.**
+### Analytics Dashboard
+
+<div align="center">
+  <img src="docs/assets/screenshot-analytics.png" alt="Analytics Dashboard - Theme Comparison" width="100%" />
+  <p><em>Analytics dashboard with light/dark theme support — track token usage, spend, and active agents</em></p>
+</div>
+
+### Agent Chat Interface
+
+<div align="center">
+  <img src="docs/assets/screenshot-chat.png" alt="Agent Chat Interface - Theme Comparison" width="100%" />
+  <p><em>Chat interface with streaming responses, tool execution timeline, and role-based messaging</em></p>
+</div>
 
 ---
 
