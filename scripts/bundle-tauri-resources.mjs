@@ -242,20 +242,18 @@ function copyOpenclaw(src) {
       "openclaw": openclawVersion
     }
   }, null, 2))
-  // Install with npm if available, fallback to pnpm
-  const useNpm = process.env.CI !== "true" || process.platform === "darwin"
-  const pkgManager = useNpm ? "npm" : "pnpm"
-  console.log(`  Running ${pkgManager} install --omit=dev...`)
-  
-  if (pkgManager === "npm") {
+  // Try npm first (flat structure, no symlinks), fallback to pnpm with shamefully-hoist
+  console.log(`  Running npm install --omit=dev...`)
+  try {
     execFileSync("npm", ["install", "--omit=dev", "--legacy-peer-deps"], {
       cwd: tmpInstall,
-      stdio: "pipe",
+      stdio: "inherit",
     })
-  } else {
-    execFileSync("pnpm", ["install", "--prod", "--no-lockfile"], {
+  } catch (err) {
+    console.log(`  npm failed, trying pnpm with --shamefully-hoist...`)
+    execFileSync("pnpm", ["install", "--prod", "--shamefully-hoist", "--no-lockfile"], {
       cwd: tmpInstall,
-      stdio: "pipe",
+      stdio: "inherit",
     })
   }
   
