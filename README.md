@@ -4,13 +4,7 @@
 
 **Desktop Control Center for OpenClaw — Unified Operations, Team Collaboration & Multi-Instance Orchestration**
 
-[![GitHub Release](https://img.shields.io/github/v/release/tageecc/pond)](https://github.com/tageecc/pond/releases)
-[![License](https://img.shields.io/github/license/tageecc/pond)](https://github.com/tageecc/pond/blob/main/LICENSE)
-[![GitHub Stars](https://img.shields.io/github/stars/tageecc/pond)](https://github.com/tageecc/pond/stargazers)
-
-[Download](https://github.com/tageecc/pond/releases/latest) · [Quick Start](#quick-start) · [Features](#features)
-
-English | **[简体中文](./README_zh.md)**
+[Download](https://github.com/tageecc/pond/releases/latest) · [Quick Start](#quick-start) · [Features](#features) · [简体中文](./README_zh.md)
 
 </div>
 
