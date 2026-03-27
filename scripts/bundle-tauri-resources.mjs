@@ -243,11 +243,27 @@ function copyOpenclaw(src) {
     }
   }, null, 2))
   // Install with npm (naturally flat, no symlinks)
-  // Note: npm should be available in all CI environments via actions/setup-node
+  // On Windows, npm might not be in PATH, so we try to locate it
+  let npmCmd = "npm"
+  if (process.platform === "win32") {
+    try {
+      // Try to find npm.cmd in the same directory as node.exe
+      const nodeDir = dirname(process.execPath)
+      const npmCmdPath = join(nodeDir, "npm.cmd")
+      if (existsSync(npmCmdPath)) {
+        npmCmd = npmCmdPath
+        console.log(`  Found npm at: ${npmCmd}`)
+      }
+    } catch (err) {
+      // Fallback to "npm" and hope it's in PATH
+    }
+  }
+  
   console.log(`  Running npm install --omit=dev...`)
-  execFileSync("npm", ["install", "--omit=dev", "--legacy-peer-deps"], {
+  execFileSync(npmCmd, ["install", "--omit=dev", "--legacy-peer-deps"], {
     cwd: tmpInstall,
     stdio: "inherit",
+    shell: process.platform === "win32", // Use shell on Windows to handle .cmd files
   })
   
   // Remove all .bin directories (contain symlinks and are not needed at runtime)
