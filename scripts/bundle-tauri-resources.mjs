@@ -242,20 +242,29 @@ function copyOpenclaw(src) {
       "openclaw": openclawVersion
     }
   }, null, 2))
-  // Install with pnpm --shamefully-hoist to create flat node_modules
-  console.log(`  Running pnpm install --shamefully-hoist...`)
-  execFileSync("pnpm", ["install", "--shamefully-hoist", "--prod", "--ignore-workspace"], {
+  // Install with npm (naturally flat, no symlinks) instead of pnpm
+  console.log(`  Running npm install --omit=dev...`)
+  execFileSync("npm", ["install", "--omit=dev", "--legacy-peer-deps"], {
     cwd: tmpInstall,
     stdio: "pipe",
   })
-  // Move the flat node_modules to destination
+  
+  // Remove all .bin directories (contain symlinks and are not needed at runtime)
   const tmpNodeModules = join(tmpInstall, "node_modules")
+  console.log(`  Removing .bin directories...`)
+  execFileSync("find", [tmpNodeModules, "-type", "d", "-name", ".bin", "-exec", "rm", "-rf", "{}", "+"], {
+    stdio: "pipe",
+    shell: false
+  })
+  
+  // Move node_modules directly
   if (existsSync(dstNodeModules)) {
     rmSync(dstNodeModules, { recursive: true, force: true })
   }
   renameSync(tmpNodeModules, dstNodeModules)
+  
   rmSync(tmpInstall, { recursive: true, force: true })
-  console.log(`  Installed openclaw with flat node_modules.`)
+  console.log(`  Installed openclaw with flat node_modules (symlinks dereferenced).`)
   if (!existsSync(dst)) {
     throw new Error(`openclaw not found at ${dst}`)
   }
@@ -315,6 +324,15 @@ function copyOpenclaw(src) {
   }
   walkAndFix(dstNodeModules)
   console.log(`  Fixed ${fixed} package.json files with null exports.`)
+  
+  // Verify no symlinks remain (Tauri walkdir skips symlinked directories)
+  try {
+    assertNoSymlinksUnder(dstNodeModules, "openclaw-runtime/node_modules")
+    console.log(`  ✓ Verified no symlinks in bundled node_modules.`)
+  } catch (err) {
+    throw new Error(`Symlink verification failed: ${err.message}`)
+  }
+  
   console.log(`Copied OpenClaw package to ${dst}`)
 }
 

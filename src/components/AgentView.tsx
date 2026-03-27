@@ -1212,7 +1212,7 @@ export function AgentView() {
     
     try {
       // Backend: stop Pond children, openclaw gateway stop/uninstall per profile, clean LaunchAgent/systemd/tasks, free port, delete dirs
-      await invoke("delete_agent_cleanup", { agentId: selectedId })
+      await invoke("delete_agent_cleanup", { instanceId: selectedId })
       
       // If last instance was removed (check disk)
       let instanceCount = 0
