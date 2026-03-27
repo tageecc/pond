@@ -4,7 +4,13 @@
 
 **OpenClaw 的桌面控制中心 — 一体化运维、团队协作与多实例编排**
 
-[下载安装包](https://github.com/tageecc/pond/releases/latest) · [快速开始](#快速开始) · [功能特性](#功能特性) · [English](./README.md)
+[![GitHub Release](https://img.shields.io/github/v/release/tageecc/pond)](https://github.com/tageecc/pond/releases)
+[![License](https://img.shields.io/github/license/tageecc/pond)](https://github.com/tageecc/pond/blob/main/LICENSE)
+[![GitHub Stars](https://img.shields.io/github/stars/tageecc/pond)](https://github.com/tageecc/pond/stargazers)
+
+[下载安装包](https://github.com/tageecc/pond/releases/latest) · [快速开始](#快速开始) · [功能特性](#功能特性)
+
+**[English](./README.md)** | 简体中文
 
 </div>
 
