@@ -242,12 +242,22 @@ function copyOpenclaw(src) {
       "openclaw": openclawVersion
     }
   }, null, 2))
-  // Install with npm (naturally flat, no symlinks) instead of pnpm
-  console.log(`  Running npm install --omit=dev...`)
-  execFileSync("npm", ["install", "--omit=dev", "--legacy-peer-deps"], {
-    cwd: tmpInstall,
-    stdio: "pipe",
-  })
+  // Install with npm if available, fallback to pnpm
+  const useNpm = process.env.CI !== "true" || process.platform === "darwin"
+  const pkgManager = useNpm ? "npm" : "pnpm"
+  console.log(`  Running ${pkgManager} install --omit=dev...`)
+  
+  if (pkgManager === "npm") {
+    execFileSync("npm", ["install", "--omit=dev", "--legacy-peer-deps"], {
+      cwd: tmpInstall,
+      stdio: "pipe",
+    })
+  } else {
+    execFileSync("pnpm", ["install", "--prod", "--no-lockfile"], {
+      cwd: tmpInstall,
+      stdio: "pipe",
+    })
+  }
   
   // Remove all .bin directories (contain symlinks and are not needed at runtime)
   const tmpNodeModules = join(tmpInstall, "node_modules")
