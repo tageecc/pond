@@ -122,6 +122,8 @@ jobs:
           POND_NODE_DIST_TRIPLE: ${{ matrix.node-dist-triple }}
           RUST_BACKTRACE: 1
           VERBOSE: 1
+          LINUXDEPLOY_VERBOSITY: 3
+          DEBUG: 1
         with:
           tagName: v__VERSION__
           releaseName: 'Pond v__VERSION__'
