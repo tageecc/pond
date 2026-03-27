@@ -242,20 +242,13 @@ function copyOpenclaw(src) {
       "openclaw": openclawVersion
     }
   }, null, 2))
-  // Try npm first (flat structure, no symlinks), fallback to pnpm with shamefully-hoist
+  // Install with npm (naturally flat, no symlinks)
+  // Note: npm should be available in all CI environments via actions/setup-node
   console.log(`  Running npm install --omit=dev...`)
-  try {
-    execFileSync("npm", ["install", "--omit=dev", "--legacy-peer-deps"], {
-      cwd: tmpInstall,
-      stdio: "inherit",
-    })
-  } catch (err) {
-    console.log(`  npm failed, trying pnpm with --shamefully-hoist...`)
-    execFileSync("pnpm", ["install", "--prod", "--shamefully-hoist", "--no-lockfile"], {
-      cwd: tmpInstall,
-      stdio: "inherit",
-    })
-  }
+  execFileSync("npm", ["install", "--omit=dev", "--legacy-peer-deps"], {
+    cwd: tmpInstall,
+    stdio: "inherit",
+  })
   
   // Remove all .bin directories (contain symlinks and are not needed at runtime)
   const tmpNodeModules = join(tmpInstall, "node_modules")
