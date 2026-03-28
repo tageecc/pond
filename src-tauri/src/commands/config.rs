@@ -455,14 +455,17 @@ pub(crate) fn merge_write_openclaw_config(
         fs::create_dir_all(parent).map_err(|e| e.to_string())?;
     }
 
-    let mut root: serde_json::Map<String, Value> = if config_path.exists() {
+    // Load existing config to check if skills changed (reuse for root merge)
+    let (old_config, mut root) = if config_path.exists() {
         let content = fs::read_to_string(&config_path).map_err(|e| e.to_string())?;
         let v: Value = serde_json::from_str(&content).map_err(|e| e.to_string())?;
-        v.as_object()
+        let root_map = v.as_object()
             .cloned()
-            .ok_or("openclaw.json 根节点须为 JSON 对象")?
+            .ok_or("openclaw.json 根节点须为 JSON 对象")?;
+        let old_cfg = load_openclaw_config_for_instance(id.to_string()).ok();
+        (old_cfg, root_map)
     } else {
-        serde_json::Map::new()
+        (None, serde_json::Map::new())
     };
 
     let patch = serde_json::to_value(&config)
@@ -479,7 +482,23 @@ pub(crate) fn merge_write_openclaw_config(
 
     let content = serde_json::to_string_pretty(&Value::Object(root)).map_err(|e| e.to_string())?;
     fs::write(&config_path, content).map_err(|e| e.to_string())?;
-    workspace::sync_skills_disabled_with_openclaw_cli(app, id, &config.skills, skills_sync_all_ids.as_deref())?;
+    
+    // Only sync skills if they actually changed or if explicitly requested via skills_sync_all_ids
+    let skills_changed = old_config
+        .as_ref()
+        .map(|old| {
+            let mut old_skills = old.skills.clone();
+            let mut new_skills = config.skills.clone();
+            old_skills.sort();
+            new_skills.sort();
+            old_skills != new_skills
+        })
+        .unwrap_or(true); // Always sync if no old config exists
+    
+    if skills_changed || skills_sync_all_ids.is_some() {
+        workspace::sync_skills_disabled_with_openclaw_cli(app, id, &config.skills, skills_sync_all_ids.as_deref())?;
+    }
+    
     Ok(())
 }
 

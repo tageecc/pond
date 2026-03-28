@@ -1265,6 +1265,10 @@ export function ChatView() {
                   const userFriendlySource = userParsed
                     ? senderToFriendlySource(userParsed.sender)
                     : null;
+                  const userTimeLabel =
+                    m.role === "user"
+                      ? formatMessageTime(userParsed!.timestamp, m.sentAt)
+                      : "";
                   return (
                     <div
                       key={m.id}
@@ -1299,7 +1303,7 @@ export function ChatView() {
                           )}
                         >
                           {m.role === "user" ? (
-                            <div className="whitespace-pre-wrap break-words">
+                            <div className="whitespace-pre-wrap break-keep">
                               {userParsed!.displayText}
                             </div>
                           ) : (
@@ -1317,28 +1321,16 @@ export function ChatView() {
                           )}
                         </div>
                         {m.role === "user" && (
-                          <div className="absolute left-0 top-full -mt-3 pt-px opacity-0 transition-opacity duration-150 group-hover:opacity-100 px-2 text-[11px] text-app-muted flex items-center gap-2 min-w-0">
-                            <span className="flex items-center gap-2 min-w-0">
-                              {formatMessageTime(
-                                userParsed!.timestamp,
-                                m.sentAt,
-                              ) && (
-                                <span>
-                                  {formatMessageTime(
-                                    userParsed!.timestamp,
-                                    m.sentAt,
-                                  )}
+                          <div className="absolute right-0 top-full -mt-3 pt-px opacity-0 transition-opacity duration-150 group-hover:opacity-100 px-2 text-[11px] text-app-muted flex flex-nowrap items-center gap-2 w-max whitespace-nowrap">
+                            <span className="flex flex-nowrap items-center gap-2">
+                              {userTimeLabel && (
+                                <span>{userTimeLabel}</span>
+                              )}
+                              {userTimeLabel && userFriendlySource && (
+                                <span className="text-app-border shrink-0">
+                                  ·
                                 </span>
                               )}
-                              {formatMessageTime(
-                                userParsed!.timestamp,
-                                m.sentAt,
-                              ) &&
-                                userFriendlySource && (
-                                  <span className="text-app-border shrink-0">
-                                    ·
-                                  </span>
-                                )}
                               {userFriendlySource && (
                                 <span>
                                   {t("chat.fromSource", {
@@ -1365,8 +1357,8 @@ export function ChatView() {
                           </div>
                         )}
                         {m.role === "assistant" && (
-                          <div className="absolute left-0 top-full -mt-3 pt-px opacity-0 transition-opacity duration-150 group-hover:opacity-100 px-2 text-[11px] text-app-muted flex items-center gap-2 min-w-0">
-                            <span className="flex items-center gap-2 min-w-0">
+                          <div className="absolute left-0 top-full -mt-3 pt-px opacity-0 transition-opacity duration-150 group-hover:opacity-100 px-2 text-[11px] text-app-muted flex flex-nowrap items-center gap-2 w-max whitespace-nowrap">
+                            <span className="flex flex-nowrap items-center gap-2">
                               {m.sentAt && (
                                 <span>
                                   {formatMessageTime(undefined, m.sentAt)}

@@ -270,8 +270,12 @@
       "noSandboxHint": "Disable Chrome sandbox (Docker / some Linux).",
       "userMode": {
         "title": "existing-session mode",
-        "desc1": "Attach to your already-open Chrome browser via Chrome DevTools MCP, reusing its tabs and login sessions.",
-        "desc2": "Open chrome://inspect/#remote-debugging in Chrome, enable remote debugging, and approve the connection prompt when attaching."
+        "desc1": "Reuse Chrome tabs and login sessions.",
+        "steps": "Required setup:",
+        "step1": "Save config and restart Gateway",
+        "step2": "Chrome: chrome://inspect/#remote-debugging",
+        "step3": "Click Configure, enable remote debugging",
+        "step4": "Then click 'Open Browser' and approve"
       }
     },
     "loading": "Loading…",

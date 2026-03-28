@@ -241,8 +241,6 @@ export interface OpenClawConfig {
 
 /** One browser profile: local CDP port, remote CDP URL, or user-data-dir */
 export interface BrowserProfileConfig {
-  /** Driver type: "existing-session" for Chrome MCP */
-  driver?: "existing-session" | string
   /** Attach-only mode (never launch) */
   attachOnly?: boolean
   /** Local CDP port (openclaw-managed profile) */

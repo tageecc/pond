@@ -3756,18 +3756,17 @@ export function AgentView() {
                         )}
 
                         {browserMode === "user" && (
-                          <div className="rounded-lg border border-app-border bg-app-surface p-4 space-y-2">
-                            <div className="flex items-start gap-2">
-                              <div className="text-claw-500 mt-0.5">
-                                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                              </div>
-                              <div className="flex-1 space-y-1 text-sm">
-                                <p className="font-medium text-app-text">{t("agentView.browser.userMode.title")}</p>
-                                <p className="text-app-muted">{t("agentView.browser.userMode.desc1")}</p>
-                                <p className="text-app-muted">{t("agentView.browser.userMode.desc2")}</p>
-                              </div>
+                          <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs space-y-1">
+                            <p className="font-medium text-app-text">{t("agentView.browser.userMode.title")}</p>
+                            <p className="text-app-muted">{t("agentView.browser.userMode.desc1")}</p>
+                            <div className="text-app-muted">
+                              <p className="font-medium text-amber-700 dark:text-amber-400">{t("agentView.browser.userMode.steps")}</p>
+                              <ol className="list-decimal list-inside space-y-0.5 pl-1">
+                                <li>{t("agentView.browser.userMode.step1")}</li>
+                                <li>{t("agentView.browser.userMode.step2")}</li>
+                                <li>{t("agentView.browser.userMode.step3")}</li>
+                                <li>{t("agentView.browser.userMode.step4")}</li>
+                              </ol>
                             </div>
                           </div>
                         )}
@@ -3783,7 +3782,7 @@ export function AgentView() {
                               setBrowserSaving(true)
                               
                               const profile: BrowserProfileConfig = browserMode === "user"
-                                ? { driver: "existing-session", attachOnly: true }
+                                ? { attachOnly: true }
                                 : {}
                               
                               if (browserUserDataDir.trim()) profile.userDataDir = browserUserDataDir.trim()

@@ -270,8 +270,12 @@
       "noSandboxHint": "关闭 Chrome 沙箱。部分环境（如 Docker、某些 Linux）需要开启才能正常启动浏览器。",
       "userMode": {
         "title": "existing-session 模式",
-        "desc1": "通过 Chrome DevTools MCP 连接到你已打开的 Chrome 浏览器，复用其中的登录会话和标签页。",
-        "desc2": "需要在 Chrome 中打开 chrome://inspect/#remote-debugging 并启用远程调试，在连接时批准授权。"
+        "desc1": "复用已打开的 Chrome 登录会话和标签页。",
+        "steps": "使用前必须先：",
+        "step1": "保存配置后重启 Gateway",
+        "step2": "Chrome 打开 chrome://inspect/#remote-debugging",
+        "step3": "点击 Configure 启用远程调试",
+        "step4": "然后点击「打开浏览器」并批准授权"
       }
     },
     "loading": "加载中…",
