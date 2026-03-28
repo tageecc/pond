@@ -70,10 +70,16 @@
 | **macOS (Apple Silicon)** | `Pond_<version>_aarch64.dmg` |
 | **macOS (Intel)** | `Pond_<version>_x64.dmg` |
 | **Windows** | `Pond_<version>_x64.msi` |
-| **Linux** | `Pond_<version>_amd64.AppImage` |
+| **Linux** | `Pond_<version>_amd64.deb` |
 
-> [!TIP]
-> **macOS 用户**：首次打开未签名应用时，**Control-点按** 应用图标，选择 **打开** → **打开**。或在 **系统设置 → 隐私与安全性** 中允许。
+> [!IMPORTANT]
+> **macOS 首次打开提示"已损坏"？** 这是正常的安全提示，因为应用暂未经过苹果公证。解决方法：
+> 
+> **方法 1（推荐）**：打开 **系统设置 → 隐私与安全性**，找到被阻止的应用，点击 **"仍要打开"**
+> 
+> **方法 2（快速）**：在终端运行：`xattr -cr /Applications/Pond.app`
+> 
+> 详见：https://support.apple.com/zh-cn/guide/mac-help/mh40616
 
 ### 本地开发
 

@@ -70,10 +70,16 @@ Download from [GitHub Releases](https://github.com/tageecc/pond/releases/latest)
 | **macOS (Apple Silicon)** | `Pond_<version>_aarch64.dmg` |
 | **macOS (Intel)** | `Pond_<version>_x64.dmg` |
 | **Windows** | `Pond_<version>_x64.msi` |
-| **Linux** | `Pond_<version>_amd64.AppImage` |
+| **Linux** | `Pond_<version>_amd64.deb` |
 
-> [!TIP]
-> **macOS users**: When opening unsigned apps for the first time, **Control-click** the app icon, select **Open** → **Open**. Or allow it in **System Settings → Privacy & Security**.
+> [!IMPORTANT]
+> **macOS shows "damaged" error?** This is a normal security prompt since the app isn't notarized yet. Solutions:
+> 
+> **Method 1 (Recommended)**: Open **System Settings → Privacy & Security**, find the blocked app, click **"Open Anyway"**
+> 
+> **Method 2 (Quick)**: Run in Terminal: `xattr -cr /Applications/Pond.app`
+> 
+> See: https://support.apple.com/guide/mac-help/mh40616
 
 ### Local Development
 
