@@ -35,12 +35,10 @@ export interface ChatMessage {
   id: string
   role: "user" | "assistant"
   content: string
-  /** User message time (from transcript or backend) */
   sentAt?: string
   toolCalls?: ChatToolCallPart[]
   reasoning?: ChatReasoningPart
   executionTime?: number
-  completedAt?: Date
   /** Per-turn execution steps for this assistant reply (client-side; may be absent in transcript) */
   executionSteps?: ExecutionStep[]
 }
@@ -243,6 +241,10 @@ export interface OpenClawConfig {
 
 /** One browser profile: local CDP port, remote CDP URL, or user-data-dir */
 export interface BrowserProfileConfig {
+  /** Driver type: "existing-session" for Chrome MCP */
+  driver?: "existing-session" | string
+  /** Attach-only mode (never launch) */
+  attachOnly?: boolean
   /** Local CDP port (openclaw-managed profile) */
   cdpPort?: number
   /** Remote CDP URL (e.g. http://127.0.0.1:9223 or Browserless) */
@@ -256,14 +258,13 @@ export interface BrowserProfileConfig {
 
 export interface BrowserConfig {
   enabled?: boolean
-  /** Default profile name */
+  /** Default profile name: "openclaw" or "user" */
   defaultProfile?: string
   /** Override Chrome/Brave/Edge binary path */
   executablePath?: string
   headless?: boolean
   noSandbox?: boolean
-  attachOnly?: boolean
-  /** Named profiles: openclaw | chrome | custom */
+  /** Named profiles: openclaw | user | custom */
   profiles?: Record<string, BrowserProfileConfig>
   [key: string]: unknown
 }

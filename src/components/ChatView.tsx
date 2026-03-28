@@ -994,7 +994,7 @@ export function ChatView() {
         toolCalls: finalToolCalls.length > 0 ? finalToolCalls : undefined,
         reasoning: finalReasoning ?? undefined,
         executionTime,
-        completedAt,
+        sentAt: completedAt.toISOString(),
         executionSteps: roundSteps,
       };
       updateChatSession(chatStoreKey, {

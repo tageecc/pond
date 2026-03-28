@@ -257,17 +257,22 @@
       "enabled": "Enabled",
       "profile": "Profile",
       "mode": {
-        "openclaw": "openclaw — managed isolated browser",
-        "chrome": "chrome — system browser + extension relay"
+        "openclaw": "openclaw — OpenClaw managed browser",
+        "user": "user — Existing Chrome session (Chrome MCP)"
       },
       "userDataDir": "Profile directory",
+      "cdpPort": "CDP Port (optional)",
+      "cdpUrl": "Remote CDP URL (optional)",
       "executable": "Executable",
       "color": "Theme color",
-      "colorHint": "Title bar color for managed browser window.",
+      "colorHint": "Title bar color for browser window.",
       "headlessHint": "Headless; no window.",
       "noSandboxHint": "Disable Chrome sandbox (Docker / some Linux).",
-      "attachOnly": "Attach only",
-      "attachOnlyHint": "Do not launch; attach to existing Chrome with remote debugging."
+      "userMode": {
+        "title": "existing-session mode",
+        "desc1": "Attach to your already-open Chrome browser via Chrome DevTools MCP, reusing its tabs and login sessions.",
+        "desc2": "Open chrome://inspect/#remote-debugging in Chrome, enable remote debugging, and approve the connection prompt when attaching."
+      }
     },
     "loading": "Loading…",
     "deleting": "Deleting…",

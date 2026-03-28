@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { invoke } from "@tauri-apps/api/core"
-import { openUrl } from "@tauri-apps/plugin-opener"
 import { toast } from "sonner"
 import { useAppStore } from "../stores/appStore"
 import { Button } from "./ui/button"
@@ -111,31 +110,6 @@ import { ChannelManager, getInternalHooksFromConfig, HooksManager } from "./Conf
 import type { HooksInternalConfig } from "../types"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip"
 
-const CHROME_EXT_STORE_URL = "https://chromewebstore.google.com/detail/openclaw-browser-relay/nglingapjinhecnfejdcpihlpneeadjp"
-
-function ChromeExtensionGuide() {
-  const { t } = useTranslation()
-  const openStore = async () => {
-    try {
-      await openUrl(CHROME_EXT_STORE_URL)
-    } catch {
-      window.open(CHROME_EXT_STORE_URL, "_blank", "noopener,noreferrer")
-    }
-  }
-
-  return (
-    <div className="rounded-lg border border-app-border bg-app-elevated/40 px-3 py-2.5 flex items-center justify-between gap-3">
-      <p className="text-sm text-app-text">
-        {t("agent.chromeExtension.hint")}
-      </p>
-      <Button size="sm" className="bg-claw-500 hover:bg-claw-600 text-white shrink-0" onClick={openStore}>
-        <ExternalLink className="h-3.5 w-3.5 mr-1" />
-        {t("agent.chromeExtension.install")}
-      </Button>
-    </div>
-  )
-}
-
 export function AgentView() {
   const { t } = useTranslation()
   const toolProfiles = useMemo(
@@ -230,15 +204,16 @@ export function AgentView() {
   const [modelSaveError, setModelSaveError] = useState<string | null>(null)
   const [modelTesting, setModelTesting] = useState(false)
   const [modelTestMsg, setModelTestMsg] = useState<string | null>(null)
-  // Browser: openclaw (managed profile) or chrome (extension relay)
+  // Browser: openclaw (managed profile) or user (existing Chrome session)
   const [browserEnabled, setBrowserEnabled] = useState(true)
-  const [browserMode, setBrowserMode] = useState<"openclaw" | "chrome">("openclaw")
+  const [browserMode, setBrowserMode] = useState<"openclaw" | "user">("openclaw")
   const [browserUserDataDir, setBrowserUserDataDir] = useState("")
   const [browserColor, setBrowserColor] = useState("")
   const [browserExecutablePath, setBrowserExecutablePath] = useState("")
   const [browserHeadless, setBrowserHeadless] = useState(false)
   const [browserNoSandbox, setBrowserNoSandbox] = useState(false)
-  const [browserAttachOnly, setBrowserAttachOnly] = useState(false)
+  const [browserCdpPort, setBrowserCdpPort] = useState("")
+  const [browserCdpUrl, setBrowserCdpUrl] = useState("")
   const [browserCommandLoading, setBrowserCommandLoading] = useState(false)
   const [browserSaving, setBrowserSaving] = useState(false)
   const [browserDefaultUserDataDir, setBrowserDefaultUserDataDir] = useState("")
@@ -601,16 +576,16 @@ export function AgentView() {
     if (agentConfigSection !== "browser" || !openclawConfig || !selectedId) return
     const b = openclawConfig.browser as BrowserConfig | undefined
     setBrowserEnabled(b?.enabled !== false)
-    setBrowserExecutablePath((b?.executablePath as string) ?? "")
+    setBrowserExecutablePath(b?.executablePath ?? "")
     setBrowserHeadless(!!b?.headless)
     setBrowserNoSandbox(!!b?.noSandbox)
-    setBrowserAttachOnly(!!b?.attachOnly)
-    const defaultProfile = (b?.defaultProfile as string) || "openclaw"
-    setBrowserMode(defaultProfile === "chrome" ? "chrome" : "openclaw")
-    const profiles = b?.profiles ?? {}
-    const openclawProfile = profiles.openclaw as BrowserProfileConfig | undefined
-    setBrowserUserDataDir((openclawProfile?.userDataDir as string) ?? "")
-    setBrowserColor((openclawProfile?.color as string) ?? (b?.color as string) ?? "")
+    const profile = b?.defaultProfile || "openclaw"
+    setBrowserMode(profile === "user" ? "user" : "openclaw")
+    const p = b?.profiles?.[profile] as BrowserProfileConfig | undefined
+    setBrowserUserDataDir(p?.userDataDir ?? "")
+    setBrowserColor(p?.color ?? "")
+    setBrowserCdpPort(p?.cdpPort?.toString() ?? "")
+    setBrowserCdpUrl(p?.cdpUrl ?? "")
   }, [agentConfigSection, openclawConfig, selectedId])
 
   useEffect(() => {
@@ -3661,13 +3636,13 @@ export function AgentView() {
                       <CardContent className="space-y-4">
                         <div className="space-y-2">
                           <Label htmlFor="browser-profile" className="text-app-muted">{t("agentView.browser.profile")}</Label>
-                          <Select value={browserMode} onValueChange={(v) => setBrowserMode(v as "openclaw" | "chrome")}>
+                          <Select value={browserMode} onValueChange={(v) => setBrowserMode(v as "openclaw" | "user")}>
                             <SelectTrigger id="browser-profile" className="border-app-border bg-app-elevated text-app-text">
                               <SelectValue placeholder={t("agentView.browser.pickMode")} />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="openclaw">{t("agentView.browser.mode.openclaw")}</SelectItem>
-                              <SelectItem value="chrome">{t("agentView.browser.mode.chrome")}</SelectItem>
+                              <SelectItem value="user">{t("agentView.browser.mode.user")}</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -3681,6 +3656,26 @@ export function AgentView() {
                                 placeholder={browserDefaultUserDataDir || t("agentView.loading")}
                                 value={browserUserDataDir}
                                 onChange={(e) => setBrowserUserDataDir(e.target.value)}
+                                className="border-app-border bg-app-elevated text-app-text font-mono text-sm"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="browser-cdp-port" className="text-app-muted">{t("agentView.browser.cdpPort")}</Label>
+                              <Input
+                                id="browser-cdp-port"
+                                placeholder="18800"
+                                value={browserCdpPort}
+                                onChange={(e) => setBrowserCdpPort(e.target.value)}
+                                className="border-app-border bg-app-elevated text-app-text font-mono text-sm"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="browser-cdp-url" className="text-app-muted">{t("agentView.browser.cdpUrl")}</Label>
+                              <Input
+                                id="browser-cdp-url"
+                                placeholder="http://remote:9222 or wss://browserless.io?token=xxx"
+                                value={browserCdpUrl}
+                                onChange={(e) => setBrowserCdpUrl(e.target.value)}
                                 className="border-app-border bg-app-elevated text-app-text font-mono text-sm"
                               />
                             </div>
@@ -3755,29 +3750,26 @@ export function AgentView() {
                                   </div>
                                   <Switch id="browser-nosandbox" checked={browserNoSandbox} onCheckedChange={setBrowserNoSandbox} />
                                 </div>
-                                <div className="flex items-center justify-between gap-2">
-                                  <div className="flex items-center gap-1.5">
-                                    <Label htmlFor="browser-attach-only" className="text-app-muted">{t("agentView.browser.attachOnly")}</Label>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <span className="inline-flex text-app-muted hover:text-app-text cursor-help" tabIndex={0}>
-                                          <HelpCircle className="h-3.5 w-3.5" />
-                                        </span>
-                                      </TooltipTrigger>
-                                      <TooltipContent side="right" className="max-w-[240px] text-xs">
-{t("agentView.browser.attachOnlyHint")}
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </div>
-                                  <Switch id="browser-attach-only" checked={browserAttachOnly} onCheckedChange={setBrowserAttachOnly} />
-                                </div>
                               </TooltipProvider>
                             </div>
                           </>
                         )}
 
-                        {browserMode === "chrome" && (
-                          <ChromeExtensionGuide />
+                        {browserMode === "user" && (
+                          <div className="rounded-lg border border-app-border bg-app-surface p-4 space-y-2">
+                            <div className="flex items-start gap-2">
+                              <div className="text-claw-500 mt-0.5">
+                                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                              </div>
+                              <div className="flex-1 space-y-1 text-sm">
+                                <p className="font-medium text-app-text">{t("agentView.browser.userMode.title")}</p>
+                                <p className="text-app-muted">{t("agentView.browser.userMode.desc1")}</p>
+                                <p className="text-app-muted">{t("agentView.browser.userMode.desc2")}</p>
+                              </div>
+                            </div>
+                          </div>
                         )}
 
                         <div className="flex flex-wrap items-center gap-2 pt-1">
@@ -3789,26 +3781,28 @@ export function AgentView() {
                             onClick={async () => {
                               if (!openclawConfig || !selectedId) return
                               setBrowserSaving(true)
-                              const nextBrowser: BrowserConfig = {
+                              
+                              const profile: BrowserProfileConfig = browserMode === "user"
+                                ? { driver: "existing-session", attachOnly: true }
+                                : {}
+                              
+                              if (browserUserDataDir.trim()) profile.userDataDir = browserUserDataDir.trim()
+                              if (browserCdpPort.trim() && !isNaN(Number(browserCdpPort))) profile.cdpPort = Number(browserCdpPort)
+                              if (browserCdpUrl.trim()) profile.cdpUrl = browserCdpUrl.trim()
+                              if (browserColor.trim()) profile.color = browserColor.trim()
+                              
+                              const browser: BrowserConfig = {
                                 enabled: browserEnabled,
                                 defaultProfile: browserMode,
-                                ...(browserMode === "openclaw"
-                                  ? {
-                                      profiles: {
-                                        openclaw: {
-                                          ...(browserUserDataDir.trim() ? { userDataDir: browserUserDataDir.trim() } : {}),
-                                          ...(browserColor.trim() ? { color: browserColor.trim() } : {}),
-                                        } as BrowserProfileConfig,
-                                      },
-                                      ...(browserExecutablePath.trim() ? { executablePath: browserExecutablePath.trim() } : {}),
-                                      ...(browserHeadless ? { headless: true } : {}),
-                                      ...(browserNoSandbox ? { noSandbox: true } : {}),
-                                      ...(browserAttachOnly ? { attachOnly: true } : {}),
-                                    }
-                                  : {}),
+                                profiles: { [browserMode]: profile },
                               }
+                              
+                              if (browserExecutablePath.trim()) browser.executablePath = browserExecutablePath.trim()
+                              if (browserHeadless) browser.headless = true
+                              if (browserNoSandbox) browser.noSandbox = true
+                              
                               try {
-                                await saveOpenClawConfig({ ...openclawConfig, browser: nextBrowser } as OpenClawConfig, selectedId)
+                                await saveOpenClawConfig({ ...openclawConfig, browser } as OpenClawConfig, selectedId)
                                 toast.success(t("agentView.model.saved"))
                               } catch (e) {
                                 toast.error(String(e))
@@ -3819,7 +3813,7 @@ export function AgentView() {
                             {browserSaving ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : <Save className="h-4 w-4 mr-1.5" />}
                             {t("agentView.save")}
                           </Button>
-                          {selectedId && browserMode === "openclaw" && (
+                          {selectedId && (
                             <Button
                               size="sm"
                               className="bg-claw-500 hover:bg-claw-600 text-white"

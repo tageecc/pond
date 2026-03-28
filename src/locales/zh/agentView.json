@@ -257,17 +257,22 @@
       "enabled": "启用",
       "profile": "配置文件",
       "mode": {
-        "openclaw": "openclaw — 托管隔离浏览器（可固定 profile）",
-        "chrome": "chrome — 系统浏览器 + 扩展中继"
+        "openclaw": "openclaw — OpenClaw 托管浏览器",
+        "user": "user — 连接已有 Chrome 会话 (Chrome MCP)"
       },
       "userDataDir": "Profile 目录",
+      "cdpPort": "CDP 端口 (可选)",
+      "cdpUrl": "远程 CDP URL (可选)",
       "executable": "可执行文件",
       "color": "主题色",
-      "colorHint": "openclaw 托管浏览器窗口的主题色，用于标题栏等界面元素。",
+      "colorHint": "浏览器窗口的主题色，用于标题栏等界面元素。",
       "headlessHint": "无头模式，不显示浏览器窗口，在后台运行。适合服务器或不需要看到界面的场景。",
       "noSandboxHint": "关闭 Chrome 沙箱。部分环境（如 Docker、某些 Linux）需要开启才能正常启动浏览器。",
-      "attachOnly": "仅附加",
-      "attachOnlyHint": "不自动启动浏览器，仅附加到已存在且开启远程调试的 Chrome 实例（如你自启的固定 profile）。"
+      "userMode": {
+        "title": "existing-session 模式",
+        "desc1": "通过 Chrome DevTools MCP 连接到你已打开的 Chrome 浏览器，复用其中的登录会话和标签页。",
+        "desc2": "需要在 Chrome 中打开 chrome://inspect/#remote-debugging 并启用远程调试，在连接时批准授权。"
+      }
     },
     "loading": "加载中…",
     "deleting": "删除中…",
