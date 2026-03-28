@@ -3764,8 +3764,6 @@ export function AgentView() {
                               <ol className="list-decimal list-inside space-y-0.5 pl-1">
                                 <li>{t("agentView.browser.userMode.step1")}</li>
                                 <li>{t("agentView.browser.userMode.step2")}</li>
-                                <li>{t("agentView.browser.userMode.step3")}</li>
-                                <li>{t("agentView.browser.userMode.step4")}</li>
                               </ol>
                             </div>
                           </div>
@@ -3781,19 +3779,20 @@ export function AgentView() {
                               if (!openclawConfig || !selectedId) return
                               setBrowserSaving(true)
                               
-                              const profile: BrowserProfileConfig = browserMode === "user"
-                                ? { attachOnly: true }
-                                : {}
-                              
+                              // OpenClaw: `openclaw browser start` fails for user profile when attachOnly/driver existing-session
+                              // is implied — Gateway reports "attachOnly is enabled and profile is not running". Saving attachOnly
+                              // or relying on existing-session forces attach-only mode where start cannot bootstrap the control plane.
+                              const profile: BrowserProfileConfig = {}
                               if (browserUserDataDir.trim()) profile.userDataDir = browserUserDataDir.trim()
                               if (browserCdpPort.trim() && !isNaN(Number(browserCdpPort))) profile.cdpPort = Number(browserCdpPort)
                               if (browserCdpUrl.trim()) profile.cdpUrl = browserCdpUrl.trim()
                               if (browserColor.trim()) profile.color = browserColor.trim()
                               
+                              const prevProfiles = (openclawConfig.browser as BrowserConfig | undefined)?.profiles ?? {}
                               const browser: BrowserConfig = {
                                 enabled: browserEnabled,
                                 defaultProfile: browserMode,
-                                profiles: { [browserMode]: profile },
+                                profiles: { ...prevProfiles, [browserMode]: profile },
                               }
                               
                               if (browserExecutablePath.trim()) browser.executablePath = browserExecutablePath.trim()

@@ -258,7 +258,7 @@
       "profile": "配置文件",
       "mode": {
         "openclaw": "openclaw — OpenClaw 托管浏览器",
-        "user": "user — 连接已有 Chrome 会话 (Chrome MCP)"
+        "user": "user — 第二套浏览器配置（独立数据目录）"
       },
       "userDataDir": "Profile 目录",
       "cdpPort": "CDP 端口 (可选)",
@@ -269,13 +269,11 @@
       "headlessHint": "无头模式，不显示浏览器窗口，在后台运行。适合服务器或不需要看到界面的场景。",
       "noSandboxHint": "关闭 Chrome 沙箱。部分环境（如 Docker、某些 Linux）需要开启才能正常启动浏览器。",
       "userMode": {
-        "title": "existing-session 模式",
-        "desc1": "复用已打开的 Chrome 登录会话和标签页。",
-        "steps": "使用前必须先：",
-        "step1": "保存配置后重启 Gateway",
-        "step2": "Chrome 打开 chrome://inspect/#remote-debugging",
-        "step3": "点击 Configure 启用远程调试",
-        "step4": "然后点击「打开浏览器」并批准授权"
+        "title": "user 配置",
+        "desc1": "与 openclaw 并列的第二套浏览器 profile，使用实例目录内独立的 browser/user 数据。",
+        "steps": "使用步骤：",
+        "step1": "保存配置；若刚改过浏览器相关项，重启 Gateway",
+        "step2": "点击「打开浏览器」（对应 OpenClaw CLI：browser start）"
       }
     },
     "loading": "加载中…",

@@ -258,7 +258,7 @@
       "profile": "Profile",
       "mode": {
         "openclaw": "openclaw — OpenClaw managed browser",
-        "user": "user — Existing Chrome session (Chrome MCP)"
+        "user": "user — Second browser profile (isolated data dir)"
       },
       "userDataDir": "Profile directory",
       "cdpPort": "CDP Port (optional)",
@@ -269,13 +269,11 @@
       "headlessHint": "Headless; no window.",
       "noSandboxHint": "Disable Chrome sandbox (Docker / some Linux).",
       "userMode": {
-        "title": "existing-session mode",
-        "desc1": "Reuse Chrome tabs and login sessions.",
-        "steps": "Required setup:",
-        "step1": "Save config and restart Gateway",
-        "step2": "Chrome: chrome://inspect/#remote-debugging",
-        "step3": "Click Configure, enable remote debugging",
-        "step4": "Then click 'Open Browser' and approve"
+        "title": "user profile",
+        "desc1": "Second named browser profile alongside openclaw; isolated browser/user data per instance.",
+        "steps": "Usage:",
+        "step1": "Save; restart Gateway if you changed browser settings",
+        "step2": "Click Open Browser (openclaw browser start)"
       }
     },
     "loading": "Loading…",
