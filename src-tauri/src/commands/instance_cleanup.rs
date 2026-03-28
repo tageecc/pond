@@ -36,6 +36,7 @@ fn normalize_windows_home_match(s: String) -> String {
     }
 }
 
+#[cfg(target_os = "macos")]
 fn string_refs_home(s: &str, home: &str) -> bool {
     if s == home {
         return true;
@@ -51,6 +52,7 @@ fn string_refs_home(s: &str, home: &str) -> bool {
     }
 }
 
+#[cfg(target_os = "macos")]
 fn json_value_references_home(v: &Value, home: &str) -> bool {
     match v {
         Value::String(s) => string_refs_home(s, home),
@@ -60,6 +62,7 @@ fn json_value_references_home(v: &Value, home: &str) -> bool {
     }
 }
 
+#[cfg(target_os = "macos")]
 fn plist_label(v: &Value) -> Option<String> {
     v.get("Label")?.as_str().map(String::from)
 }
