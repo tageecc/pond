@@ -1140,6 +1140,9 @@ pub async fn delete_agent_cleanup(
         map.remove(&key);
     }
 
+    // Clean up analytics data for this instance
+    let _ = crate::commands::spend::cleanup_instance_analytics_data(&key);
+
     // Delete instance directory
     if profile_dir.exists() {
         std::fs::remove_dir_all(&profile_dir)

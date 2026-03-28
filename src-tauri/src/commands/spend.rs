@@ -586,3 +586,17 @@ pub fn get_token_daily_history(days: u32) -> Result<Vec<TokenDailyEntry>, String
     out.sort_by(|a, b| a.date.cmp(&b.date));
     Ok(out)
 }
+
+/// Clean up analytics data (tokens) for a deleted instance
+pub fn cleanup_instance_analytics_data(instance_id: &str) -> Result<(), String> {
+    let mut token_data = load_token_data()?;
+    let prefix = format!("{}:", instance_id);
+    
+    token_data.agents.retain(|agent_key, _| !agent_key.starts_with(&prefix));
+    
+    token_data.updated_at = chrono::Utc::now().to_rfc3339();
+    save_token_data(&token_data)?;
+    
+    eprintln!("[cleanup_instance_analytics_data] Cleaned analytics data for instance: {}", instance_id);
+    Ok(())
+}
