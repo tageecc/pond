@@ -164,6 +164,9 @@ pub struct OpenClawConfig {
     /// Hooks / webhooks.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub hooks: Option<Value>,
+    /// Browser profiles (`defaultProfile`, `profiles.*.driver`, …); must round-trip — UI saves depend on this.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub browser: Option<Value>,
     /// Privacy.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub privacy: Option<Value>,
@@ -186,6 +189,7 @@ impl Default for OpenClawConfig {
             web: None,
             cron: None,
             hooks: None,
+            browser: None,
             privacy: None,
         }
     }

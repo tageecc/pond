@@ -239,32 +239,21 @@ export interface OpenClawConfig {
   browser?: BrowserConfig
 }
 
-/** One browser profile: local CDP port, remote CDP URL, or user-data-dir */
+/** openclaw profile fields we persist; built-in `user` profile is not stored in JSON */
 export interface BrowserProfileConfig {
-  /** Attach-only mode (never launch) */
-  attachOnly?: boolean
-  /** Local CDP port (openclaw-managed profile) */
   cdpPort?: number
-  /** Remote CDP URL (e.g. http://127.0.0.1:9223 or Browserless) */
   cdpUrl?: string
-  /** Fixed user-data-dir for persistent login */
   userDataDir?: string
-  /** Accent color, e.g. #FF4500 */
   color?: string
-  [key: string]: unknown
 }
 
 export interface BrowserConfig {
   enabled?: boolean
-  /** Default profile name: "openclaw" or "user" */
   defaultProfile?: string
-  /** Override Chrome/Brave/Edge binary path */
   executablePath?: string
   headless?: boolean
   noSandbox?: boolean
-  /** Named profiles: openclaw | user | custom */
   profiles?: Record<string, BrowserProfileConfig>
-  [key: string]: unknown
 }
 
 export interface SkillPackage {

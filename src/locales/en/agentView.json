@@ -257,8 +257,8 @@
       "enabled": "Enabled",
       "profile": "Profile",
       "mode": {
-        "openclaw": "openclaw — OpenClaw managed browser",
-        "user": "user — Second browser profile (isolated data dir)"
+        "openclaw": "openclaw — Managed isolated browser",
+        "user": "user — Existing Chrome (Chrome DevTools MCP)"
       },
       "userDataDir": "Profile directory",
       "cdpPort": "CDP Port (optional)",
@@ -269,11 +269,14 @@
       "headlessHint": "Headless; no window.",
       "noSandboxHint": "Disable Chrome sandbox (Docker / some Linux).",
       "userMode": {
-        "title": "user profile",
-        "desc1": "Second named browser profile alongside openclaw; isolated browser/user data per instance.",
-        "steps": "Usage:",
-        "step1": "Save; restart Gateway if you changed browser settings",
-        "step2": "Click Open Browser (openclaw browser start)"
+        "title": "Chrome DevTools MCP (existing-session)",
+        "desc1": "Aligned with OpenClaw: we do not write profiles.user here—only set default profile to user. OpenClaw injects the built-in user profile (Chrome DevTools MCP / existing-session) at runtime. Enable remote debugging first, then Open Browser.",
+        "steps": "Official flow:",
+        "step1": "Save; restart Gateway after browser config changes",
+        "step2": "Enable remote debugging in Chrome (use the button below to open the inspect page)",
+        "step3": "Keep Chrome open and approve the attach prompt when it appears",
+        "step4": "Then click Open Browser (openclaw browser --browser-profile user start)",
+        "openInspect": "Open Chrome remote debugging page"
       }
     },
     "loading": "Loading…",

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { invoke } from "@tauri-apps/api/core"
+import { openUrl } from "@tauri-apps/plugin-opener"
 import { toast } from "sonner"
 import { useAppStore } from "../stores/appStore"
 import { Button } from "./ui/button"
@@ -204,7 +205,6 @@ export function AgentView() {
   const [modelSaveError, setModelSaveError] = useState<string | null>(null)
   const [modelTesting, setModelTesting] = useState(false)
   const [modelTestMsg, setModelTestMsg] = useState<string | null>(null)
-  // Browser: openclaw (managed profile) or user (existing Chrome session)
   const [browserEnabled, setBrowserEnabled] = useState(true)
   const [browserMode, setBrowserMode] = useState<"openclaw" | "user">("openclaw")
   const [browserUserDataDir, setBrowserUserDataDir] = useState("")
@@ -579,13 +579,12 @@ export function AgentView() {
     setBrowserExecutablePath(b?.executablePath ?? "")
     setBrowserHeadless(!!b?.headless)
     setBrowserNoSandbox(!!b?.noSandbox)
-    const profile = b?.defaultProfile || "openclaw"
-    setBrowserMode(profile === "user" ? "user" : "openclaw")
-    const p = b?.profiles?.[profile] as BrowserProfileConfig | undefined
-    setBrowserUserDataDir(p?.userDataDir ?? "")
-    setBrowserColor(p?.color ?? "")
-    setBrowserCdpPort(p?.cdpPort?.toString() ?? "")
-    setBrowserCdpUrl(p?.cdpUrl ?? "")
+    setBrowserMode(b?.defaultProfile === "user" ? "user" : "openclaw")
+    const o = b?.profiles?.openclaw as BrowserProfileConfig | undefined
+    setBrowserUserDataDir(o?.userDataDir ?? "")
+    setBrowserColor(o?.color ?? "")
+    setBrowserCdpPort(o?.cdpPort != null ? String(o.cdpPort) : "")
+    setBrowserCdpUrl(o?.cdpUrl ?? "")
   }, [agentConfigSection, openclawConfig, selectedId])
 
   useEffect(() => {
@@ -3756,16 +3755,30 @@ export function AgentView() {
                         )}
 
                         {browserMode === "user" && (
-                          <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs space-y-1">
-                            <p className="font-medium text-app-text">{t("agentView.browser.userMode.title")}</p>
-                            <p className="text-app-muted">{t("agentView.browser.userMode.desc1")}</p>
-                            <div className="text-app-muted">
-                              <p className="font-medium text-amber-700 dark:text-amber-400">{t("agentView.browser.userMode.steps")}</p>
-                              <ol className="list-decimal list-inside space-y-0.5 pl-1">
-                                <li>{t("agentView.browser.userMode.step1")}</li>
-                                <li>{t("agentView.browser.userMode.step2")}</li>
-                              </ol>
+                          <div className="space-y-3">
+                            <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs space-y-2">
+                              <p className="font-medium text-app-text">{t("agentView.browser.userMode.title")}</p>
+                              <p className="text-app-muted leading-relaxed">{t("agentView.browser.userMode.desc1")}</p>
+                              <div className="text-app-muted">
+                                <p className="font-medium text-amber-700 dark:text-amber-400">{t("agentView.browser.userMode.steps")}</p>
+                                <ol className="list-decimal list-inside space-y-0.5 pl-1">
+                                  <li>{t("agentView.browser.userMode.step1")}</li>
+                                  <li>{t("agentView.browser.userMode.step2")}</li>
+                                  <li>{t("agentView.browser.userMode.step3")}</li>
+                                  <li>{t("agentView.browser.userMode.step4")}</li>
+                                </ol>
+                              </div>
                             </div>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="border-app-border w-full sm:w-auto"
+                              onClick={() => void openUrl("chrome://inspect/#remote-debugging")}
+                            >
+                              <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                              {t("agentView.browser.userMode.openInspect")}
+                            </Button>
                           </div>
                         )}
 
@@ -3779,25 +3792,35 @@ export function AgentView() {
                               if (!openclawConfig || !selectedId) return
                               setBrowserSaving(true)
                               
-                              // OpenClaw: `openclaw browser start` fails for user profile when attachOnly/driver existing-session
-                              // is implied — Gateway reports "attachOnly is enabled and profile is not running". Saving attachOnly
-                              // or relying on existing-session forces attach-only mode where start cannot bootstrap the control plane.
-                              const profile: BrowserProfileConfig = {}
-                              if (browserUserDataDir.trim()) profile.userDataDir = browserUserDataDir.trim()
-                              if (browserCdpPort.trim() && !isNaN(Number(browserCdpPort))) profile.cdpPort = Number(browserCdpPort)
-                              if (browserCdpUrl.trim()) profile.cdpUrl = browserCdpUrl.trim()
-                              if (browserColor.trim()) profile.color = browserColor.trim()
-                              
-                              const prevProfiles = (openclawConfig.browser as BrowserConfig | undefined)?.profiles ?? {}
+                              const prevProfiles = { ...((openclawConfig.browser as BrowserConfig | undefined)?.profiles ?? {}) }
+                              delete prevProfiles.user
+
+                              const profiles: Record<string, BrowserProfileConfig> =
+                                browserMode === "user"
+                                  ? prevProfiles
+                                  : {
+                                      ...prevProfiles,
+                                      openclaw: {
+                                        ...(browserUserDataDir.trim() ? { userDataDir: browserUserDataDir.trim() } : {}),
+                                        ...(browserCdpPort.trim() && !Number.isNaN(Number(browserCdpPort))
+                                          ? { cdpPort: Number(browserCdpPort) }
+                                          : {}),
+                                        ...(browserCdpUrl.trim() ? { cdpUrl: browserCdpUrl.trim() } : {}),
+                                        ...(browserColor.trim() ? { color: browserColor.trim() } : {}),
+                                      },
+                                    }
+
                               const browser: BrowserConfig = {
                                 enabled: browserEnabled,
                                 defaultProfile: browserMode,
-                                profiles: { ...prevProfiles, [browserMode]: profile },
+                                profiles,
                               }
                               
-                              if (browserExecutablePath.trim()) browser.executablePath = browserExecutablePath.trim()
-                              if (browserHeadless) browser.headless = true
-                              if (browserNoSandbox) browser.noSandbox = true
+                              if (browserMode === "openclaw") {
+                                if (browserExecutablePath.trim()) browser.executablePath = browserExecutablePath.trim()
+                                if (browserHeadless) browser.headless = true
+                                if (browserNoSandbox) browser.noSandbox = true
+                              }
                               
                               try {
                                 await saveOpenClawConfig({ ...openclawConfig, browser } as OpenClawConfig, selectedId)

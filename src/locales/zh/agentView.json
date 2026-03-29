@@ -257,8 +257,8 @@
       "enabled": "启用",
       "profile": "配置文件",
       "mode": {
-        "openclaw": "openclaw — OpenClaw 托管浏览器",
-        "user": "user — 第二套浏览器配置（独立数据目录）"
+        "openclaw": "openclaw — OpenClaw 托管浏览器（独立实例）",
+        "user": "user — 已有 Chrome 会话（Chrome DevTools MCP）"
       },
       "userDataDir": "Profile 目录",
       "cdpPort": "CDP 端口 (可选)",
@@ -269,11 +269,14 @@
       "headlessHint": "无头模式，不显示浏览器窗口，在后台运行。适合服务器或不需要看到界面的场景。",
       "noSandboxHint": "关闭 Chrome 沙箱。部分环境（如 Docker、某些 Linux）需要开启才能正常启动浏览器。",
       "userMode": {
-        "title": "user 配置",
-        "desc1": "与 openclaw 并列的第二套浏览器 profile，使用实例目录内独立的 browser/user 数据。",
-        "steps": "使用步骤：",
-        "step1": "保存配置；若刚改过浏览器相关项，重启 Gateway",
-        "step2": "点击「打开浏览器」（对应 OpenClaw CLI：browser start）"
+        "title": "Chrome DevTools MCP（existing-session）",
+        "desc1": "与官方一致：不在此写入 profiles.user，只将默认 profile 设为 user；OpenClaw 会在运行时注入内置 user（Chrome DevTools MCP / existing-session）。请先启用远程调试再点「打开浏览器」。",
+        "steps": "按官方流程：",
+        "step1": "保存配置；修改浏览器配置后重启 Gateway",
+        "step2": "在 Chrome 中打开远程调试页（可用下方按钮），按页面说明启用远程调试",
+        "step3": "保持 Chrome 在前台，在连接提示中选择允许",
+        "step4": "再点「打开浏览器」（CLI：openclaw browser --browser-profile user start）",
+        "openInspect": "在 Chrome 中打开远程调试页"
       }
     },
     "loading": "加载中…",
