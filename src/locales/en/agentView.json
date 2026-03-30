@@ -8,6 +8,8 @@
       "teamNeedRoles": "Add at least one role under Team → Roles first",
       "needMainLeader": "Add a role with id “main” as Team Leader in the role list first",
       "teamSpaceEnabled": "Team space enabled",
+      "teamSpaceEnabledWithRestart": "Team space enabled. Gateway restarted to load collaboration skill",
+      "teamSpaceEnabledNeedStart": "Team space enabled. Please start Gateway to load collaboration skill",
       "enableFailed": "Failed to enable",
       "rolesListUpdated": "Role list updated",
       "rolesListUpdatedDesc": "agents.list[].model written as provider/modelId per OpenClaw; restart Gateway to apply.",
@@ -119,12 +121,13 @@
       "keepOne": "Keep at least one role",
       "removeFromList": "Remove this role from agents.list",
       "pickModel": "Choose model",
-      "descPlaceholder": "Short duty description (optional)",
+      "descPlaceholder": "e.g., Write code, implement features (required)",
       "idPlaceholder": "e.g. coder, researcher",
       "displayNameTitle": "Display name; if empty, same as role id below.",
       "displayNameAria": "Display name, defaults to {{id}}",
       "deleteAria": "Remove role {{id}}",
-      "roleDescLabel": "Role description"
+      "roleDescLabel": "Role Duties",
+      "roleRequired": "Please fill in duties for all roles to enable automatic task assignment in team collaboration"
     },
     "teamTab": {
       "overview": "Overview",

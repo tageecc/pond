@@ -4,6 +4,7 @@ use crate::commands::gateway;
 use crate::utils::paths;
 use serde_json::Value;
 use std::collections::HashSet;
+use std::fs;
 use std::path::{Path, PathBuf};
 use tauri::AppHandle;
 
@@ -51,6 +52,57 @@ pub(crate) fn implicit_role_workspace_dir(instance_id: &str, role_id: &str) -> R
     } else {
         Ok(home.join(format!("workspace-{rid}")))
     }
+}
+
+/// Invalidate all sessions' skillsSnapshot cache to force refresh on next message.
+/// This solves the OpenClaw bug where sessions created before skill installation don't see new skills.
+#[tauri::command]
+pub fn invalidate_all_skills_snapshots(instance_id: String) -> Result<usize, String> {
+    let inst = instance_id.trim();
+    let instance_home = paths::instance_home(inst)?;
+    let agents_dir = instance_home.join("agents");
+    
+    if !agents_dir.exists() {
+        return Ok(0);
+    }
+    
+    let mut invalidated_count = 0;
+    
+    // Iterate through all agent directories
+    for entry in fs::read_dir(&agents_dir).map_err(|e| e.to_string())? {
+        let entry = entry.map_err(|e| e.to_string())?;
+        let agent_path = entry.path();
+        
+        if !agent_path.is_dir() {
+            continue;
+        }
+        
+        let sessions_json = agent_path.join("sessions").join("sessions.json");
+        if !sessions_json.exists() {
+            continue;
+        }
+        
+        // Read sessions.json
+        let content = fs::read_to_string(&sessions_json).map_err(|e| e.to_string())?;
+        let mut sessions: Value = serde_json::from_str(&content).map_err(|e| e.to_string())?;
+        
+        // Remove skillsSnapshot from all sessions
+        if let Some(sessions_obj) = sessions.as_object_mut() {
+            for (_session_key, session_value) in sessions_obj.iter_mut() {
+                if let Some(session_obj) = session_value.as_object_mut() {
+                    if session_obj.remove("skillsSnapshot").is_some() {
+                        invalidated_count += 1;
+                    }
+                }
+            }
+        }
+        
+        // Write back
+        let updated = serde_json::to_string_pretty(&sessions).map_err(|e| e.to_string())?;
+        fs::write(&sessions_json, updated).map_err(|e| e.to_string())?;
+    }
+    
+    Ok(invalidated_count)
 }
 
 /// `agent_id`: Pond instance id. `openclaw_role_id`: `agents.list[].id`; None uses default `workspace/` under the instance dir.

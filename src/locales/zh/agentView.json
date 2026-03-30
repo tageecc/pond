@@ -8,6 +8,8 @@
       "teamNeedRoles": "请先在「团队 → 角色列表」中添加至少一个角色",
       "needMainLeader": "请先在角色列表中添加 id 为 main 的角色作为 Team Leader",
       "teamSpaceEnabled": "团队空间已开启",
+      "teamSpaceEnabledWithRestart": "团队空间已开启，Gateway 已重启以加载协作技能",
+      "teamSpaceEnabledNeedStart": "团队空间已开启。请启动 Gateway 以加载协作技能",
       "enableFailed": "开启失败",
       "rolesListUpdated": "角色列表已更新",
       "rolesListUpdatedDesc": "已按 OpenClaw 规范将 agents.list[].model 写为 provider/modelId；须重启 Gateway 后生效。",
@@ -119,12 +121,13 @@
       "keepOne": "至少保留一个角色",
       "removeFromList": "从 agents.list 移除此角色",
       "pickModel": "选择模型",
-      "descPlaceholder": "职责简述（可选）",
+      "descPlaceholder": "例如：负责编写代码、实现功能（必填）",
       "idPlaceholder": "例如 coder、researcher",
       "displayNameTitle": "界面展示名称；未填写时与角色 ID「{{id}}」相同。保存配置仍使用下方技术 ID。",
       "displayNameAria": "角色显示名，默认同 {{id}}",
       "deleteAria": "删除角色 {{id}}",
-      "roleDescLabel": "角色说明"
+      "roleDescLabel": "角色职责",
+      "roleRequired": "请为所有角色填写职责说明，以便团队协作时自动分配任务"
     },
     "teamTab": {
       "overview": "概览",

@@ -736,6 +736,18 @@ export function AgentView() {
       toast.error(t("agentView.toast.needMainLeader"))
       return
     }
+    
+    // Check all roles have duty descriptions (critical for task assignment)
+    const membersWithoutRole = agentsList.filter((a) => {
+      const role = teamEditMeta.members.find((m) => m.agent_id === a.id)?.role
+      return !role || role.trim() === ""
+    })
+    if (membersWithoutRole.length > 0) {
+      const ids = membersWithoutRole.map((a) => a.id).join(", ")
+      toast.error(t("agentView.role.roleRequired") + ` (${ids})`)
+      return
+    }
+    
     setTeamSaving(true)
     try {
       const meta = {
@@ -748,9 +760,23 @@ export function AgentView() {
         })),
       }
       await invoke("save_team_meta", { instanceId: selectedId, meta })
+
       setTeamFetchError(null)
       setTeamSpaceInitialized(true)
-      toast.success(t("agentView.toast.teamSpaceEnabled"))
+
+      // Invalidate all sessions' skillsSnapshot cache so they can see pond-team skill
+      const invalidatedCount = await invoke<number>("invalidate_all_skills_snapshots", { instanceId: selectedId })
+      console.log(`Invalidated ${invalidatedCount} session skillsSnapshot(s)`)
+
+      // Restart gateway to reload skills (pond-team skill needs to be recognized)
+      try {
+        await invoke("restart_gateway", { instanceId: selectedId })
+        toast.success(t("agentView.toast.teamSpaceEnabledWithRestart"))
+      } catch (e) {
+        console.warn("Gateway restart failed (may not be running):", e)
+        toast.success(t("agentView.toast.teamSpaceEnabledNeedStart"))
+      }
+      
       void loadTeamDashboard()
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t("agentView.toast.enableFailed"))
