@@ -36,7 +36,7 @@ export function CreateOpenClawInstanceDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border-app-border bg-app-surface sm:max-w-sm">
+      <DialogContent className="border-app-border bg-app-surface sm:max-w-sm" style={{ cursor: pending ? 'wait' : 'auto' }}>
         <DialogHeader>
           <DialogTitle>{t("createInstance.title")}</DialogTitle>
           <DialogDescription className="text-app-muted">

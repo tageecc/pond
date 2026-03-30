@@ -124,9 +124,9 @@ interface AppState {
   setGatewayError: (error: string | null) => void
   loadConfigs: (cachedAppConfig?: AppConfig) => Promise<void>
   /** Load instance into openclawConfig and set selectedInstanceId */
-  loadInstanceConfig: (instanceId: string) => Promise<void>
+  loadInstanceConfig: (instanceId: string, skipSkills?: boolean) => Promise<void>
   /** Switch instance; null clears selection */
-  switchInstance: (instanceId: string | null) => Promise<void>
+  switchInstance: (instanceId: string | null, skipSkills?: boolean) => Promise<void>
   /** Refresh display name from IDENTITY.md (agent may rename in chat) */
   refreshInstanceDisplayName: (instanceId: string) => Promise<void>
   /** Save openclaw.json; pass explicit instanceId to avoid races with selection */
@@ -263,7 +263,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
-  loadInstanceConfig: async (instanceId: string) => {
+  loadInstanceConfig: async (instanceId: string, skipSkills?: boolean) => {
     try {
       const config = await invoke<OpenClawConfig>('load_openclaw_config_for_instance', { instanceId })
       let name = get().instanceDisplayNames[instanceId]
@@ -277,20 +277,26 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
       set({ selectedInstanceId: instanceId, openclawConfig: config })
       void saveAppConfig({ selectedInstanceId: instanceId }).catch(() => {})
-      await get().loadSkills()
+      // Skip skills loading if requested (e.g., for new instances)
+      if (!skipSkills) {
+        await get().loadSkills()
+      } else {
+        // Load skills in background
+        void get().loadSkills()
+      }
     } catch (error) {
       console.error('Failed to load instance config:', error)
       throw error
     }
   },
 
-  switchInstance: async (instanceId: string | null) => {
+  switchInstance: async (instanceId: string | null, skipSkills?: boolean) => {
     if (instanceId === null) {
       set({ selectedInstanceId: null, openclawConfig: null })
       void saveAppConfig({ selectedInstanceId: null }).catch(() => {})
       return
     }
-    await get().loadInstanceConfig(instanceId)
+    await get().loadInstanceConfig(instanceId, skipSkills)
   },
 
   refreshInstanceDisplayName: async (instanceId: string) => {
@@ -701,11 +707,18 @@ export const useAppStore = create<AppState>((set, get) => ({
       id = Math.random().toString(36).slice(2, 7)
     }
     const toastId = `create-instance-${id}`
+    
+    // Set app cursor to show progress
+    if (typeof document !== 'undefined') {
+      document.body.style.cursor = 'wait'
+    }
+    
     toast.loading(i18n.t('toast.createInstanceLoading'), { id: toastId })
     try {
       await invoke('run_openclaw_agents_add', { agentId: id })
       await get().loadConfigs()
-      await get().switchInstance(id)
+      // Skip skills loading for new instance (load in background)
+      await get().switchInstance(id, true)
       toast.success(i18n.t('toast.instanceReady'), {
         id: toastId,
         description: i18n.t('toast.createInstanceSuccessHint'),
@@ -714,6 +727,11 @@ export const useAppStore = create<AppState>((set, get) => ({
       toast.dismiss(toastId)
       toast.error(e instanceof Error ? e.message : String(e))
       throw e
+    } finally {
+      // Restore cursor
+      if (typeof document !== 'undefined') {
+        document.body.style.cursor = 'auto'
+      }
     }
   },
 
