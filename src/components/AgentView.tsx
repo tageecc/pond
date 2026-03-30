@@ -943,10 +943,11 @@ export function AgentView() {
     list.push({ id, model: modelKey })
     
     try {
-      // Initialize workspace directory and bootstrap files for the new role
-      await invoke("initialize_role_workspace", {
+      // Add role agent using OpenClaw CLI (creates workspace, registers agent)
+      await invoke("add_role_agent_with_cli", {
         instanceId: selectedId,
         roleId: id,
+        model: modelKey,
       })
       await persistRoleAgentsList(list)
       setAddRoleDialogOpen(false)
@@ -3571,9 +3572,15 @@ export function AgentView() {
                                 onClick={async () => {
                                   try {
                                     setWorkspaceFileSaving(true)
-                                    await invoke("initialize_role_workspace", {
+                                    // Get model from agents.list
+                                    const agentInList = openclawConfig?.agents?.list?.find(
+                                      (a: { id: string; model?: string }) => a.id === workspaceOpenclawRoleId
+                                    )
+                                    const agentModel = agentInList?.model
+                                    await invoke("add_role_agent_with_cli", {
                                       instanceId: selectedId,
                                       roleId: workspaceOpenclawRoleId,
+                                      model: agentModel || null,
                                     })
                                     await loadWorkspaceFileList()
                                     toast.success(t("agentView.toast.roleWorkspaceInitialized", { id: workspaceOpenclawRoleId }))

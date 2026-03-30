@@ -569,7 +569,7 @@ pub fn save_skill_enabled_for_instance(
 }
 
 /// Import a discovered profile: ensure `openclaw.json` exists so `list_openclaw_instances` includes it.
-/// Optionally seed IDENTITY.md Name.
+/// Optionally set identity name via OpenClaw CLI.
 #[tauri::command]
 pub fn import_discovered_instance(
     app_handle: AppHandle,
@@ -587,11 +587,8 @@ pub fn import_discovered_instance(
         workspace::run_openclaw_setup_sync(&app_handle, id)?;
     }
     if let Some(name) = display_name.filter(|s| !s.trim().is_empty()) {
-        let workspace_dir = instance_dir.join("workspace");
-        fs::create_dir_all(&workspace_dir).map_err(|e| format!("创建 workspace 失败: {}", e))?;
-        let identity_path = workspace_dir.join("IDENTITY.md");
-        let content = format!("- Name: {}\n", name.trim());
-        fs::write(&identity_path, content).map_err(|e| format!("写入 IDENTITY.md 失败: {}", e))?;
+        // Set identity name using OpenClaw CLI instead of manually writing IDENTITY.md
+        workspace::run_openclaw_agents_set_identity_sync(&app_handle, id, "main", &name)?;
     }
     Ok(())
 }

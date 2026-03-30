@@ -454,6 +454,85 @@ pub(crate) fn openclaw_cli_registered_agent_ids(
     Ok(set)
 }
 
+/// Add role agent using OpenClaw CLI (creates workspace, bootstrap files, and registers agent).
+#[tauri::command]
+pub async fn add_role_agent_with_cli(
+    app_handle: AppHandle,
+    instance_id: String,
+    role_id: String,
+    model: Option<String>,
+) -> Result<(), String> {
+    let inst = instance_id.trim().to_string();
+    let rid = role_id.trim().to_string();
+    
+    if rid.is_empty() {
+        return Err("role_id cannot be empty".to_string());
+    }
+    
+    let instance_home = paths::instance_home(&inst)?;
+    let workspace_path = if rid == "main" {
+        instance_home.join("workspace")
+    } else {
+        instance_home.join(format!("workspace-{}", rid))
+    };
+    let workspace_str = workspace_path.to_string_lossy().to_string();
+    
+    let model_clone = model.clone();
+    let app_clone = app_handle.clone();
+    let inst_clone = inst.clone();
+    let rid_clone = rid.clone();
+    
+    tokio::task::spawn_blocking(move || {
+        let model_opt = model_clone.as_deref();
+        run_openclaw_agents_add_sync(&app_clone, &inst_clone, &rid_clone, &workspace_str, model_opt)
+    })
+    .await
+    .map_err(|e| format!("Background task failed: {}", e))??;
+    
+    Ok(())
+}
+
+/// Set agent identity name using OpenClaw CLI.
+#[allow(dead_code)]
+pub fn run_openclaw_agents_set_identity_sync(
+    app_handle: &AppHandle,
+    instance_id: &str,
+    agent_id: &str,
+    name: &str,
+) -> Result<(), String> {
+    let inst = instance_id.trim();
+    let aid = agent_id.trim();
+    let name_trimmed = name.trim();
+    
+    if aid.is_empty() || name_trimmed.is_empty() {
+        return Ok(());
+    }
+    
+    let args: Vec<&str> = vec![
+        "agents",
+        "set-identity",
+        "--agent",
+        aid,
+        "--name",
+        name_trimmed,
+    ];
+    
+    let mut cmd = gateway::build_openclaw_cli_for_instance_sync(app_handle, inst, &args)?;
+    let out = cmd.output().map_err(|e| e.to_string())?;
+    
+    if !out.status.success() {
+        let stderr = gateway::strip_npm_warn_lines(&String::from_utf8_lossy(&out.stderr));
+        let stdout = String::from_utf8_lossy(&out.stdout);
+        return Err(format!(
+            "openclaw agents set-identity 失败: {}\n{}",
+            stderr.trim(),
+            stdout.trim()
+        ));
+    }
+    
+    Ok(())
+}
+
 #[allow(dead_code)]
 pub fn run_openclaw_agents_add_sync(
     app_handle: &AppHandle,
@@ -496,51 +575,14 @@ pub fn run_openclaw_agents_add_sync(
     Ok(())
 }
 
-/// Initialize workspace directory and bootstrap files for a role agent.
-/// Creates workspace-{agentId} directory and populates with basic files.
+/// DEPRECATED: Use add_role_agent_with_cli instead.
+/// This function manually creates files but doesn't register the agent with OpenClaw CLI.
 #[tauri::command]
 pub fn initialize_role_workspace(
-    instance_id: String,
-    role_id: String,
+    _instance_id: String,
+    _role_id: String,
 ) -> Result<(), String> {
-    let inst = instance_id.trim();
-    let rid = role_id.trim();
-    if rid.is_empty() {
-        return Err("role_id cannot be empty".to_string());
-    }
-    
-    let instance_home = paths::instance_home(inst)?;
-    let workspace_dir = instance_home.join(format!("workspace-{}", rid));
-    
-    // Create workspace directory
-    std::fs::create_dir_all(&workspace_dir)
-        .map_err(|e| format!("Failed to create workspace directory: {}", e))?;
-    
-    // Initialize basic bootstrap files
-    let identity_path = workspace_dir.join("IDENTITY.md");
-    if !identity_path.exists() {
-        let identity_content = format!(
-            "- Name: (pick something you like)\n- Emoji: 🤖\n- Theme: helpful assistant\n"
-        );
-        std::fs::write(&identity_path, identity_content)
-            .map_err(|e| format!("Failed to write IDENTITY.md: {}", e))?;
-    }
-    
-    let soul_path = workspace_dir.join("SOUL.md");
-    if !soul_path.exists() {
-        let soul_content = "# Persona\n\nYou are a helpful AI assistant.\n\n# Boundaries\n\n- Be respectful and professional\n- Follow user instructions carefully\n";
-        std::fs::write(&soul_path, soul_content)
-            .map_err(|e| format!("Failed to write SOUL.md: {}", e))?;
-    }
-    
-    let agents_path = workspace_dir.join("AGENTS.md");
-    if !agents_path.exists() {
-        let agents_content = "# Operating Instructions\n\nFollow the guidelines in SOUL.md and use available tools to help the user.\n";
-        std::fs::write(&agents_path, agents_content)
-            .map_err(|e| format!("Failed to write AGENTS.md: {}", e))?;
-    }
-    
-    Ok(())
+    Err("initialize_role_workspace is deprecated. Use add_role_agent_with_cli instead.".to_string())
 }
 
 /// DEPRECATED: No longer needed. Agents in `agents.list` are automatically recognized by OpenClaw without running `openclaw agents add`.

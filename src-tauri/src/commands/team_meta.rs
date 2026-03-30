@@ -110,7 +110,10 @@ pub fn read_team_meta(instance_id: String) -> Result<TeamMeta, String> {
 
 /// Overwrite `members` from current `openclaw.json` `agents.list` (keep display name/role per id); set `leader_agent_id` to `main` when present.
 #[tauri::command]
-pub fn sync_team_meta_members_from_agents(instance_id: String) -> Result<bool, String> {
+pub fn sync_team_meta_members_from_agents(
+    app_handle: tauri::AppHandle,
+    instance_id: String,
+) -> Result<bool, String> {
     let inst = instance_id.trim();
     if !team_space_has_data(inst)? {
         return Ok(false);
@@ -140,7 +143,7 @@ pub fn sync_team_meta_members_from_agents(instance_id: String) -> Result<bool, S
         .iter()
         .any(|id| id == POND_LEADER_AGENT_ID)
         .then(|| POND_LEADER_AGENT_ID.to_string());
-    save_team_meta(instance_id, meta)?;
+    save_team_meta(app_handle, instance_id, meta)?;
     Ok(true)
 }
 
@@ -152,7 +155,11 @@ pub fn is_team_space_initialized(instance_id: String) -> Result<bool, String> {
 
 /// Persist team metadata for the current instance.
 #[tauri::command]
-pub fn save_team_meta(instance_id: String, meta: TeamMeta) -> Result<(), String> {
+pub fn save_team_meta(
+    app_handle: tauri::AppHandle,
+    instance_id: String,
+    meta: TeamMeta,
+) -> Result<(), String> {
     let inst = instance_id.trim();
     if inst.is_empty() {
         return Err("instance_id 不能为空".to_string());
@@ -175,6 +182,24 @@ pub fn save_team_meta(instance_id: String, meta: TeamMeta) -> Result<(), String>
     file.write_all(content.as_bytes())
         .map_err(|e| e.to_string())?;
     file.sync_all().map_err(|e| e.to_string())?;
+    
+    // Ensure agents can read team files outside workspace
+    ensure_team_file_access(&app_handle, inst)?;
+    
     sync_pond_team_skill_artifacts(inst)?;
     Ok(())
+}
+
+/// Configure file system permissions to allow agents to read team data outside workspace.
+fn ensure_team_file_access(app_handle: &tauri::AppHandle, instance_id: &str) -> Result<(), String> {
+    use crate::commands::workspace;
+    
+    // Use OpenClaw CLI to set tools.fs.workspaceOnly = false
+    // This allows agents to read ../team/*.json files
+    workspace::run_openclaw_config_set_strict_json_sync(
+        app_handle,
+        instance_id,
+        "tools.fs.workspaceOnly",
+        "false",
+    )
 }
