@@ -164,7 +164,10 @@ pub fn save_team_meta(
     if inst.is_empty() {
         return Err("instance_id 不能为空".to_string());
     }
+    
     let path = crate::utils::paths::team_meta_json_path(inst).map_err(|e| e.to_string())?;
+    let is_first_time = !path.exists();
+    
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
     }
@@ -183,8 +186,10 @@ pub fn save_team_meta(
         .map_err(|e| e.to_string())?;
     file.sync_all().map_err(|e| e.to_string())?;
     
-    // Ensure agents can read team files outside workspace
-    ensure_team_file_access(&app_handle, inst)?;
+    // Only set file permissions on first-time team space creation
+    if is_first_time {
+        ensure_team_file_access(&app_handle, inst)?;
+    }
     
     sync_pond_team_skill_artifacts(inst)?;
     Ok(())
@@ -194,8 +199,7 @@ pub fn save_team_meta(
 fn ensure_team_file_access(app_handle: &tauri::AppHandle, instance_id: &str) -> Result<(), String> {
     use crate::commands::workspace;
     
-    // Use OpenClaw CLI to set tools.fs.workspaceOnly = false
-    // This allows agents to read ../team/*.json files
+    // Set tools.fs.workspaceOnly = false to allow agents reading ../team/*.json files
     workspace::run_openclaw_config_set_strict_json_sync(
         app_handle,
         instance_id,

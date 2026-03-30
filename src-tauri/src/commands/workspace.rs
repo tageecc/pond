@@ -411,47 +411,10 @@ pub async fn run_openclaw_agents_add(app_handle: AppHandle, agent_id: String) ->
     let openclaw_home = paths::instance_home(&id_trim)?;
     std::fs::create_dir_all(&openclaw_home)
         .map_err(|e| format!("创建实例目录失败: {}", e))?;
-    let id_for_cli = id_trim.clone();
-    let app_handle_clone = app_handle.clone();
-    tokio::task::spawn_blocking(move || ensure_openclaw_json_with_setup(&app_handle_clone, &id_for_cli))
+    tokio::task::spawn_blocking(move || ensure_openclaw_json_with_setup(&app_handle, &id_trim))
         .await
         .map_err(|e| format!("后台任务异常: {}", e))??;
     Ok(())
-}
-
-#[allow(dead_code)]
-pub(crate) fn openclaw_cli_registered_agent_ids(
-    app_handle: &AppHandle,
-    instance_id: &str,
-) -> Result<HashSet<String>, String> {
-    let mut cmd = gateway::build_openclaw_cli_for_instance_sync(
-        app_handle,
-        instance_id,
-        &["agents", "list", "--json"],
-    )?;
-    let out = cmd.output().map_err(|e| e.to_string())?;
-    let stdout = String::from_utf8_lossy(&out.stdout);
-    if !out.status.success() {
-        let stderr =
-            gateway::strip_npm_warn_lines(&String::from_utf8_lossy(&out.stderr));
-        return Err(format!(
-            "openclaw agents list 失败: {}\n{}",
-            stderr.trim(),
-            stdout.trim()
-        ));
-    }
-    let v: Value =
-        serde_json::from_str(stdout.trim()).map_err(|e| format!("agents list 非 JSON: {e}"))?;
-    let arr = v
-        .as_array()
-        .ok_or_else(|| "openclaw agents list --json 根须为 JSON 数组".to_string())?;
-    let mut set = HashSet::new();
-    for item in arr {
-        if let Some(id) = item.get("id").and_then(|x| x.as_str()) {
-            set.insert(id.to_string());
-        }
-    }
-    Ok(set)
 }
 
 /// Add role agent using OpenClaw CLI (creates workspace, bootstrap files, and registers agent).
@@ -477,14 +440,9 @@ pub async fn add_role_agent_with_cli(
     };
     let workspace_str = workspace_path.to_string_lossy().to_string();
     
-    let model_clone = model.clone();
-    let app_clone = app_handle.clone();
-    let inst_clone = inst.clone();
-    let rid_clone = rid.clone();
-    
     tokio::task::spawn_blocking(move || {
-        let model_opt = model_clone.as_deref();
-        run_openclaw_agents_add_sync(&app_clone, &inst_clone, &rid_clone, &workspace_str, model_opt)
+        let model_opt = model.as_deref();
+        run_openclaw_agents_add_sync(&app_handle, &inst, &rid, &workspace_str, model_opt)
     })
     .await
     .map_err(|e| format!("Background task failed: {}", e))??;
@@ -493,7 +451,6 @@ pub async fn add_role_agent_with_cli(
 }
 
 /// Set agent identity name using OpenClaw CLI.
-#[allow(dead_code)]
 pub fn run_openclaw_agents_set_identity_sync(
     app_handle: &AppHandle,
     instance_id: &str,
@@ -533,7 +490,6 @@ pub fn run_openclaw_agents_set_identity_sync(
     Ok(())
 }
 
-#[allow(dead_code)]
 pub fn run_openclaw_agents_add_sync(
     app_handle: &AppHandle,
     instance_id: &str,
@@ -546,24 +502,25 @@ pub fn run_openclaw_agents_add_sync(
     if rid.is_empty() {
         return Ok(());
     }
-    let mut parts: Vec<String> = vec![
-        "agents".into(),
-        "add".into(),
-        rid.to_string(),
-        "--workspace".into(),
-        workspace_path.to_string(),
-        "--non-interactive".into(),
+    
+    let mut args = vec![
+        "agents",
+        "add",
+        rid,
+        "--workspace",
+        workspace_path,
+        "--non-interactive",
     ];
+    
     if let Some(m) = model.filter(|s| !s.is_empty()) {
-        parts.push("--model".into());
-        parts.push(m.to_string());
+        args.push("--model");
+        args.push(m);
     }
-    let argv: Vec<&str> = parts.iter().map(|s| s.as_str()).collect();
-    let mut cmd = gateway::build_openclaw_cli_for_instance_sync(app_handle, inst, &argv)?;
+    
+    let mut cmd = gateway::build_openclaw_cli_for_instance_sync(app_handle, inst, &args)?;
     let out = cmd.output().map_err(|e| e.to_string())?;
     if !out.status.success() {
-        let stderr =
-            gateway::strip_npm_warn_lines(&String::from_utf8_lossy(&out.stderr));
+        let stderr = gateway::strip_npm_warn_lines(&String::from_utf8_lossy(&out.stderr));
         let stdout = String::from_utf8_lossy(&out.stdout);
         return Err(format!(
             "openclaw agents add {} 失败: {}\n{}",
@@ -571,60 +528,6 @@ pub fn run_openclaw_agents_add_sync(
             stderr.trim(),
             stdout.trim()
         ));
-    }
-    Ok(())
-}
-
-/// DEPRECATED: Use add_role_agent_with_cli instead.
-/// This function manually creates files but doesn't register the agent with OpenClaw CLI.
-#[tauri::command]
-pub fn initialize_role_workspace(
-    _instance_id: String,
-    _role_id: String,
-) -> Result<(), String> {
-    Err("initialize_role_workspace is deprecated. Use add_role_agent_with_cli instead.".to_string())
-}
-
-/// DEPRECATED: No longer needed. Agents in `agents.list` are automatically recognized by OpenClaw without running `openclaw agents add`.
-#[allow(dead_code)]
-pub fn sync_agents_list_with_openclaw_cli(
-    app_handle: &AppHandle,
-    instance_id: &str,
-) -> Result<(), String> {
-    let inst = instance_id.trim();
-    let config_path = paths::instance_config_path(inst)?;
-    if !config_path.is_file() {
-        return Ok(());
-    }
-    let content = std::fs::read_to_string(&config_path).map_err(|e| e.to_string())?;
-    let root: Value = serde_json::from_str(&content).map_err(|e| e.to_string())?;
-    let Some(list) = root
-        .get("agents")
-        .and_then(|a| a.as_object())
-        .and_then(|a| a.get("list"))
-        .and_then(|l| l.as_array())
-    else {
-        return Ok(());
-    };
-    let ws = paths::workspace_dir(Some(inst))?;
-    let ws_str = ws.to_string_lossy().to_string();
-    let registered = openclaw_cli_registered_agent_ids(app_handle, inst)?;
-    for entry in list {
-        let Some(obj) = entry.as_object() else {
-            continue;
-        };
-        let role_id = obj.get("id").and_then(|v| v.as_str()).unwrap_or("main").trim();
-        if role_id.is_empty() {
-            continue;
-        }
-        if registered.contains(role_id) {
-            continue;
-        }
-        let m = obj
-            .get("model")
-            .and_then(|v| v.as_str())
-            .filter(|s| !s.is_empty());
-        run_openclaw_agents_add_sync(app_handle, inst, role_id, &ws_str, m)?;
     }
     Ok(())
 }
