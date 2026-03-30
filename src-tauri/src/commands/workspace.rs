@@ -42,6 +42,17 @@ pub(crate) fn repair_openclaw_json_channel_keys(instance_id: &str) -> Result<(),
     repair_openclaw_json_channel_keys_at(&path)
 }
 
+/// Default per-role workspace directory (matches `add_role_agent_with_cli` / `openclaw agents add --workspace`).
+pub(crate) fn implicit_role_workspace_dir(instance_id: &str, role_id: &str) -> Result<PathBuf, String> {
+    let home = paths::instance_home(instance_id)?;
+    let rid = role_id.trim();
+    if rid == "main" {
+        Ok(home.join("workspace"))
+    } else {
+        Ok(home.join(format!("workspace-{rid}")))
+    }
+}
+
 /// `agent_id`: Pond instance id. `openclaw_role_id`: `agents.list[].id`; None uses default `workspace/` under the instance dir.
 fn resolve_workspace_dir(
     agent_id: Option<&str>,
@@ -57,7 +68,7 @@ fn resolve_workspace_dir(
     };
     let cfg_path = paths::instance_config_path(inst)?;
     if !cfg_path.is_file() {
-        return Ok(default_ws);
+        return implicit_role_workspace_dir(inst, rid);
     }
     let raw = std::fs::read_to_string(&cfg_path).map_err(|e| e.to_string())?;
     let v: Value = serde_json::from_str(&raw).map_err(|e| e.to_string())?;
@@ -66,7 +77,7 @@ fn resolve_workspace_dir(
         .and_then(|a| a.get("list"))
         .and_then(|l| l.as_array())
     else {
-        return Ok(default_ws);
+        return implicit_role_workspace_dir(inst, rid);
     };
     for agent in list {
         let id = agent.get("id").and_then(|x| x.as_str());
@@ -79,9 +90,9 @@ fn resolve_workspace_dir(
                 return expand_workspace_path(w, inst);
             }
         }
-        break;
+        return implicit_role_workspace_dir(inst, rid);
     }
-    Ok(default_ws)
+    implicit_role_workspace_dir(inst, rid)
 }
 
 fn home_dir_string() -> Result<String, String> {
@@ -427,17 +438,12 @@ pub async fn add_role_agent_with_cli(
 ) -> Result<(), String> {
     let inst = instance_id.trim().to_string();
     let rid = role_id.trim().to_string();
-    
+
     if rid.is_empty() {
         return Err("role_id cannot be empty".to_string());
     }
-    
-    let instance_home = paths::instance_home(&inst)?;
-    let workspace_path = if rid == "main" {
-        instance_home.join("workspace")
-    } else {
-        instance_home.join(format!("workspace-{}", rid))
-    };
+
+    let workspace_path = implicit_role_workspace_dir(&inst, &rid)?;
     let workspace_str = workspace_path.to_string_lossy().to_string();
     
     tokio::task::spawn_blocking(move || {

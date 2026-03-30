@@ -158,7 +158,7 @@ export function AgentView() {
   const [workspaceFileContent, setWorkspaceFileContent] = useState("")
   const [workspaceFileSaving, setWorkspaceFileSaving] = useState(false)
   const [workspaceFileError, setWorkspaceFileError] = useState<string | null>(null)
-  /** OpenClaw agents.list[].id; null = instance default workspace/ */
+  /** `agents.list[].id` for workspace dir; `null` = instance `workspace/` (including role `main`, never stored as the string `"main"`) */
   const [workspaceOpenclawRoleId, setWorkspaceOpenclawRoleId] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [rawConfig, setRawConfig] = useState("")
@@ -277,18 +277,22 @@ export function AgentView() {
     [openclawConfig],
   )
 
-  /** Only roles with their own workspace are edited separately (matches resolve_workspace_dir) */
-  const workspaceOverrideAgents = useMemo(() => {
+  const { workspaceRoleSelectAgents, workspaceHasMainRole } = useMemo(() => {
     const list = openclawConfig?.agents?.list
-    if (!Array.isArray(list)) return []
-    return list.filter(
-      (a) =>
-        typeof a?.id === "string" &&
-        a.id.trim() !== "" &&
-        typeof a.workspace === "string" &&
-        a.workspace.trim() !== "",
-    )
+    if (!Array.isArray(list)) return { workspaceRoleSelectAgents: [], workspaceHasMainRole: false }
+    const workspaceRoleSelectAgents = list.filter((a) => typeof a?.id === "string" && a.id.trim() !== "")
+    return {
+      workspaceRoleSelectAgents,
+      workspaceHasMainRole: workspaceRoleSelectAgents.some((a) => a.id === "main"),
+    }
   }, [openclawConfig?.agents?.list])
+
+  const workspaceSelectValue =
+    workspaceOpenclawRoleId === null
+      ? workspaceHasMainRole
+        ? "main"
+        : "__default__"
+      : workspaceOpenclawRoleId
 
   const teamTasksView = useMemo(() => {
     const statusOrder: Record<string, number> = { open: 0, claimed: 1, failed: 2, done: 3 }
@@ -390,7 +394,7 @@ export function AgentView() {
         "list_agent_workspace_files",
         {
           agentId: selectedId ?? undefined,
-          openclawRoleId: workspaceOpenclawRoleId?.trim() || null,
+          openclawRoleId: workspaceOpenclawRoleId,
         },
       )
       const arr = Array.isArray(result?.files) ? result.files : []
@@ -410,7 +414,7 @@ export function AgentView() {
       const content = await invoke<string>("read_agent_workspace_file", {
         agentId: selectedId ?? undefined,
         filename,
-        openclawRoleId: workspaceOpenclawRoleId?.trim() || null,
+        openclawRoleId: workspaceOpenclawRoleId,
       })
       setWorkspaceFileContent(typeof content === "string" ? content : "")
     } catch (e) {
@@ -464,12 +468,8 @@ export function AgentView() {
       setWorkspaceOpenclawRoleId(null)
       return
     }
-    const entry = list.find((a) => a.id === workspaceOpenclawRoleId)
-    const hasDistinct =
-      entry &&
-      typeof entry.workspace === "string" &&
-      entry.workspace.trim() !== ""
-    if (!hasDistinct) setWorkspaceOpenclawRoleId(null)
+    const exists = list.some((a) => a.id === workspaceOpenclawRoleId)
+    if (!exists) setWorkspaceOpenclawRoleId(null)
   }, [openclawConfig, workspaceOpenclawRoleId])
 
   useEffect(() => {
@@ -776,7 +776,7 @@ export function AgentView() {
         agentId: selectedId ?? undefined,
         filename: selectedWorkspaceFile,
         content: workspaceFileContent,
-        openclawRoleId: workspaceOpenclawRoleId?.trim() || null,
+        openclawRoleId: workspaceOpenclawRoleId,
       })
       await loadWorkspaceFileList()
     } catch (e) {
@@ -1968,8 +1968,9 @@ export function AgentView() {
                                               size="sm"
                                               className="h-9 gap-1 rounded-lg border-app-border/80 px-2.5 text-xs text-claw-700 hover:bg-claw-500/[0.06] dark:text-claw-300"
                                               onClick={() => {
-                                                setWorkspaceOpenclawRoleId(agent.id)
+                                                setCurrentView("agents")
                                                 setAgentConfigSection("workspace")
+                                                setWorkspaceOpenclawRoleId(agent.id === "main" ? null : agent.id)
                                               }}
                                             >
                                               <FileText className="h-3.5 w-3.5" />
@@ -3534,21 +3535,24 @@ export function AgentView() {
                           <FileText className="h-4 w-4" />
 {t("agentView.section.workspaceFiles")}
                         </CardTitle>
-                        {workspaceOverrideAgents.length > 0 && (
+                        {workspaceRoleSelectAgents.length > 1 && (
                           <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
                             <Label className="text-xs text-app-muted shrink-0">{t("agentView.workspace.editTarget")}</Label>
                             <Select
-                              value={workspaceOpenclawRoleId ?? "__default__"}
-                              onValueChange={(v) =>
-                                setWorkspaceOpenclawRoleId(v === "__default__" ? null : v)
-                              }
+                              value={workspaceSelectValue}
+                              onValueChange={(v) => {
+                                if (v === "__default__" || v === "main") setWorkspaceOpenclawRoleId(null)
+                                else setWorkspaceOpenclawRoleId(v)
+                              }}
                             >
                               <SelectTrigger className="h-9 max-w-md border-app-border bg-app-elevated text-sm">
                                 <SelectValue placeholder={t("agentView.workspace.pickRoleWs")} />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="__default__">{t("agentView.workspace.defaultWs")}</SelectItem>
-                                {workspaceOverrideAgents.map((a) => (
+                                {!workspaceHasMainRole && (
+                                  <SelectItem value="__default__">{t("agentView.workspace.defaultWs")}</SelectItem>
+                                )}
+                                {workspaceRoleSelectAgents.map((a) => (
                                   <SelectItem key={a.id} value={a.id}>
                                     {t("agentView.workspace.roleWs", { id: a.id })}
                                   </SelectItem>

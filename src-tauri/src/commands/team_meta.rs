@@ -195,15 +195,24 @@ pub fn save_team_meta(
     Ok(())
 }
 
-/// Configure file system permissions to allow agents to read team data outside workspace.
+/// Configure file system permissions and session visibility for team collaboration.
 fn ensure_team_file_access(app_handle: &tauri::AppHandle, instance_id: &str) -> Result<(), String> {
     use crate::commands::workspace;
     
-    // Set tools.fs.workspaceOnly = false to allow agents reading ../team/*.json files
+    // 1. Set tools.fs.workspaceOnly = false to allow agents reading ../team/*.json files
     workspace::run_openclaw_config_set_strict_json_sync(
         app_handle,
         instance_id,
         "tools.fs.workspaceOnly",
         "false",
+    )?;
+    
+    // 2. Set tools.sessions.visibility = "all" to enable cross-agent communication
+    // This allows agents to use sessions_send/sessions_history across different agents
+    workspace::run_openclaw_config_set_strict_json_sync(
+        app_handle,
+        instance_id,
+        "tools.sessions.visibility",
+        "\"all\"",  // JSON string value needs quotes
     )
 }
