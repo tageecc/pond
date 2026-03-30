@@ -189,6 +189,7 @@ pub fn run() {
             config::get_agent_directory,
             config::get_browser_default_user_data_dir,
             config::get_browser_executable_placeholder,
+            config::open_chrome_remote_inspect_page,
             config::open_path,
             // API key pool
             config::load_api_key_pool,
@@ -199,6 +200,7 @@ pub fn run() {
             workspace::list_agent_workspace_files,
             workspace::read_agent_workspace_file,
             workspace::write_agent_workspace_file,
+            workspace::initialize_role_workspace,
             workspace::run_openclaw_agents_add,
             workspace::run_openclaw_onboard_non_interactive,
             // Skills commands

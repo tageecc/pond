@@ -28,10 +28,6 @@
         "label": "Minimal - 最小化",
         "desc": "仅状态查询工具"
       }
-    },
-    "chromeExtension": {
-      "hint": "Chrome 模式需安装 OpenClaw Browser Relay 扩展，安装后在目标标签页点击扩展图标即可附加控制。",
-      "install": "去安装"
     }
   }
 }

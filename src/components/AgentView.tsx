@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { invoke } from "@tauri-apps/api/core"
-import { openUrl } from "@tauri-apps/plugin-opener"
 import { toast } from "sonner"
 import { useAppStore } from "../stores/appStore"
 import { Button } from "./ui/button"
@@ -579,7 +578,7 @@ export function AgentView() {
     setBrowserExecutablePath(b?.executablePath ?? "")
     setBrowserHeadless(!!b?.headless)
     setBrowserNoSandbox(!!b?.noSandbox)
-    setBrowserMode(b?.defaultProfile === "user" ? "user" : "openclaw")
+    setBrowserMode(b?.defaultProfile === "user" || b?.defaultProfile === "chrome" ? "user" : "openclaw")
     const o = b?.profiles?.openclaw as BrowserProfileConfig | undefined
     setBrowserUserDataDir(o?.userDataDir ?? "")
     setBrowserColor(o?.color ?? "")
@@ -942,8 +941,20 @@ export function AgentView() {
     }
     const modelKey = newRoleModelKey || defaultModelId || modelSelectOptions[0]?.value || "openai"
     list.push({ id, model: modelKey })
-    await persistRoleAgentsList(list)
-    setAddRoleDialogOpen(false)
+    
+    try {
+      // Initialize workspace directory and bootstrap files for the new role
+      await invoke("initialize_role_workspace", {
+        instanceId: selectedId,
+        roleId: id,
+      })
+      await persistRoleAgentsList(list)
+      setAddRoleDialogOpen(false)
+      toast.success(t("agentView.toast.roleWorkspaceInitialized", { id }))
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e))
+      return
+    }
   }
 
   const handleRoleModelChange = async (agentId: string, modelKey: string) => {
@@ -3533,8 +3544,37 @@ export function AgentView() {
                           </div>
                         )}
                         {workspaceFilesGuide && (
-                          <div className="mx-6 mb-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs leading-relaxed text-amber-900 dark:text-amber-100/90">
-                            {workspaceFilesGuide}
+                          <div className="mx-6 mb-2 space-y-2">
+                            <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs leading-relaxed text-amber-900 dark:text-amber-100/90">
+                              {workspaceFilesGuide}
+                            </div>
+                            {workspaceOpenclawRoleId && (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                className="h-8 gap-1.5 rounded-lg border-claw-500/40 bg-claw-500/5 text-claw-700 hover:bg-claw-500/10 dark:text-claw-300"
+                                disabled={workspaceFileSaving}
+                                onClick={async () => {
+                                  try {
+                                    setWorkspaceFileSaving(true)
+                                    await invoke("initialize_role_workspace", {
+                                      instanceId: selectedId,
+                                      roleId: workspaceOpenclawRoleId,
+                                    })
+                                    await loadWorkspaceFileList()
+                                    toast.success(t("agentView.toast.roleWorkspaceInitialized", { id: workspaceOpenclawRoleId }))
+                                  } catch (e) {
+                                    toast.error(e instanceof Error ? e.message : String(e))
+                                  } finally {
+                                    setWorkspaceFileSaving(false)
+                                  }
+                                }}
+                              >
+                                <FileText className="h-3.5 w-3.5" />
+                                {t("agentView.action.initializeWorkspace")}
+                              </Button>
+                            )}
                           </div>
                         )}
                       </CardHeader>
@@ -3774,7 +3814,13 @@ export function AgentView() {
                               size="sm"
                               variant="outline"
                               className="border-app-border w-full sm:w-auto"
-                              onClick={() => void openUrl("chrome://inspect/#remote-debugging")}
+                              onClick={async () => {
+                                try {
+                                  await invoke("open_chrome_remote_inspect_page")
+                                } catch (e) {
+                                  toast.error(t("agentView.toast.openChromeInspectFailed", { msg: e instanceof Error ? e.message : String(e) }))
+                                }
+                              }}
                             >
                               <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
                               {t("agentView.browser.userMode.openInspect")}
@@ -3812,7 +3858,7 @@ export function AgentView() {
 
                               const browser: BrowserConfig = {
                                 enabled: browserEnabled,
-                                defaultProfile: browserMode,
+                                defaultProfile: browserMode === "user" ? "chrome" : browserMode,
                                 profiles,
                               }
                               
@@ -3842,7 +3888,7 @@ export function AgentView() {
                               onClick={async () => {
                                 setBrowserCommandLoading(true)
                                 const runOnce = async (): Promise<{ ok: boolean; msg: string }> => {
-                                  const r = await invoke<{ stdout: string; stderr: string; success: string }>("run_browser_command", { instanceId: selectedId, profile: browserMode, subcommand: "start", extraArgs: null })
+                                  const r = await invoke<{ stdout: string; stderr: string; success: string }>("run_browser_command", { instanceId: selectedId, profile: browserMode === "user" ? "chrome" : browserMode, subcommand: "start", extraArgs: null })
                                   if (r.success === "true") return { ok: true, msg: "" }
                                   const msg = r.stderr || r.stdout || t("agentView.browser.startFailed")
                                   return { ok: false, msg }

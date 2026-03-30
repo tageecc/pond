@@ -164,7 +164,7 @@ pub struct OpenClawConfig {
     /// Hooks / webhooks.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub hooks: Option<Value>,
-    /// Browser profiles (`defaultProfile`, `profiles.*.driver`, …); must round-trip — UI saves depend on this.
+    /// Browser (`defaultProfile`, `profiles` including `user` with driver existing-session); round-trip for UI saves.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub browser: Option<Value>,
     /// Privacy.
@@ -1162,6 +1162,55 @@ pub fn get_browser_executable_placeholder() -> String {
     return "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe".to_string();
     #[cfg(not(any(target_os = "macos", target_os = "windows")))]
     return "/usr/bin/google-chrome".to_string();
+}
+
+const CHROME_INSPECT_URL: &str = "chrome://inspect/#remote-debugging";
+
+/// Open Chrome (or Chromium) to the remote-debugging inspect page. `opener` cannot handle `chrome://` URLs reliably.
+#[tauri::command]
+pub fn open_chrome_remote_inspect_page() -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        for app in ["Google Chrome", "Chromium", "Google Chrome Canary"] {
+            let st = std::process::Command::new("open")
+                .args(["-a", app, CHROME_INSPECT_URL])
+                .status();
+            if st.map(|s| s.success()).unwrap_or(false) {
+                return Ok(());
+            }
+        }
+        return Err("未找到 Chrome / Chromium。请手动在地址栏打开 chrome://inspect/#remote-debugging".to_string());
+    }
+    #[cfg(target_os = "windows")]
+    {
+        let candidates = [
+            r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+            r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+        ];
+        for exe in candidates {
+            if std::path::Path::new(exe).is_file() {
+                let st = std::process::Command::new(exe)
+                    .arg(CHROME_INSPECT_URL)
+                    .status();
+                if st.map(|s| s.success()).unwrap_or(false) {
+                    return Ok(());
+                }
+            }
+        }
+        return Err("Chrome not found. Open chrome://inspect/#remote-debugging in Chrome manually.".to_string());
+    }
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+    {
+        for bin in ["google-chrome", "google-chrome-stable", "chromium", "chromium-browser"] {
+            let st = std::process::Command::new(bin)
+                .arg(CHROME_INSPECT_URL)
+                .status();
+            if st.map(|s| s.success()).unwrap_or(false) {
+                return Ok(());
+            }
+        }
+        return Err("Chrome/Chromium not found. Open chrome://inspect/#remote-debugging manually.".to_string());
+    }
 }
 
 /// Open file or directory with OS handler.

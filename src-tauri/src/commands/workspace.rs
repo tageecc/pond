@@ -496,6 +496,53 @@ pub fn run_openclaw_agents_add_sync(
     Ok(())
 }
 
+/// Initialize workspace directory and bootstrap files for a role agent.
+/// Creates workspace-{agentId} directory and populates with basic files.
+#[tauri::command]
+pub fn initialize_role_workspace(
+    instance_id: String,
+    role_id: String,
+) -> Result<(), String> {
+    let inst = instance_id.trim();
+    let rid = role_id.trim();
+    if rid.is_empty() {
+        return Err("role_id cannot be empty".to_string());
+    }
+    
+    let instance_home = paths::instance_home(inst)?;
+    let workspace_dir = instance_home.join(format!("workspace-{}", rid));
+    
+    // Create workspace directory
+    std::fs::create_dir_all(&workspace_dir)
+        .map_err(|e| format!("Failed to create workspace directory: {}", e))?;
+    
+    // Initialize basic bootstrap files
+    let identity_path = workspace_dir.join("IDENTITY.md");
+    if !identity_path.exists() {
+        let identity_content = format!(
+            "- Name: (pick something you like)\n- Emoji: 🤖\n- Theme: helpful assistant\n"
+        );
+        std::fs::write(&identity_path, identity_content)
+            .map_err(|e| format!("Failed to write IDENTITY.md: {}", e))?;
+    }
+    
+    let soul_path = workspace_dir.join("SOUL.md");
+    if !soul_path.exists() {
+        let soul_content = "# Persona\n\nYou are a helpful AI assistant.\n\n# Boundaries\n\n- Be respectful and professional\n- Follow user instructions carefully\n";
+        std::fs::write(&soul_path, soul_content)
+            .map_err(|e| format!("Failed to write SOUL.md: {}", e))?;
+    }
+    
+    let agents_path = workspace_dir.join("AGENTS.md");
+    if !agents_path.exists() {
+        let agents_content = "# Operating Instructions\n\nFollow the guidelines in SOUL.md and use available tools to help the user.\n";
+        std::fs::write(&agents_path, agents_content)
+            .map_err(|e| format!("Failed to write AGENTS.md: {}", e))?;
+    }
+    
+    Ok(())
+}
+
 /// DEPRECATED: No longer needed. Agents in `agents.list` are automatically recognized by OpenClaw without running `openclaw agents add`.
 #[allow(dead_code)]
 pub fn sync_agents_list_with_openclaw_cli(

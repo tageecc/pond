@@ -28,10 +28,6 @@
         "label": "Minimal",
         "desc": "Status queries only"
       }
-    },
-    "chromeExtension": {
-      "hint": "Chrome mode requires the OpenClaw Browser Relay extension. After installing, click the extension icon on the target tab to attach.",
-      "install": "Install"
     }
   }
 }

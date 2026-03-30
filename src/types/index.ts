@@ -239,8 +239,10 @@ export interface OpenClawConfig {
   browser?: BrowserConfig
 }
 
-/** openclaw profile fields we persist; built-in `user` profile is not stored in JSON */
+/** Named browser profile (openclaw-managed or existing-session / Chrome MCP) */
 export interface BrowserProfileConfig {
+  driver?: "existing-session"
+  attachOnly?: boolean
   cdpPort?: number
   cdpUrl?: string
   userDataDir?: string
