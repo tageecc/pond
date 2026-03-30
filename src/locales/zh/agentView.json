@@ -14,8 +14,9 @@
       "rolesListUpdated": "角色列表已更新",
       "rolesListUpdatedDesc": "已按 OpenClaw 规范将 agents.list[].model 写为 provider/modelId；须重启 Gateway 后生效。",
       "restartGateway": "重启 Gateway",
-      "agentIdInvalid": "Agent ID 须为字母开头，仅含字母、数字、连字符、下划线，最多 63 位",
-      "idExists": "该 ID 已存在",
+      "nameRequired": "成员名称不能为空",
+      "roleRequired": "职责描述不能为空",
+      "roleDescRequired": "以下成员尚未填写职责描述：{{names}}。请在角色列表中完善后再开启团队空间。",
       "roleWorkspaceInitialized": "已为角色 {{id}} 初始化工作区",
       "teamInfoSaved": "团队信息已保存",
       "saveFailed": "保存失败",
@@ -121,13 +122,12 @@
       "keepOne": "至少保留一个角色",
       "removeFromList": "从 agents.list 移除此角色",
       "pickModel": "选择模型",
-      "descPlaceholder": "例如：负责编写代码、实现功能（必填）",
+      "descPlaceholder": "例如：后端开发、前端测试（可选备注）",
       "idPlaceholder": "例如 coder、researcher",
       "displayNameTitle": "界面展示名称；未填写时与角色 ID「{{id}}」相同。保存配置仍使用下方技术 ID。",
       "displayNameAria": "角色显示名，默认同 {{id}}",
       "deleteAria": "删除角色 {{id}}",
-      "roleDescLabel": "角色职责",
-      "roleRequired": "请为所有角色填写职责说明，以便团队协作时自动分配任务"
+      "roleDescLabel": "角色说明（可选）"
     },
     "teamTab": {
       "overview": "概览",
@@ -331,8 +331,10 @@
     "addRole": {
       "title": "添加角色",
       "desc": "为团队新增一名角色，并为其选择要使用的模型。",
-      "id": "角色 ID",
-      "idHint": "字母开头，可用字母、数字、连字符与下划线，至多 63 个字符。",
+      "roleName": "成员名称",
+      "nameHint": "例如: 小红、小明、开发者A",
+      "roleDesc": "职责描述",
+      "descHint": "例如: 后端开发、前端测试、代码审查",
       "bindModel": "绑定模型"
     },
     "deleteRole": {

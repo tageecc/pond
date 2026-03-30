@@ -487,6 +487,7 @@ pub async fn add_role_agent_with_cli(
     instance_id: String,
     role_id: String,
     model: Option<String>,
+    name: Option<String>,
 ) -> Result<(), String> {
     let inst = instance_id.trim().to_string();
     let rid = role_id.trim().to_string();
@@ -497,14 +498,28 @@ pub async fn add_role_agent_with_cli(
 
     let workspace_path = implicit_role_workspace_dir(&inst, &rid)?;
     let workspace_str = workspace_path.to_string_lossy().to_string();
-    
+
+    // Clone values for the second task
+    let inst_clone = inst.clone();
+    let rid_clone = rid.clone();
+
+    let app_clone = app_handle.clone();
     tokio::task::spawn_blocking(move || {
         let model_opt = model.as_deref();
-        run_openclaw_agents_add_sync(&app_handle, &inst, &rid, &workspace_str, model_opt)
+        run_openclaw_agents_add_sync(&app_clone, &inst, &rid, &workspace_str, model_opt)
     })
     .await
     .map_err(|e| format!("Background task failed: {}", e))??;
-    
+
+    // Set agent identity name if provided
+    if let Some(agent_name) = name {
+        tokio::task::spawn_blocking(move || {
+            run_openclaw_agents_set_identity_sync(&app_handle, &inst_clone, &rid_clone, &agent_name)
+        })
+        .await
+        .map_err(|e| format!("Background task failed: {}", e))??;
+    }
+
     Ok(())
 }
 

@@ -411,8 +411,8 @@ export interface TeamTask {
 /** Team member row (maps to agents.list id) */
 export interface TeamMetaMember {
   agent_id: string
-  display_name?: string
-  role?: string
+  name?: string  // Member name (synced from agents.list[].name); optional for backward compatibility
+  role: string  // Role description (required)
 }
 
 /** Team metadata (multi-agent + leader; stored in app data) */

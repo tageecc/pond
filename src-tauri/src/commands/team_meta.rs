@@ -24,10 +24,12 @@ const LEGACY_SNAPSHOT: &str = "POND_TEAM_SNAPSHOT.md";
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct TeamMetaMember {
     pub agent_id: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub display_name: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub role: Option<String>,
+    /// Member name (synced from agents.list[].name for display)
+    /// Optional for backward compatibility; falls back to agent_id if missing
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    /// Role description: what this agent does in the team (required for task assignment)
+    pub role: String,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -125,17 +127,41 @@ pub fn sync_team_meta_members_from_agents(
     }
     let mut meta = load_team_meta_disk(inst)?;
     let old = std::mem::take(&mut meta.members);
+    
+    // Get agents list to extract names
+    let agents_list = cfg.agents
+        .get("list")
+        .and_then(|l| l.as_array())
+        .cloned()
+        .unwrap_or_default();
+    
     meta.members = agent_ids
         .iter()
         .map(|id| {
-            old
-                .iter()
-                .find(|m| m.agent_id == *id)
-                .cloned()
+            // Find name from agents.list
+            let name: Option<String> = agents_list.iter()
+                .find(|agent_val| {
+                    agent_val.get("id")
+                        .and_then(|i| i.as_str())
+                        .map(|s| s == id.as_str())
+                        .unwrap_or(false)
+                })
+                .and_then(|agent_val| agent_val.get("name"))
+                .and_then(|name_val| name_val.as_str())
+                .map(|s| s.to_string());
+            
+            // Preserve role from old members, update name
+            old.iter()
+                .find(|m| &m.agent_id == id)
+                .map(|m| TeamMetaMember {
+                    agent_id: id.clone(),
+                    name: name.clone(),  // Always sync name from agents.list (may be None)
+                    role: m.role.clone(),
+                })
                 .unwrap_or(TeamMetaMember {
                     agent_id: id.clone(),
-                    display_name: None,
-                    role: None,
+                    name,
+                    role: String::new(), // Will be filled by user in UI
                 })
         })
         .collect();

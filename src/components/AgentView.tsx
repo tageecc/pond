@@ -91,7 +91,7 @@ import type {
   TeamTask,
   MultiAgentActivityRow,
 } from "../types"
-import { isValidOpenClawAgentId, normalizeAgentsListOrder } from "../lib/agentsList"
+import { normalizeAgentsListOrder } from "../lib/agentsList"
 import {
   isUnifiedDmContinuity,
   SESSION_RESET_LONG_IDLE_MINUTES,
@@ -236,7 +236,8 @@ export function AgentView() {
   /** null loading; false not initialized; true enabled */
   const [teamSpaceInitialized, setTeamSpaceInitialized] = useState<boolean | null>(null)
   const [addRoleDialogOpen, setAddRoleDialogOpen] = useState(false)
-  const [newRoleIdInput, setNewRoleIdInput] = useState("")
+  const [newRoleName, setNewRoleName] = useState("")
+  const [newRoleDescription, setNewRoleDescription] = useState("")
   const [newRoleModelKey, setNewRoleModelKey] = useState("")
   const [roleListSaving, setRoleListSaving] = useState(false)
   const [deleteRoleId, setDeleteRoleId] = useState<string | null>(null)
@@ -736,18 +737,18 @@ export function AgentView() {
       toast.error(t("agentView.toast.needMainLeader"))
       return
     }
-    
-    // Check all roles have duty descriptions (critical for task assignment)
-    const membersWithoutRole = agentsList.filter((a) => {
-      const role = teamEditMeta.members.find((m) => m.agent_id === a.id)?.role
-      return !role || role.trim() === ""
+
+    // Validate that all members have role descriptions
+    const membersWithoutRole = agentsList.filter(a => {
+      const role = teamEditMeta.members.find(m => m.agent_id === a.id)?.role?.trim()
+      return !role
     })
     if (membersWithoutRole.length > 0) {
-      const ids = membersWithoutRole.map((a) => a.id).join(", ")
-      toast.error(t("agentView.role.roleRequired") + ` (${ids})`)
+      const names = membersWithoutRole.map(a => a.name || a.id).join("、")
+      toast.error(t("agentView.toast.roleDescRequired", { names }))
       return
     }
-    
+
     setTeamSaving(true)
     try {
       const meta = {
@@ -755,8 +756,8 @@ export function AgentView() {
         leader_agent_id: teamLeaderAgentId,
         members: agentsList.map((a) => ({
           agent_id: a.id,
-          display_name: teamEditMeta.members.find((m) => m.agent_id === a.id)?.display_name,
-          role: teamEditMeta.members.find((m) => m.agent_id === a.id)?.role,
+          name: a.name || a.id,  // Sync name from agents.list
+          role: teamEditMeta.members.find((m) => m.agent_id === a.id)?.role || "",
         })),
       }
       await invoke("save_team_meta", { instanceId: selectedId, meta })
@@ -949,35 +950,54 @@ export function AgentView() {
   }
 
   const openAddRoleDialog = () => {
-    setNewRoleIdInput("")
+    setNewRoleName("")
+    setNewRoleDescription("")
     setNewRoleModelKey(defaultModelId || modelSelectOptions[0]?.value || "openai")
     setAddRoleDialogOpen(true)
   }
 
   const handleConfirmAddRole = async () => {
-    const id = newRoleIdInput.trim()
-    if (!isValidOpenClawAgentId(id)) {
-      toast.error(t("agentView.toast.agentIdInvalid"))
-      return
-    }
-    const list = [...(openclawConfig.agents?.list ?? [])]
-    if (list.some((a) => a.id === id)) {
-      toast.error(t("agentView.toastask.idExists"))
-      return
-    }
-    const modelKey = newRoleModelKey || defaultModelId || modelSelectOptions[0]?.value || "openai"
-    list.push({ id, model: modelKey })
+    const name = newRoleName.trim()
+    const roleDesc = newRoleDescription.trim()
     
+    if (!name) {
+      toast.error(t("agentView.toast.nameRequired"))
+      return
+    }
+    if (!roleDesc) {
+      toast.error(t("agentView.toast.roleRequired"))
+      return
+    }
+    
+    // Generate unique agent_id automatically
+    const agentId = `agent-${Date.now().toString(36)}-${Math.random().toString(36).substr(2, 5)}`
+    
+    const list = [...(openclawConfig.agents?.list ?? [])]
+    const modelKey = newRoleModelKey || defaultModelId || modelSelectOptions[0]?.value || "openai"
+    list.push({ id: agentId, name, model: modelKey })
+
     try {
       // Add role agent using OpenClaw CLI (creates workspace, registers agent)
       await invoke("add_role_agent_with_cli", {
         instanceId: selectedId,
-        roleId: id,
+        roleId: agentId,
         model: modelKey,
+        name,
       })
       await persistRoleAgentsList(list)
+      
+      // Also update team meta with name and role description
+      const updatedMeta = { ...teamEditMeta }
+      if (!updatedMeta.members.some(m => m.agent_id === agentId)) {
+        updatedMeta.members.push({ agent_id: agentId, name, role: roleDesc })
+      }
+      await invoke("update_team_meta", { instanceId: selectedId, meta: updatedMeta })
+      setTeamEditMeta(updatedMeta)
+      
       setAddRoleDialogOpen(false)
-      toast.success(t("agentView.toast.roleWorkspaceInitialized", { id }))
+      setNewRoleName("")
+      setNewRoleDescription("")
+      toast.success(t("agentView.toast.roleWorkspaceInitialized", { id: name }))
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e))
       return
@@ -1967,24 +1987,9 @@ export function AgentView() {
                                               {isLeader ? "Team Leader" : t("agentView.role.member")}
                                             </span>
                                             <div className="min-w-0 flex-1">
-                                              <Input
-                                                className="h-9 w-full rounded-lg border-app-border/80 bg-app-surface text-sm font-semibold text-app-text shadow-none placeholder:font-mono placeholder:text-app-muted"
-                                                placeholder={agent.id}
-                                                disabled={teamFetchLoading}
-                                                title={t("agentView.role.displayNameTitle", { id: agent.id })}
-                                                value={member?.display_name ?? ""}
-                                                onChange={(e) => {
-                                                  const display_name = e.target.value.trim() || undefined
-                                                  setTeamEditMeta((m) => ({
-                                                    ...m,
-                                                    members: [
-                                                      ...m.members.filter((x) => x.agent_id !== agent.id),
-                                                      { agent_id: agent.id, display_name, role: member?.role },
-                                                    ],
-                                                  }))
-                                                }}
-                                                aria-label={t("agentView.role.displayNameAria", { id: agent.id })}
-                                              />
+                                              <p className="text-sm font-semibold text-app-text" title={`ID: ${agent.id}`}>
+                                                {agent.name || agent.id}
+                                              </p>
                                             </div>
                                           </div>
                                           <div className="flex shrink-0 items-center gap-1">
@@ -2047,19 +2052,23 @@ export function AgentView() {
                                         </div>
 
                                         <div className="space-y-1.5">
-                                            <Label className="text-xs text-app-muted">{t("agentView.role.roleDescLabel")}</Label>
+                                            <Label className="text-xs font-medium text-app-text">
+                                              {t("agentView.addRole.roleDesc")}
+                                              <span className="text-destructive ml-0.5">*</span>
+                                            </Label>
                                             <Input
                                               className="h-10 rounded-lg border-app-border/80 bg-app-surface text-sm shadow-none"
-                                              placeholder={t("agentView.role.descPlaceholder")}
+                                              placeholder={t("agentView.addRole.descHint")}
                                               disabled={teamFetchLoading}
                                               value={member?.role ?? ""}
                                               onChange={(e) => {
-                                                const role = e.target.value.trim() || undefined
+                                                const role = e.target.value
+                                                const name = agent.name || agent.id
                                                 setTeamEditMeta((m) => ({
                                                   ...m,
                                                   members: [
                                                     ...m.members.filter((x) => x.agent_id !== agent.id),
-                                                    { agent_id: agent.id, display_name: member?.display_name, role },
+                                                    { agent_id: agent.id, name, role },
                                                   ],
                                                 }))
                                               }}
@@ -2210,6 +2219,18 @@ export function AgentView() {
                                       toast.error(t("agentView.toast.needMainLeader"))
                                       return
                                     }
+                                    
+                                    // Validate that all members have role descriptions
+                                    const membersWithoutRole = agentsList.filter(a => {
+                                      const role = teamEditMeta.members.find(m => m.agent_id === a.id)?.role?.trim()
+                                      return !role
+                                    })
+                                    if (membersWithoutRole.length > 0) {
+                                      const names = membersWithoutRole.map(a => a.name || a.id).join("、")
+                                      toast.error(t("agentView.toast.roleDescRequired", { names }))
+                                      return
+                                    }
+                                    
                                     setTeamSaving(true)
                                     try {
                                       const meta = {
@@ -2217,8 +2238,8 @@ export function AgentView() {
                                         leader_agent_id: teamLeaderAgentId,
                                         members: agentsList.map((a) => ({
                                           agent_id: a.id,
-                                          display_name: teamEditMeta.members.find((m) => m.agent_id === a.id)?.display_name,
-                                          role: teamEditMeta.members.find((m) => m.agent_id === a.id)?.role,
+                                          name: a.name || a.id,  // Sync name from agents.list
+                                          role: teamEditMeta.members.find((m) => m.agent_id === a.id)?.role || "",
                                         })),
                                       }
                                       await invoke("save_team_meta", { instanceId: selectedId, meta })
@@ -2388,8 +2409,8 @@ export function AgentView() {
                             ) : (
                               <div className="flex flex-wrap gap-2">
                                 {teamActivity.map((row) => {
-                                  const label = teamEditMeta.members.find((m) => m.agent_id === row.agentId)?.display_name?.trim()
-                                  const displayName = label || row.agentId
+                                  const agent = (openclawConfig?.agents?.list ?? []).find((a) => a.id === row.agentId)
+                                  const displayName = agent?.name || row.agentId
                                   const isLeader = row.agentId === TEAM_LEADER_AGENT_ID
                                   return (
                                     <div
@@ -2415,7 +2436,7 @@ export function AgentView() {
                                       <span
                                         className={cn(
                                           "max-w-[140px] truncate text-[11px] text-app-text",
-                                          !label && "font-mono",
+                                          !agent?.name && "font-mono",
                                         )}
                                       >
                                         {displayName}
@@ -2544,7 +2565,7 @@ export function AgentView() {
                                   <SelectContent>
                                     {(openclawConfig?.agents?.list ?? []).map((a) => (
                                       <SelectItem key={a.id} value={a.id}>
-                                        {a.id}
+                                        {a.name || a.id}
                                       </SelectItem>
                                     ))}
                                   </SelectContent>
@@ -2663,7 +2684,10 @@ export function AgentView() {
                                               <span>
 {t("agentView.task.reassign")}{" "}
                                                 <span className="font-mono text-sky-600/90 dark:text-sky-400">
-                                                  @{task.claimedByAgentId}
+                                                  @{(() => {
+                                                    const agent = (openclawConfig?.agents?.list ?? []).find(a => a.id === task.claimedByAgentId)
+                                                    return agent?.name || task.claimedByAgentId
+                                                  })()}
                                                 </span>
                                               </span>
                                             ) : null}
@@ -2681,7 +2705,7 @@ export function AgentView() {
                                                   <SelectContent>
                                                     {(openclawConfig?.agents?.list ?? []).map((a) => (
                                                       <SelectItem key={a.id} value={a.id}>
-                                                        {a.id}
+                                                        {a.name || a.id}
                                                       </SelectItem>
                                                     ))}
                                                   </SelectContent>
@@ -2934,14 +2958,22 @@ export function AgentView() {
                         </DialogHeader>
                         <div className="space-y-3 pt-1">
                           <div className="space-y-1.5">
-                            <Label className="text-xs font-medium text-app-text">{t("agentView.addRole.id")}</Label>
+                            <Label className="text-xs font-medium text-app-text">{t("agentView.addRole.roleName")}</Label>
                             <Input
-                              className="h-10 rounded-lg border-app-border/80 bg-app-surface font-mono text-sm shadow-none placeholder:text-app-muted"
-                              placeholder={t("agentView.role.idPlaceholder")}
-                              value={newRoleIdInput}
-                              onChange={(e) => setNewRoleIdInput(e.target.value)}
+                              value={newRoleName}
+                              onChange={(e) => setNewRoleName(e.target.value)}
+                              className="h-10 rounded-lg border-app-border/80 bg-app-surface shadow-none"
+                              placeholder={t("agentView.addRole.nameHint")}
                             />
-<p className="text-[11px] text-app-muted">{t("agentView.addRole.idHint")}</p>
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-medium text-app-text">{t("agentView.addRole.roleDesc")}</Label>
+                            <Input
+                              value={newRoleDescription}
+                              onChange={(e) => setNewRoleDescription(e.target.value)}
+                              className="h-10 rounded-lg border-app-border/80 bg-app-surface shadow-none"
+                              placeholder={t("agentView.addRole.descHint")}
+                            />
                           </div>
                           <div className="space-y-1.5">
                             <Label className="text-xs font-medium text-app-text">{t("agentView.addRole.bindModel")}</Label>

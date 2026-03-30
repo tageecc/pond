@@ -14,8 +14,9 @@
       "rolesListUpdated": "Role list updated",
       "rolesListUpdatedDesc": "agents.list[].model written as provider/modelId per OpenClaw; restart Gateway to apply.",
       "restartGateway": "Restart Gateway",
-      "agentIdInvalid": "Agent ID must start with a letter; only letters, digits, hyphen, underscore; max 63 chars.",
-      "idExists": "This ID already exists",
+      "nameRequired": "Name is required",
+      "roleRequired": "Role description is required",
+      "roleDescRequired": "The following members are missing role descriptions: {{names}}. Please complete them in the roles list before enabling team space.",
       "roleWorkspaceInitialized": "Role workspace initialized for {{id}}",
       "teamInfoSaved": "Team info saved",
       "saveFailed": "Save failed",
@@ -121,13 +122,12 @@
       "keepOne": "Keep at least one role",
       "removeFromList": "Remove this role from agents.list",
       "pickModel": "Choose model",
-      "descPlaceholder": "e.g., Write code, implement features (required)",
+      "descPlaceholder": "e.g., Backend dev, Frontend testing (optional note)",
       "idPlaceholder": "e.g. coder, researcher",
       "displayNameTitle": "Display name; if empty, same as role id below.",
       "displayNameAria": "Display name, defaults to {{id}}",
       "deleteAria": "Remove role {{id}}",
-      "roleDescLabel": "Role Duties",
-      "roleRequired": "Please fill in duties for all roles to enable automatic task assignment in team collaboration"
+      "roleDescLabel": "Role Description (optional)"
     },
     "teamTab": {
       "overview": "Overview",
@@ -331,8 +331,10 @@
     "addRole": {
       "title": "Add role",
       "desc": "Add a role and pick its model.",
-      "id": "Role ID",
-      "idHint": "Starts with a letter; letters, digits, hyphen, underscore; up to 63 chars.",
+      "roleName": "Name",
+      "nameHint": "e.g., Alice, Bob, Dev-A",
+      "roleDesc": "Role Description",
+      "descHint": "e.g., Backend Dev, Frontend Testing, Code Review",
       "bindModel": "Bound model"
     },
     "deleteRole": {
