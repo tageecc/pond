@@ -1199,6 +1199,19 @@ export function AgentView() {
       // Backend: stop Pond children, openclaw gateway stop/uninstall per profile, clean LaunchAgent/systemd/tasks, free port, delete dirs
       await invoke("delete_agent_cleanup", { instanceId: selectedId })
       
+      // Clear all chat sessions for this instance (frontend memory state)
+      // storeKey format: "<pondInstanceId>::<roleAgentId>" (e.g., "default::main", "myinstance::coder")
+      const currentChatByInstance = useAppStore.getState().chatByInstance
+      const cleanedChatByInstance: typeof currentChatByInstance = {}
+      const instancePrefix = `${selectedId}::`
+      for (const [storeKey, sessionState] of Object.entries(currentChatByInstance)) {
+        // Only keep sessions from other instances
+        if (!storeKey.startsWith(instancePrefix)) {
+          cleanedChatByInstance[storeKey] = sessionState
+        }
+      }
+      useAppStore.setState({ chatByInstance: cleanedChatByInstance })
+      
       // If last instance was removed (check disk)
       let instanceCount = 0
       try {
