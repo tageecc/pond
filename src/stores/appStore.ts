@@ -180,7 +180,13 @@ interface AppState {
   /** Run openclaw setup for instance dir (with toast) */
   ensureInstanceSetup: (agentId: string) => Promise<void>
   /** Create new isolated OpenClaw profile via CLI; name from IDENTITY.md */
-  createOpenClawInstance: () => Promise<void>
+  createOpenClawInstance: (options?: {
+    mode: 'inherit' | 'manual'
+    providerId?: string
+    apiKey?: string
+    model?: string
+    baseURL?: string
+  }) => Promise<void>
 
   initialize: () => Promise<void>
 }
@@ -686,6 +692,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   createOpenClawInstance: async (options?: {
     mode: 'inherit' | 'manual'
+    inheritProviderId?: string
     providerId?: string
     apiKey?: string
     model?: string
@@ -737,29 +744,43 @@ export const useAppStore = create<AppState>((set, get) => ({
           customModelId: needsCustomParams ? options.model : undefined,
           customApiKey: needsCustomParams ? options.apiKey : undefined,
         })
-      } else if (options?.mode === 'inherit') {
-        // Copy config from current instance
+      } else if (options?.mode === 'inherit' && options.inheritProviderId) {
+        // Copy config from selected provider in current instance
         const currentConfig = get().openclawConfig
         if (currentConfig?.models?.providers) {
           const providers = currentConfig.models.providers
-          const firstProvider = Object.entries(providers).find(([_, p]) => p?.apiKey)?.[0]
+          const selectedProviderId = options.inheritProviderId
+          const provider = providers[selectedProviderId]
           
-          if (firstProvider) {
-            const provider = providers[firstProvider]
-            const authChoice = firstProvider === 'anthropic' ? 'anthropic-api-key' :
-                              firstProvider === 'openai' ? 'openai-api-key' :
-                              firstProvider === 'google' ? 'gemini-api-key' :
-                              'custom-api-key'
+          if (provider?.apiKey) {
+            const NATIVE_PROVIDERS: Record<string, string> = {
+              'anthropic': 'anthropic-api-key',
+              'openai': 'openai-api-key',
+              'google': 'gemini-api-key',
+              'openrouter': 'openrouter-api-key',
+              'xai': 'xai-api-key',
+              'mistral': 'mistral-api-key',
+              'together': 'together-api-key',
+              'moonshot': 'moonshot-api-key',
+              'volcengine': 'volcengine-api-key',
+              'huggingface': 'huggingface-api-key',
+              'opencode': 'opencode-zen',
+              'vercel-ai-gateway': 'ai-gateway-api-key',
+            }
+            
+            const authChoice = NATIVE_PROVIDERS[selectedProviderId] || 'custom-api-key'
+            const needsCustomParams = !(selectedProviderId in NATIVE_PROVIDERS)
             
             await invoke('run_openclaw_onboard_non_interactive', {
               instanceId: id,
               gatewayPort: 18789,
               authChoice,
-              anthropicApiKey: firstProvider === 'anthropic' ? provider?.apiKey : undefined,
-              openaiApiKey: firstProvider === 'openai' ? provider?.apiKey : undefined,
-              geminiApiKey: firstProvider === 'google' ? provider?.apiKey : undefined,
-              customBaseUrl: provider?.baseUrl,
-              customApiKey: !['anthropic', 'openai', 'google'].includes(firstProvider) ? provider?.apiKey : undefined,
+              anthropicApiKey: selectedProviderId === 'anthropic' ? provider.apiKey : undefined,
+              openaiApiKey: selectedProviderId === 'openai' ? provider.apiKey : undefined,
+              geminiApiKey: selectedProviderId === 'google' ? provider.apiKey : undefined,
+              customBaseUrl: needsCustomParams ? provider.baseUrl : undefined,
+              customModelId: needsCustomParams ? (provider.defaultModel || provider.models?.[0]?.id) : undefined,
+              customApiKey: needsCustomParams ? provider.apiKey : undefined,
             })
           }
         }

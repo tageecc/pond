@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { useAppStore } from "../stores/appStore"
 import {
@@ -38,6 +38,9 @@ export function CreateOpenClawInstanceDialog({
   // Config mode: 'inherit' or 'manual'
   const [configMode, setConfigMode] = useState<'inherit' | 'manual'>('inherit')
   
+  // Inherit mode: which provider to copy
+  const [inheritProviderId, setInheritProviderId] = useState<string>('')
+  
   // Manual config fields
   const [providerId, setProviderId] = useState('anthropic')
   const [apiKey, setApiKey] = useState('')
@@ -45,13 +48,49 @@ export function CreateOpenClawInstanceDialog({
   const [baseURL, setBaseURL] = useState('')
   
   const selectedProvider = getProvider(providerId)
+  
+  // Get all configured providers from current instance
+  const configuredProviders = openclawConfig?.models?.providers 
+    ? Object.entries(openclawConfig.models.providers)
+        .filter(([_, p]) => p?.apiKey && p.apiKey.trim().length > 0)
+        .map(([id, p]) => ({
+          id,
+          name: getProvider(id)?.name || id,
+          apiKey: p?.apiKey || '',
+          baseUrl: p?.baseUrl,
+          model: p?.defaultModel || p?.models?.[0]?.id,
+        }))
+    : []
+  
+  const hasCurrentConfig = configuredProviders.length > 0
+  
+  // Auto-select first configured provider when dialog opens or config changes
+  useEffect(() => {
+    if (hasCurrentConfig && !inheritProviderId) {
+      setInheritProviderId(configuredProviders[0].id)
+    }
+    // If inheritProviderId is set but not in current configuredProviders, reset to first
+    if (hasCurrentConfig && inheritProviderId && !configuredProviders.find(cp => cp.id === inheritProviderId)) {
+      setInheritProviderId(configuredProviders[0].id)
+    }
+    // If no config, clear inheritProviderId
+    if (!hasCurrentConfig && inheritProviderId) {
+      setInheritProviderId('')
+    }
+  }, [hasCurrentConfig, configuredProviders, inheritProviderId])
+  
+  // Auto-switch to manual mode if no config available
+  useEffect(() => {
+    if (!hasCurrentConfig && configMode === 'inherit') {
+      setConfigMode('manual')
+    }
+  }, [hasCurrentConfig, configMode])
 
   const submit = async () => {
     // Validate manual config if selected
     if (configMode === 'manual') {
       const key = apiKey.trim()
       if (!key) {
-        // Show error in UI
         return
       }
     }
@@ -59,7 +98,10 @@ export function CreateOpenClawInstanceDialog({
     setPending(true)
     try {
       if (configMode === 'inherit') {
-        await createOpenClawInstance({ mode: 'inherit' })
+        await createOpenClawInstance({ 
+          mode: 'inherit',
+          inheritProviderId 
+        })
       } else {
         await createOpenClawInstance({
           mode: 'manual',
@@ -76,13 +118,6 @@ export function CreateOpenClawInstanceDialog({
       setPending(false)
     }
   }
-  
-  // Check if current instance has valid config to inherit
-  const hasCurrentConfig = openclawConfig && 
-    openclawConfig.models?.providers && 
-    Object.values(openclawConfig.models.providers).some(
-      (p) => p?.apiKey && p.apiKey.trim().length > 0
-    )
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -110,6 +145,32 @@ export function CreateOpenClawInstanceDialog({
                     ? t("createInstance.inheritConfigDesc")
                     : t("createInstance.noConfigToInherit")}
                 </p>
+                
+                {hasCurrentConfig && configMode === 'inherit' && (
+                  <div className="mt-3 space-y-2">
+                    <Label className="text-xs font-medium text-app-muted">
+                      {t("createInstance.selectProvider")}
+                    </Label>
+                    <Select value={inheritProviderId} onValueChange={setInheritProviderId}>
+                      <SelectTrigger className="h-9 rounded-lg border-app-border bg-app-elevated text-app-text text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {configuredProviders.map((cp) => (
+                          <SelectItem key={cp.id} value={cp.id}>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{cp.name}</span>
+                              <span className="text-xs text-app-muted">
+                                API key: {cp.apiKey.slice(0, 8)}••••
+                                {cp.model && ` · ${cp.model}`}
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
             </div>
             
@@ -203,7 +264,11 @@ export function CreateOpenClawInstanceDialog({
           <Button
             type="button"
             className="bg-claw-500 hover:bg-claw-600 text-white"
-            disabled={pending || (configMode === 'manual' && !apiKey.trim())}
+            disabled={
+              pending || 
+              (configMode === 'manual' && !apiKey.trim()) ||
+              (configMode === 'inherit' && !inheritProviderId)
+            }
             onClick={() => void submit()}
           >
             {pending ? t("createInstance.creating") : t("createInstance.create")}

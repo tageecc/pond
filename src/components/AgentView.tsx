@@ -726,6 +726,17 @@ export function AgentView() {
     void loadTeamDashboard()
   }, [agentConfigSection, selectedId, loadTeamDashboard, teamSpaceInitialized])
 
+  // Build team meta from current state
+  const buildTeamMeta = useCallback((agentsList: Array<{ id: string; name?: string }>) => ({
+    team_name: teamEditMeta.team_name || undefined,
+    leader_agent_id: teamLeaderAgentId,
+    members: agentsList.map((a) => ({
+      agent_id: a.id,
+      name: a.name || a.id,
+      role: teamEditMeta.members.find((m) => m.agent_id === a.id)?.role || "",
+    })),
+  }), [teamEditMeta, teamLeaderAgentId])
+
   // Validate all members have role descriptions (except team leader)
   const validateTeamMembers = useCallback((agentsList: Array<{ id: string; name?: string }>) => {
     const membersWithoutRole = agentsList.filter(a => {
@@ -758,15 +769,7 @@ export function AgentView() {
 
     setTeamSaving(true)
     try {
-      const meta = {
-        team_name: teamEditMeta.team_name || undefined,
-        leader_agent_id: teamLeaderAgentId,
-        members: agentsList.map((a) => ({
-          agent_id: a.id,
-          name: a.name || a.id,
-          role: teamEditMeta.members.find((m) => m.agent_id === a.id)?.role || "",
-        })),
-      }
+      const meta = buildTeamMeta(agentsList)
       await invoke("save_team_meta", { instanceId: selectedId, meta })
 
       setTeamFetchError(null)
@@ -2238,15 +2241,7 @@ export function AgentView() {
                                     
                                     setTeamSaving(true)
                                     try {
-                                      const meta = {
-                                        team_name: teamEditMeta.team_name || undefined,
-                                        leader_agent_id: teamLeaderAgentId,
-                                        members: agentsList.map((a) => ({
-                                          agent_id: a.id,
-                                          name: a.name || a.id,  // Sync name from agents.list
-                                          role: teamEditMeta.members.find((m) => m.agent_id === a.id)?.role || "",
-                                        })),
-                                      }
+                                      const meta = buildTeamMeta(agentsList)
                                       await invoke("save_team_meta", { instanceId: selectedId, meta })
                                       setTeamFetchError(null)
                                       toast.success(t("agentView.toast.teamInfoSaved"))
