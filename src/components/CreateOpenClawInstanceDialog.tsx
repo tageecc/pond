@@ -134,7 +134,7 @@ export function CreateOpenClawInstanceDialog({
         </DialogHeader>
         
         <div className="space-y-4">
-          <RadioGroup value={configMode} onValueChange={(v) => setConfigMode(v as 'inherit' | 'manual')}>
+          <RadioGroup value={configMode} onValueChange={(v: string) => setConfigMode(v as 'inherit' | 'manual')}>
             <div className="flex items-start space-x-2">
               <RadioGroupItem value="inherit" id="inherit" disabled={!hasCurrentConfig} />
               <div className="flex-1">
