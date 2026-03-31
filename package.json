@@ -1,7 +1,7 @@
 {
   "name": "pond",
   "private": true,
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Desktop control plane for OpenClaw: multi-instance Gateway, team management, chat, and observability (Tauri + React).",
   "keywords": [
     "openclaw",
