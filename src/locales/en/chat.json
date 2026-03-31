@@ -20,6 +20,7 @@
     "stoppedPartial": "_（generation stopped）_",
     "stoppedShort": "（generation stopped）",
     "startGatewayFirst": "Start this Agent's Gateway before sending messages",
+    "noApiKeyConfigured": "Please configure your API key in the settings panel before chatting",
     "userMessagePreview": "Sent: {{text}}",
     "toolCall": "Tool: {{name}}",
     "thinkingContent": "Thinking...",

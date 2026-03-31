@@ -4,6 +4,8 @@
     "instanceReady": "实例已就绪",
     "createInstanceLoading": "正在创建 OpenClaw 实例…",
     "createInstanceSuccessHint": "记得在「模型配置」填写 API Key",
+    "instanceCreatedNeedsConfig": "实例已创建",
+    "pleaseConfigureApiKey": "请先在右侧配置页面设置 API key 后再开始对话",
     "modelConfigReminder": "记得在「模型配置」填写 API Key"
   }
 }

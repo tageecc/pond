@@ -4,6 +4,8 @@
     "instanceReady": "Instance ready",
     "createInstanceLoading": "Creating OpenClaw instance…",
     "createInstanceSuccessHint": "Add your API key under Model settings",
+    "instanceCreatedNeedsConfig": "Instance created",
+    "pleaseConfigureApiKey": "Please configure your API key in the settings panel before chatting",
     "modelConfigReminder": "Remember to add your API key under Model settings"
   }
 }

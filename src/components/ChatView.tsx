@@ -724,9 +724,31 @@ export function ChatView() {
   const handleSend = useCallback(async () => {
     const text = input.trim();
     if (!text || sending) return;
+    
+    // Check if gateway is running
     if (!canSend) {
       updateChatSession(chatStoreKey, {
         error: i18n.t("chat.startGatewayFirst"),
+      });
+      return;
+    }
+    
+    // Check if API key is configured
+    const currentConfig = useAppStore.getState().openclawConfig;
+    if (!currentConfig || !currentConfig.models?.providers || Object.keys(currentConfig.models.providers).length === 0) {
+      updateChatSession(chatStoreKey, {
+        error: i18n.t("chat.noApiKeyConfigured"),
+      });
+      return;
+    }
+    
+    // Check if any provider has valid API key
+    const hasValidKey = Object.values(currentConfig.models.providers).some(
+      (provider) => provider?.apiKey && provider.apiKey.trim().length > 0
+    );
+    if (!hasValidKey) {
+      updateChatSession(chatStoreKey, {
+        error: i18n.t("chat.noApiKeyConfigured"),
       });
       return;
     }

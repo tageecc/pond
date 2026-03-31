@@ -20,6 +20,7 @@
     "stoppedPartial": "_（已停止生成）_",
     "stoppedShort": "（已停止生成）",
     "startGatewayFirst": "请先启动该 Agent 的 Gateway 后再发送消息",
+    "noApiKeyConfigured": "请先在右侧配置页面设置 API key 后再开始对话",
     "userMessagePreview": "发送消息: {{text}}",
     "toolCall": "调用工具: {{name}}",
     "thinkingContent": "正在思考...",
