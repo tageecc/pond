@@ -75,22 +75,20 @@ description: Pond 团队协作技能。开启团队空间后自动配置 tools.s
 
 members 数组结构说明：
 {
-  "agent_id": "agent-abc123",    // 自动生成的唯一ID（必需）
-  "name": "小红",                // 成员名称（从 agents.list 自动同步，可选）
-  "role": "后端开发，负责 API 实现和数据库设计"  // 职责描述（必需）
+  "agent_id": "agent-abc123",    // 自动生成的唯一ID
+  "name": "小红",                // 成员显示名称（从 agents.list 自动同步）
+  "role": "后端开发，负责 API 实现和数据库设计"  // 职责描述
 }
 
 注意：
 - agent_id 是系统自动生成的（如 agent-abc123、agent-def456）
-- name 字段会在保存团队信息时自动从 agents.list[].name 同步
-- ✅ 优先使用 name 字段显示成员名称（如："任务已分配给小红"）
-- ⚠️ 如果 name 不存在（旧数据），使用 agent_id 作为 fallback
-- role 是必填的职责描述，用于说明该成员负责什么工作
+- name 字段在保存团队信息时自动从 agents.list[].name 同步
+- 直接使用 name 字段显示成员名称
 
-显示成员名称的推荐代码：
+显示成员名称示例：
 ```javascript
-const displayName = member.name || member.agent_id
-console.log(`任务已分配给 ${displayName}`)
+console.log(`任务已分配给 ${member.name}`)
+// 输出：任务已分配给小红
 ```
 
 建议检查哪些角色尚未激活：

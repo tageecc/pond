@@ -726,6 +726,20 @@ export function AgentView() {
     void loadTeamDashboard()
   }, [agentConfigSection, selectedId, loadTeamDashboard, teamSpaceInitialized])
 
+  // Validate all members have role descriptions
+  const validateTeamMembers = useCallback((agentsList: Array<{ id: string; name?: string }>) => {
+    const membersWithoutRole = agentsList.filter(a => {
+      const role = teamEditMeta.members.find(m => m.agent_id === a.id)?.role?.trim()
+      return !role
+    })
+    if (membersWithoutRole.length > 0) {
+      const names = membersWithoutRole.map(a => a.name || a.id).join("、")
+      toast.error(t("agentView.toast.roleDescRequired", { names }))
+      return false
+    }
+    return true
+  }, [teamEditMeta.members, t])
+
   const enableTeamSpace = useCallback(async () => {
     if (!selectedId) return
     const agentsList = openclawConfig?.agents?.list ?? []
@@ -738,16 +752,7 @@ export function AgentView() {
       return
     }
 
-    // Validate that all members have role descriptions
-    const membersWithoutRole = agentsList.filter(a => {
-      const role = teamEditMeta.members.find(m => m.agent_id === a.id)?.role?.trim()
-      return !role
-    })
-    if (membersWithoutRole.length > 0) {
-      const names = membersWithoutRole.map(a => a.name || a.id).join("、")
-      toast.error(t("agentView.toast.roleDescRequired", { names }))
-      return
-    }
+    if (!validateTeamMembers(agentsList)) return
 
     setTeamSaving(true)
     try {
@@ -756,7 +761,7 @@ export function AgentView() {
         leader_agent_id: teamLeaderAgentId,
         members: agentsList.map((a) => ({
           agent_id: a.id,
-          name: a.name || a.id,  // Sync name from agents.list
+          name: a.name || a.id,
           role: teamEditMeta.members.find((m) => m.agent_id === a.id)?.role || "",
         })),
       }
@@ -2220,16 +2225,7 @@ export function AgentView() {
                                       return
                                     }
                                     
-                                    // Validate that all members have role descriptions
-                                    const membersWithoutRole = agentsList.filter(a => {
-                                      const role = teamEditMeta.members.find(m => m.agent_id === a.id)?.role?.trim()
-                                      return !role
-                                    })
-                                    if (membersWithoutRole.length > 0) {
-                                      const names = membersWithoutRole.map(a => a.name || a.id).join("、")
-                                      toast.error(t("agentView.toast.roleDescRequired", { names }))
-                                      return
-                                    }
+                                    if (!validateTeamMembers(agentsList)) return
                                     
                                     setTeamSaving(true)
                                     try {
