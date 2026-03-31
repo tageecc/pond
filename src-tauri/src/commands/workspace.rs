@@ -631,6 +631,7 @@ pub fn run_openclaw_onboard_non_interactive(
     let mut args: Vec<&str> = vec![
         "onboard",
         "--non-interactive",
+        "--accept-risk",
         "--mode", "local",
         "--gateway-port", &port_str,
         "--gateway-bind", "loopback",

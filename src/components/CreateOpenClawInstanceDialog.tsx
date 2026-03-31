@@ -55,7 +55,6 @@ export function CreateOpenClawInstanceDialog({
         .filter(([_, p]) => p?.apiKey && p.apiKey.trim().length > 0)
         .map(([id, p]) => ({
           id,
-          name: getProvider(id)?.name || id,
           apiKey: p?.apiKey || '',
           baseUrl: p?.baseUrl,
           model: p?.defaultModel || p?.models?.[0]?.id,
@@ -155,12 +154,12 @@ export function CreateOpenClawInstanceDialog({
                       <SelectTrigger className="h-9 rounded-lg border-app-border bg-app-elevated text-app-text text-sm">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="w-64 rounded-xl">
                         {configuredProviders.map((cp) => (
-                          <SelectItem key={cp.id} value={cp.id}>
-                            <div className="flex flex-col">
-                              <span className="font-medium">{cp.name}</span>
-                              <span className="text-xs text-app-muted">
+                          <SelectItem key={cp.id} value={cp.id} className="cursor-pointer rounded-lg">
+                            <div className="flex flex-col py-0.5">
+                              <span className="font-medium text-sm">{t(`providers.names.${cp.id}`)}</span>
+                              <span className="text-xs text-app-muted mt-0.5">
                                 API key: {cp.apiKey.slice(0, 8)}••••
                                 {cp.model && ` · ${cp.model}`}
                               </span>
@@ -197,10 +196,10 @@ export function CreateOpenClawInstanceDialog({
                   <SelectTrigger className="h-9 rounded-lg border-app-border bg-app-elevated text-app-text text-sm">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="w-64 rounded-xl max-h-80">
                     {PROVIDERS.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.name}
+                      <SelectItem key={p.id} value={p.id} className="cursor-pointer rounded-lg">
+                        {t(`providers.names.${p.id}`)}
                       </SelectItem>
                     ))}
                   </SelectContent>
