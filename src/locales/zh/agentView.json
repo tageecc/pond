@@ -323,7 +323,8 @@
     },
     "leader": {
       "titleFixed": "Team Leader 固定为 id「{{id}}」",
-      "badge": "Team Leader"
+      "badge": "Team Leader",
+      "roleAutoSet": "团队领导职责由系统自动设定"
     },
     "label": {
       "teamName": "团队名称"

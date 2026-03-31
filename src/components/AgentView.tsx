@@ -726,9 +726,11 @@ export function AgentView() {
     void loadTeamDashboard()
   }, [agentConfigSection, selectedId, loadTeamDashboard, teamSpaceInitialized])
 
-  // Validate all members have role descriptions
+  // Validate all members have role descriptions (except team leader)
   const validateTeamMembers = useCallback((agentsList: Array<{ id: string; name?: string }>) => {
     const membersWithoutRole = agentsList.filter(a => {
+      // Skip team leader (main) - no role description needed
+      if (a.id === TEAM_LEADER_AGENT_ID) return false
       const role = teamEditMeta.members.find(m => m.agent_id === a.id)?.role?.trim()
       return !role
     })
@@ -2059,12 +2061,19 @@ export function AgentView() {
                                         <div className="space-y-1.5">
                                             <Label className="text-xs font-medium text-app-text">
                                               {t("agentView.addRole.roleDesc")}
-                                              <span className="text-destructive ml-0.5">*</span>
+                                              {!isLeader && <span className="text-destructive ml-0.5">*</span>}
                                             </Label>
                                             <Input
-                                              className="h-10 rounded-lg border-app-border/80 bg-app-surface text-sm shadow-none"
-                                              placeholder={t("agentView.addRole.descHint")}
-                                              disabled={teamFetchLoading}
+                                              className={cn(
+                                                "h-10 rounded-lg border-app-border/80 bg-app-surface text-sm shadow-none",
+                                                isLeader && "cursor-not-allowed opacity-60"
+                                              )}
+                                              placeholder={
+                                                isLeader 
+                                                  ? t("agentView.leader.roleAutoSet")
+                                                  : t("agentView.addRole.descHint")
+                                              }
+                                              disabled={teamFetchLoading || isLeader}
                                               value={member?.role ?? ""}
                                               onChange={(e) => {
                                                 const role = e.target.value

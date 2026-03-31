@@ -615,6 +615,10 @@ pub fn run_openclaw_onboard_non_interactive(
     auth_choice: Option<String>,
     anthropic_api_key: Option<String>,
     openai_api_key: Option<String>,
+    gemini_api_key: Option<String>,
+    custom_base_url: Option<String>,
+    custom_model_id: Option<String>,
+    custom_api_key: Option<String>,
 ) -> Result<(), String> {
     let port = gateway_port.unwrap_or(18789);
     let port_str = port.to_string();
@@ -626,26 +630,60 @@ pub fn run_openclaw_onboard_non_interactive(
         "--gateway-bind", "loopback",
         "--skip-skills",
     ];
+    
     if let Some(a) = auth_choice.as_deref() {
         args.push("--auth-choice");
         args.push(a);
     }
+    
     if let Some(k) = anthropic_api_key.as_deref() {
         if !k.is_empty() {
             args.push("--anthropic-api-key");
             args.push(k);
         }
     }
+    
     if let Some(k) = openai_api_key.as_deref() {
         if !k.is_empty() {
             args.push("--openai-api-key");
             args.push(k);
         }
     }
+    
+    if let Some(k) = gemini_api_key.as_deref() {
+        if !k.is_empty() {
+            args.push("--gemini-api-key");
+            args.push(k);
+        }
+    }
+    
+    // Custom provider support
+    if let Some(url) = custom_base_url.as_deref() {
+        if !url.is_empty() {
+            args.push("--custom-base-url");
+            args.push(url);
+        }
+    }
+    
+    if let Some(model) = custom_model_id.as_deref() {
+        if !model.is_empty() {
+            args.push("--custom-model-id");
+            args.push(model);
+        }
+    }
+    
+    if let Some(key) = custom_api_key.as_deref() {
+        if !key.is_empty() {
+            args.push("--custom-api-key");
+            args.push(key);
+        }
+    }
+    
     let id = instance_id.trim();
     if id.is_empty() {
         return Err("instance_id 不能为空".to_string());
     }
+    
     let mut cmd =
         gateway::build_openclaw_cli_for_instance_sync(&app_handle, id, &args)?;
     let out = cmd.output().map_err(|e| format!("执行 openclaw onboard 失败: {}", e))?;

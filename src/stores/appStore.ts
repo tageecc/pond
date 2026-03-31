@@ -739,31 +739,59 @@ export const useAppStore = create<AppState>((set, get) => ({
     const key = (apiKey ?? '').trim()
     if (!key) return
     const defaultId = 'default'
-    const config = get().openclawConfig ?? ({} as OpenClawConfig)
-    const { agents, models } = buildAgentsAndModelsFromProvider(
-      providerId,
-      key,
-      baseURL ?? undefined,
-      model ?? defaultModelHint(providerId)
-    )
-    const nextConfig: OpenClawConfig = { ...config, agents, models }
-    await invoke('save_openclaw_config_for_instance', {
-      instanceId: defaultId,
-      config: nextConfig,
-    })
-    set({ openclawConfig: nextConfig })
-
-    // Init default instance dir (same as Agents page create flow)
-    try {
-      await get().ensureInstanceSetup('default')
-    } catch (e) {
-      console.error('ensureInstanceSetup failed:', e)
-      // Non-fatal; user can retry from Agents later
+    
+    // Provider ID to OpenClaw auth-choice mapping
+    const authChoiceMap: Record<string, string> = {
+      'anthropic': 'anthropic-api-key',
+      'openai': 'openai-api-key',
+      'google': 'gemini-api-key',
+      'deepseek': 'custom-api-key',
+      'openrouter': 'openrouter-api-key',
+      'xai': 'xai-api-key',
+      'mistral': 'mistral-api-key',
+      'groq': 'custom-api-key',
+      'together': 'together-api-key',
+      'cerebras': 'custom-api-key',
+      'bailian': 'custom-api-key',
+      'moonshot': 'moonshot-api-key',
+      'zhipu': 'custom-api-key',
+      'minimax': 'custom-api-key',
+      'volcengine': 'volcengine-api-key',
+      'huggingface': 'huggingface-api-key',
+      'nvidia': 'custom-api-key',
+      'bedrock': 'custom-api-key',
+      'azure': 'custom-api-key',
+      'ollama': 'custom-api-key',
+      'vllm': 'custom-api-key',
+      'opencode': 'opencode-zen',
+      'vercel-ai-gateway': 'ai-gateway-api-key',
+      'custom': 'custom-api-key',
     }
     
-    set({ needsOnboarding: false })
-    await get().loadConfigs()
-    void get().restartAgentGateway('default').catch(() => {})
+    const authChoice = authChoiceMap[providerId] || 'custom-api-key'
+    const needsCustomParams = !['anthropic', 'openai', 'google'].includes(providerId)
+    
+    try {
+      // Use openclaw onboard for one-shot initialization (avoids N CLI calls for skills)
+      await invoke('run_openclaw_onboard_non_interactive', {
+        instanceId: defaultId,
+        gatewayPort: 18789,
+        authChoice,
+        anthropicApiKey: providerId === 'anthropic' ? key : undefined,
+        openaiApiKey: providerId === 'openai' ? key : undefined,
+        geminiApiKey: providerId === 'google' ? key : undefined,
+        customBaseUrl: needsCustomParams ? (baseURL || undefined) : undefined,
+        customModelId: needsCustomParams ? (model || defaultModelHint(providerId)) : undefined,
+        customApiKey: needsCustomParams ? key : undefined,
+      })
+      
+      set({ needsOnboarding: false })
+      await get().loadConfigs()
+      void get().restartAgentGateway('default').catch(() => {})
+    } catch (error) {
+      console.error('Onboarding failed:', error)
+      throw error
+    }
   },
 
   initialize: async () => {

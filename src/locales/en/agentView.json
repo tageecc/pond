@@ -323,7 +323,8 @@
     },
     "leader": {
       "titleFixed": "Team Leader id is fixed to “{{id}}”",
-      "badge": "Team Leader"
+      "badge": "Team Leader",
+      "roleAutoSet": "Team leader role is automatically set by system"
     },
     "label": {
       "teamName": "Team name"
