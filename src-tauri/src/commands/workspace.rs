@@ -279,16 +279,10 @@ pub fn list_agent_workspace_files(
     Ok(ListWorkspaceFilesResult { files: out, guide })
 }
 
-/// Run `openclaw setup` when instance root exists but `openclaw.json` is missing.
+/// Run `openclaw setup` when `openclaw.json` is missing.
+/// OpenClaw CLI will create all necessary directories automatically.
 pub fn ensure_openclaw_json_with_setup(app_handle: &AppHandle, instance_id: &str) -> Result<(), String> {
     let inst = instance_id.trim();
-    let home = paths::instance_home(inst)?;
-    if !home.exists() {
-        return Err(format!(
-            "实例目录不存在: {}，请先创建实例",
-            home.display()
-        ));
-    }
     if paths::instance_config_path(inst)?.is_file() {
         return Ok(());
     }
@@ -296,11 +290,10 @@ pub fn ensure_openclaw_json_with_setup(app_handle: &AppHandle, instance_id: &str
 }
 
 /// `openclaw setup --workspace <instance>/workspace` (sync; shared by Gateway start, import, etc.).
+/// OpenClaw CLI will create all necessary directories automatically.
 pub fn run_openclaw_setup_sync(app_handle: &AppHandle, instance_id: &str) -> Result<(), String> {
     let inst = instance_id.trim();
     let openclaw_home = paths::instance_home(inst)?;
-    std::fs::create_dir_all(openclaw_home.join("workspace"))
-        .map_err(|e| format!("创建 workspace 失败: {}", e))?;
     let ws_path = openclaw_home.join("workspace").to_string_lossy().to_string();
     let args: Vec<&str> = vec!["setup", "--workspace", ws_path.as_str()];
     let mut cmd = gateway::build_openclaw_cli_for_instance_sync(app_handle, inst, &args)?;
@@ -468,12 +461,10 @@ pub fn sync_skills_disabled_with_openclaw_cli(
 }
 
 /// Run `openclaw setup` to init instance directory (creates openclaw.json if missing).
+/// OpenClaw CLI will create all directories and config files automatically.
 #[tauri::command]
 pub async fn run_openclaw_agents_add(app_handle: AppHandle, agent_id: String) -> Result<(), String> {
     let id_trim = agent_id.trim().to_string();
-    let openclaw_home = paths::instance_home(&id_trim)?;
-    std::fs::create_dir_all(&openclaw_home)
-        .map_err(|e| format!("创建实例目录失败: {}", e))?;
     tokio::task::spawn_blocking(move || ensure_openclaw_json_with_setup(&app_handle, &id_trim))
         .await
         .map_err(|e| format!("后台任务异常: {}", e))??;
@@ -605,6 +596,16 @@ pub fn run_openclaw_agents_add_sync(
     Ok(())
 }
 
+/// Helper to push non-empty optional string arguments to CLI args
+fn push_arg_if_nonempty<'a>(args: &mut Vec<&'a str>, flag: &'a str, value: Option<&'a str>) {
+    if let Some(v) = value {
+        if !v.is_empty() {
+            args.push(flag);
+            args.push(v);
+        }
+    }
+}
+
 /// Run `openclaw onboard` non-interactively; init default workspace and config (see OpenClaw wizard docs, non-interactive mode).
 /// Requires at least one auth method (e.g. api_key_provider + api_key). Skips channels, skills, etc.; minimal init only.
 #[tauri::command]
@@ -620,6 +621,11 @@ pub fn run_openclaw_onboard_non_interactive(
     custom_model_id: Option<String>,
     custom_api_key: Option<String>,
 ) -> Result<(), String> {
+    let id = instance_id.trim();
+    if id.is_empty() {
+        return Err("instance_id 不能为空".to_string());
+    }
+    
     let port = gateway_port.unwrap_or(18789);
     let port_str = port.to_string();
     let mut args: Vec<&str> = vec![
@@ -631,65 +637,18 @@ pub fn run_openclaw_onboard_non_interactive(
         "--skip-skills",
     ];
     
-    if let Some(a) = auth_choice.as_deref() {
-        args.push("--auth-choice");
-        args.push(a);
-    }
+    push_arg_if_nonempty(&mut args, "--auth-choice", auth_choice.as_deref());
+    push_arg_if_nonempty(&mut args, "--anthropic-api-key", anthropic_api_key.as_deref());
+    push_arg_if_nonempty(&mut args, "--openai-api-key", openai_api_key.as_deref());
+    push_arg_if_nonempty(&mut args, "--gemini-api-key", gemini_api_key.as_deref());
+    push_arg_if_nonempty(&mut args, "--custom-base-url", custom_base_url.as_deref());
+    push_arg_if_nonempty(&mut args, "--custom-model-id", custom_model_id.as_deref());
+    push_arg_if_nonempty(&mut args, "--custom-api-key", custom_api_key.as_deref());
     
-    if let Some(k) = anthropic_api_key.as_deref() {
-        if !k.is_empty() {
-            args.push("--anthropic-api-key");
-            args.push(k);
-        }
-    }
-    
-    if let Some(k) = openai_api_key.as_deref() {
-        if !k.is_empty() {
-            args.push("--openai-api-key");
-            args.push(k);
-        }
-    }
-    
-    if let Some(k) = gemini_api_key.as_deref() {
-        if !k.is_empty() {
-            args.push("--gemini-api-key");
-            args.push(k);
-        }
-    }
-    
-    // Custom provider support
-    if let Some(url) = custom_base_url.as_deref() {
-        if !url.is_empty() {
-            args.push("--custom-base-url");
-            args.push(url);
-        }
-    }
-    
-    if let Some(model) = custom_model_id.as_deref() {
-        if !model.is_empty() {
-            args.push("--custom-model-id");
-            args.push(model);
-        }
-    }
-    
-    if let Some(key) = custom_api_key.as_deref() {
-        if !key.is_empty() {
-            args.push("--custom-api-key");
-            args.push(key);
-        }
-    }
-    
-    let id = instance_id.trim();
-    if id.is_empty() {
-        return Err("instance_id 不能为空".to_string());
-    }
-    
-    let mut cmd =
-        gateway::build_openclaw_cli_for_instance_sync(&app_handle, id, &args)?;
+    let mut cmd = gateway::build_openclaw_cli_for_instance_sync(&app_handle, id, &args)?;
     let out = cmd.output().map_err(|e| format!("执行 openclaw onboard 失败: {}", e))?;
     if !out.status.success() {
-        let stderr =
-            gateway::strip_npm_warn_lines(&String::from_utf8_lossy(&out.stderr));
+        let stderr = gateway::strip_npm_warn_lines(&String::from_utf8_lossy(&out.stderr));
         return Err(format!("openclaw onboard 失败: {}", stderr.trim()));
     }
     Ok(())

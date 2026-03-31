@@ -62,10 +62,9 @@ export function Onboarding() {
   useEffect(() => {
     invoke<{ exists: boolean }>("detect_system_openclaw")
       .then((r) => {
-        const ex = r?.exists ?? false
-        setHasSystemOpenClaw(ex)
+        setHasSystemOpenClaw(r.exists)
         if (openClawExistedBeforeWizardRef.current === null) {
-          openClawExistedBeforeWizardRef.current = ex
+          openClawExistedBeforeWizardRef.current = r.exists
         }
       })
       .catch(() => {
@@ -96,7 +95,7 @@ export function Onboarding() {
       setError(e instanceof Error ? e.message : String(e))
       // Re-probe filesystem on import failure
       invoke<{ exists: boolean }>("detect_system_openclaw")
-        .then((r) => setHasSystemOpenClaw(r?.exists ?? false))
+        .then((r) => setHasSystemOpenClaw(r.exists))
         .catch(() => setHasSystemOpenClaw(false))
     } finally {
       setImporting(false)
@@ -143,7 +142,7 @@ export function Onboarding() {
     if (existedBefore === null) {
       try {
         const result = await invoke<{ exists: boolean }>("detect_system_openclaw")
-        existedBefore = result?.exists ?? false
+        existedBefore = result.exists
       } catch {
         existedBefore = false
       }
@@ -252,7 +251,7 @@ export function Onboarding() {
                   // Re-check system install when entering key step
                   try {
                     const result = await invoke<{ exists: boolean }>("detect_system_openclaw")
-                    setHasSystemOpenClaw(result?.exists ?? false)
+                    setHasSystemOpenClaw(result.exists)
                   } catch {
                     setHasSystemOpenClaw(false)
                   }
@@ -313,7 +312,7 @@ export function Onboarding() {
                     // Re-check when going back to provider step
                     try {
                       const result = await invoke<{ exists: boolean }>("detect_system_openclaw")
-                      setHasSystemOpenClaw(result?.exists ?? false)
+                      setHasSystemOpenClaw(result.exists)
                     } catch {
                       setHasSystemOpenClaw(false)
                     }

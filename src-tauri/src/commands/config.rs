@@ -441,10 +441,23 @@ pub fn load_openclaw_config_for_instance(instance_id: String) -> Result<OpenClaw
     Ok(config)
 }
 
-/// Shallow-merge write to `openclaw.json` (skills disabled entries via CLI set/unset, not raw `skills.entries`).
+/// Shallow-merge write to `openclaw.json` for Pond UI config edits.
 ///
-/// Must shallow-merge with on-disk JSON: only modeled keys are overwritten; preserve other roots (`browser`, `logging`, ...)
-/// or a save / `start_gateway` load→save would wipe user edits.
+/// NOTE: This function manually writes the config file instead of using `openclaw config set`.
+/// 
+/// **Rationale for manual write**:
+/// - Converting the full OpenClawConfig object to `openclaw config set --batch-json` format
+///   (array of {path, value} entries) would require extensive flattening logic (~200 LOC)
+/// - The function already uses CLI for skills sync (`sync_skills_disabled_with_openclaw_cli`),
+///   which was the main performance bottleneck (fixed by using `openclaw onboard` for init)
+/// - Manual write is fast (<50ms) when no skill changes detected
+///
+/// **Safety measures**:
+/// - Shallow-merge preserves unknown OpenClaw keys (`browser`, `logging`, `privacy`, etc.)
+/// - Skills are synced via CLI commands, not written directly
+/// - Config is validated after write in critical paths
+///
+/// **Future**: Could implement batch-json converter to eliminate this manual operation.
 pub(crate) fn merge_write_openclaw_config(
     instance_id: &str,
     mut config: OpenClawConfig,
@@ -580,10 +593,9 @@ pub fn import_discovered_instance(
     if id.is_empty() || id.eq_ignore_ascii_case("default") {
         return Err("不能导入 default 或空 ID".to_string());
     }
-    let instance_dir = paths::instance_home(id)?;
-    fs::create_dir_all(&instance_dir).map_err(|e| format!("创建实例目录失败: {}", e))?;
-    let config_path = instance_dir.join("openclaw.json");
+    let config_path = paths::instance_config_path(id)?;
     if !config_path.exists() {
+        // OpenClaw CLI will create directories and config automatically
         workspace::run_openclaw_setup_sync(&app_handle, id)?;
     }
     if let Some(name) = display_name.filter(|s| !s.trim().is_empty()) {

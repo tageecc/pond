@@ -667,24 +667,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   importSystemOpenClaw: async () => {
-    try {
-      // 1. Import system OpenClaw into Pond-managed instances
-      await invoke('import_system_openclaw_config')
-      
-      // 2. Reload configs
-      await get().loadConfigs()
-      
-      // 3. Ensure instance dir is complete (same as create-instance flow)
-      try {
-        await get().ensureInstanceSetup('default')
-      } catch (e) {
-        console.warn('ensureInstanceSetup failed:', e)
-        // Non-fatal; dir may already be complete
-      }
-    } catch (error) {
-      console.error('Failed to import system OpenClaw config:', error)
-      throw error
-    }
+    await invoke('import_system_openclaw_config')
+    await get().loadConfigs()
   },
 
   finishOnboarding: () => set({ needsOnboarding: false }),
@@ -736,62 +720,43 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   completeOnboarding: async (providerId, apiKey, baseURL, model) => {
-    const key = (apiKey ?? '').trim()
+    const key = apiKey?.trim()
     if (!key) return
-    const defaultId = 'default'
     
-    // Provider ID to OpenClaw auth-choice mapping
-    const authChoiceMap: Record<string, string> = {
+    // Only providers with native OpenClaw support; others use custom-api-key
+    const NATIVE_PROVIDERS: Record<string, string> = {
       'anthropic': 'anthropic-api-key',
       'openai': 'openai-api-key',
       'google': 'gemini-api-key',
-      'deepseek': 'custom-api-key',
       'openrouter': 'openrouter-api-key',
       'xai': 'xai-api-key',
       'mistral': 'mistral-api-key',
-      'groq': 'custom-api-key',
       'together': 'together-api-key',
-      'cerebras': 'custom-api-key',
-      'bailian': 'custom-api-key',
       'moonshot': 'moonshot-api-key',
-      'zhipu': 'custom-api-key',
-      'minimax': 'custom-api-key',
       'volcengine': 'volcengine-api-key',
       'huggingface': 'huggingface-api-key',
-      'nvidia': 'custom-api-key',
-      'bedrock': 'custom-api-key',
-      'azure': 'custom-api-key',
-      'ollama': 'custom-api-key',
-      'vllm': 'custom-api-key',
       'opencode': 'opencode-zen',
       'vercel-ai-gateway': 'ai-gateway-api-key',
-      'custom': 'custom-api-key',
     }
     
-    const authChoice = authChoiceMap[providerId] || 'custom-api-key'
-    const needsCustomParams = !['anthropic', 'openai', 'google'].includes(providerId)
+    const authChoice = NATIVE_PROVIDERS[providerId] || 'custom-api-key'
+    const needsCustomParams = !(providerId in NATIVE_PROVIDERS)
     
-    try {
-      // Use openclaw onboard for one-shot initialization (avoids N CLI calls for skills)
-      await invoke('run_openclaw_onboard_non_interactive', {
-        instanceId: defaultId,
-        gatewayPort: 18789,
-        authChoice,
-        anthropicApiKey: providerId === 'anthropic' ? key : undefined,
-        openaiApiKey: providerId === 'openai' ? key : undefined,
-        geminiApiKey: providerId === 'google' ? key : undefined,
-        customBaseUrl: needsCustomParams ? (baseURL || undefined) : undefined,
-        customModelId: needsCustomParams ? (model || defaultModelHint(providerId)) : undefined,
-        customApiKey: needsCustomParams ? key : undefined,
-      })
-      
-      set({ needsOnboarding: false })
-      await get().loadConfigs()
-      void get().restartAgentGateway('default').catch(() => {})
-    } catch (error) {
-      console.error('Onboarding failed:', error)
-      throw error
-    }
+    await invoke('run_openclaw_onboard_non_interactive', {
+      instanceId: 'default',
+      gatewayPort: 18789,
+      authChoice,
+      anthropicApiKey: providerId === 'anthropic' ? key : undefined,
+      openaiApiKey: providerId === 'openai' ? key : undefined,
+      geminiApiKey: providerId === 'google' ? key : undefined,
+      customBaseUrl: needsCustomParams ? baseURL : undefined,
+      customModelId: needsCustomParams ? (model || defaultModelHint(providerId)) : undefined,
+      customApiKey: needsCustomParams ? key : undefined,
+    })
+    
+    set({ needsOnboarding: false })
+    await get().loadConfigs()
+    void get().restartAgentGateway('default').catch(() => {})
   },
 
   initialize: async () => {
@@ -812,18 +777,13 @@ export const useAppStore = create<AppState>((set, get) => ({
       if (hasConfiguredModel()) {
         set({ needsOnboarding: false, onboardingChecked: true })
       } else {
-        // Detect system ~/.openclaw
         try {
           const sys = await invoke<{ exists: boolean }>('detect_system_openclaw')
-          if (sys?.exists) {
-            // Auto-import into Pond
+          if (sys.exists) {
             await invoke('import_system_openclaw_config')
             await get().loadConfigs()
-            
-            // Skip onboarding; user can set API keys in-app
             set({ needsOnboarding: false, onboardingChecked: true })
           } else {
-            // No system install; show wizard
             set({ needsOnboarding: true, onboardingChecked: true })
           }
         } catch {

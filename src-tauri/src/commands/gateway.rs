@@ -588,8 +588,8 @@ pub async fn start_gateway(
     }
     emit_status(&app_handle, &key, &GatewayStatus::Starting, gw_port, None);
 
-    let cfg = config::load_openclaw_config_for_instance(key.clone())?;
-    config::merge_write_openclaw_config(&key, cfg, &app_handle, None)?;
+    // Ensure config exists and has auth tokens (no unnecessary rewrite)
+    workspace::ensure_openclaw_json_with_setup(&app_handle, &key)?;
     config::ensure_gateway_tokens_for_instance(app_handle.clone(), key.clone())?;
 
     let port_s = gw_port.to_string();
