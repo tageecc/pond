@@ -998,7 +998,7 @@ export function AgentView() {
       if (!updatedMeta.members.some(m => m.agent_id === agentId)) {
         updatedMeta.members.push({ agent_id: agentId, name, role: roleDesc })
       }
-      await invoke("update_team_meta", { instanceId: selectedId, meta: updatedMeta })
+      await invoke("save_team_meta", { instanceId: selectedId, meta: updatedMeta })
       setTeamEditMeta(updatedMeta)
       
       setAddRoleDialogOpen(false)

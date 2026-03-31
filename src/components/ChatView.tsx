@@ -1129,6 +1129,7 @@ export function ChatView() {
                     : [{ id: "main" } as { id: string }]
                   ).map((entry) => {
                     const id = String(entry.id);
+                    const name: string = ('name' in entry && entry.name) ? String(entry.name) : id;
                     const active = id === chatRoleId;
                     const isLeader =
                       teamLeaderRoleId != null && id === TEAM_LEADER_AGENT_ID;
@@ -1142,12 +1143,12 @@ export function ChatView() {
                         title={
                           isLeader
                             ? t("chat.teamLeader")
-                            : t("chat.switchToRole", { id })
+                            : name
                         }
                         onClick={() => {
                           if (id === chatRoleId) return;
                           setChatRoleId(id);
-                          toast.message(t("chat.switchedTo", { id }), {
+                          toast.message(t("chat.switchedTo", { id: name }), {
                             duration: 2200,
                           });
                         }}
@@ -1159,7 +1160,7 @@ export function ChatView() {
                           sending && "pointer-events-none opacity-50",
                         )}
                       >
-                        <span className="font-mono tracking-tight">{id}</span>
+                        <span className="tracking-tight">{name}</span>
                       </button>
                     );
                   })}

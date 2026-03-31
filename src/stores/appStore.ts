@@ -53,7 +53,6 @@ export function getDefaultChatState(): ChatSessionState {
 }
 
 import {
-  buildAgentsAndModelsFromProvider,
   hasConfiguredModel as hasConfiguredModelFromConfig,
 } from '../lib/openclawAgentsModels'
 import { defaultModelHint } from '../constants/providers'
@@ -692,7 +691,6 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
     const toastId = `create-instance-${id}`
     
-    // Set app cursor to show progress
     if (typeof document !== 'undefined') {
       document.body.style.cursor = 'wait'
     }
@@ -701,18 +699,27 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       await invoke('run_openclaw_agents_add', { agentId: id })
       await get().loadConfigs()
-      // Skip skills loading for new instance (load in background)
       await get().switchInstance(id, true)
-      toast.success(i18n.t('toast.instanceReady'), {
-        id: toastId,
-        description: i18n.t('toast.createInstanceSuccessHint'),
-      })
+      
+      // Check if the new instance has configured API key
+      const config = get().openclawConfig
+      if (!hasConfiguredModelFromConfig(config)) {
+        toast.warning(i18n.t('toast.instanceCreatedNeedsConfig'), {
+          id: toastId,
+          description: i18n.t('toast.pleaseConfigureApiKey'),
+          duration: 5000,
+        })
+      } else {
+        toast.success(i18n.t('toast.instanceReady'), {
+          id: toastId,
+          description: i18n.t('toast.createInstanceSuccessHint'),
+        })
+      }
     } catch (e) {
       toast.dismiss(toastId)
       toast.error(e instanceof Error ? e.message : String(e))
       throw e
     } finally {
-      // Restore cursor
       if (typeof document !== 'undefined') {
         document.body.style.cursor = 'auto'
       }
