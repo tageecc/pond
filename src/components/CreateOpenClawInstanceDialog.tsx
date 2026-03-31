@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { useAppStore } from "../stores/appStore"
 import {
@@ -49,17 +49,19 @@ export function CreateOpenClawInstanceDialog({
   
   const selectedProvider = getProvider(providerId)
   
-  // Get all configured providers from current instance
-  const configuredProviders = openclawConfig?.models?.providers 
-    ? Object.entries(openclawConfig.models.providers)
-        .filter(([_, p]) => p?.apiKey && p.apiKey.trim().length > 0)
-        .map(([id, p]) => ({
-          id,
-          apiKey: p?.apiKey || '',
-          baseUrl: p?.baseUrl,
-          model: p?.defaultModel || p?.models?.[0]?.id,
-        }))
-    : []
+  // Get all configured providers from current instance (memoized to prevent unnecessary re-renders)
+  const configuredProviders = useMemo(() => {
+    return openclawConfig?.models?.providers 
+      ? Object.entries(openclawConfig.models.providers)
+          .filter(([_, p]) => p?.apiKey && p.apiKey.trim().length > 0)
+          .map(([id, p]) => ({
+            id,
+            apiKey: p?.apiKey || '',
+            baseUrl: p?.baseUrl,
+            model: p?.defaultModel || p?.models?.[0]?.id,
+          }))
+      : []
+  }, [openclawConfig?.models?.providers])
   
   const hasCurrentConfig = configuredProviders.length > 0
   

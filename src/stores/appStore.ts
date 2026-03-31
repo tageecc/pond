@@ -182,6 +182,7 @@ interface AppState {
   /** Create new isolated OpenClaw profile via CLI; name from IDENTITY.md */
   createOpenClawInstance: (options?: {
     mode: 'inherit' | 'manual'
+    inheritProviderId?: string
     providerId?: string
     apiKey?: string
     model?: string
