@@ -5,6 +5,14 @@
     "short": "~/.openclaw-<短 id>",
     "defaultPath": "~/.openclaw",
     "creating": "创建中…",
-    "create": "创建"
+    "create": "创建",
+    "inheritConfig": "复用当前实例配置",
+    "inheritConfigDesc": "自动复制当前实例的 provider 和 API key 配置",
+    "noConfigToInherit": "当前实例未配置 API key，无法复用",
+    "manualConfig": "手动配置",
+    "manualConfigDesc": "为新实例单独配置 provider 和 API key",
+    "provider": "Provider",
+    "apiKeyPlaceholder": "请输入 API Key",
+    "modelOptional": "模型 ID（可选）"
   }
 }

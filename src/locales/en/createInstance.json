@@ -5,6 +5,14 @@
     "short": "~/.openclaw-<short id>",
     "defaultPath": "~/.openclaw",
     "creating": "Creating…",
-    "create": "Create"
+    "create": "Create",
+    "inheritConfig": "Copy from current instance",
+    "inheritConfigDesc": "Automatically copy provider and API key from current instance",
+    "noConfigToInherit": "Current instance has no API key configured",
+    "manualConfig": "Manual configuration",
+    "manualConfigDesc": "Configure provider and API key for the new instance",
+    "provider": "Provider",
+    "apiKeyPlaceholder": "Enter your API key",
+    "modelOptional": "Model ID (optional)"
   }
 }

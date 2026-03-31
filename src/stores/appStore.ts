@@ -684,7 +684,13 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
-  createOpenClawInstance: async () => {
+  createOpenClawInstance: async (options?: {
+    mode: 'inherit' | 'manual'
+    providerId?: string
+    apiKey?: string
+    model?: string
+    baseURL?: string
+  }) => {
     let id = Math.random().toString(36).slice(2, 7)
     while (id.toLowerCase() === 'default' || id.toLowerCase() === 'main') {
       id = Math.random().toString(36).slice(2, 7)
@@ -697,7 +703,68 @@ export const useAppStore = create<AppState>((set, get) => ({
     
     toast.loading(i18n.t('toast.createInstanceLoading'), { id: toastId })
     try {
+      // Create instance directory and basic config
       await invoke('run_openclaw_agents_add', { agentId: id })
+      
+      // If manual config provided, run onboard with user's settings
+      if (options?.mode === 'manual' && options.providerId && options.apiKey) {
+        const NATIVE_PROVIDERS: Record<string, string> = {
+          'anthropic': 'anthropic-api-key',
+          'openai': 'openai-api-key',
+          'google': 'gemini-api-key',
+          'openrouter': 'openrouter-api-key',
+          'xai': 'xai-api-key',
+          'mistral': 'mistral-api-key',
+          'together': 'together-api-key',
+          'moonshot': 'moonshot-api-key',
+          'volcengine': 'volcengine-api-key',
+          'huggingface': 'huggingface-api-key',
+          'opencode': 'opencode-zen',
+          'vercel-ai-gateway': 'ai-gateway-api-key',
+        }
+        
+        const authChoice = NATIVE_PROVIDERS[options.providerId] || 'custom-api-key'
+        const needsCustomParams = !(options.providerId in NATIVE_PROVIDERS)
+        
+        await invoke('run_openclaw_onboard_non_interactive', {
+          instanceId: id,
+          gatewayPort: 18789,
+          authChoice,
+          anthropicApiKey: options.providerId === 'anthropic' ? options.apiKey : undefined,
+          openaiApiKey: options.providerId === 'openai' ? options.apiKey : undefined,
+          geminiApiKey: options.providerId === 'google' ? options.apiKey : undefined,
+          customBaseUrl: needsCustomParams ? options.baseURL : undefined,
+          customModelId: needsCustomParams ? options.model : undefined,
+          customApiKey: needsCustomParams ? options.apiKey : undefined,
+        })
+      } else if (options?.mode === 'inherit') {
+        // Copy config from current instance
+        const currentConfig = get().openclawConfig
+        if (currentConfig?.models?.providers) {
+          const providers = currentConfig.models.providers
+          const firstProvider = Object.entries(providers).find(([_, p]) => p?.apiKey)?.[0]
+          
+          if (firstProvider) {
+            const provider = providers[firstProvider]
+            const authChoice = firstProvider === 'anthropic' ? 'anthropic-api-key' :
+                              firstProvider === 'openai' ? 'openai-api-key' :
+                              firstProvider === 'google' ? 'gemini-api-key' :
+                              'custom-api-key'
+            
+            await invoke('run_openclaw_onboard_non_interactive', {
+              instanceId: id,
+              gatewayPort: 18789,
+              authChoice,
+              anthropicApiKey: firstProvider === 'anthropic' ? provider?.apiKey : undefined,
+              openaiApiKey: firstProvider === 'openai' ? provider?.apiKey : undefined,
+              geminiApiKey: firstProvider === 'google' ? provider?.apiKey : undefined,
+              customBaseUrl: provider?.baseUrl,
+              customApiKey: !['anthropic', 'openai', 'google'].includes(firstProvider) ? provider?.apiKey : undefined,
+            })
+          }
+        }
+      }
+      
       await get().loadConfigs()
       await get().switchInstance(id, true)
       
@@ -712,7 +779,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       } else {
         toast.success(i18n.t('toast.instanceReady'), {
           id: toastId,
-          description: i18n.t('toast.createInstanceSuccessHint'),
         })
       }
     } catch (e) {
