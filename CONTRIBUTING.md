@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping improve Pond.
+Thanks for helping improve ClawTeam.
 
 ## Code of conduct
 
@@ -8,7 +8,7 @@ This project follows the [Contributor Covenant](CODE_OF_CONDUCT.md). By particip
 
 ## Before you contribute
 
-- Search [existing issues](https://github.com/tageecc/pond/issues) to avoid duplicates.
+- Search [existing issues](https://github.com/tageecc/clawteam/issues) to avoid duplicates.
 - For **security-sensitive** reports, use [SECURITY.md](./SECURITY.md), not public issues.
 
 ## Pull requests
@@ -67,7 +67,7 @@ Frontend calls Rust with `invoke` from `@tauri-apps/api/core`. Commands are regi
 
 - OpenClaw config: `~/.openclaw/openclaw.json` or `~/.openclaw-{id}/openclaw.json`
 - App preferences: Tauri Store — `src/lib/appStore.ts`
-- Pond app data: platform `app_data_dir` (bundle id `ai.clawhub.pond`)
+- ClawTeam app data: platform `app_data_dir` (bundle id `ai.clawhub.clawteam`)
 
 ## Debugging
 
@@ -75,7 +75,7 @@ Frontend calls Rust with `invoke` from `@tauri-apps/api/core`. Commands are regi
 - Frontend: DevTools in dev
 - Inspect OpenClaw JSON: `cat ~/.openclaw/openclaw.json` (adjust path per instance)
 
-Questions: [Issues](https://github.com/tageecc/pond/issues).
+Questions: [Issues](https://github.com/tageecc/clawteam/issues).
 
 ## Releasing
 

@@ -139,7 +139,7 @@
     "team": {
       "namePlaceholder": "请输入团队名称",
       "leaderUnset": "未指定",
-      "pondTeamHint": "开启团队空间后写入当前实例 skills/pond-team/SKILL.md，供角色按协作约定使用。",
+      "pondTeamHint": "开启团队空间后写入当前实例 skills/clawteam-collab/SKILL.md，供角色按协作约定使用。",
       "syncing": "正在同步 Pond 团队信息…",
       "checking": "正在检查团队空间…",
       "notEnabledTitle": "尚未开启团队空间",
@@ -151,7 +151,7 @@
       "tasksNeedCoord": " · 需协调 {{n}}",
       "recentTasks": "近期任务",
       "noTasks": "暂无任务；在任务台中添加。",
-      "dashboardHint": "pond-team：开启团队空间后写入当前实例 skills/pond-team/SKILL.md，供角色按协作约定使用。",
+      "dashboardHint": "clawteam-collab：开启团队空间后写入当前实例 skills/clawteam-collab/SKILL.md，供角色按协作约定使用。",
       "heartbeatInject": "心跳轻量上下文开启时，仅向心跳注入 HEARTBEAT.md（见「心跳与定时」）。",
       "openclawDoc": "OpenClaw 多 Agent 与路由见官方文档："
     },

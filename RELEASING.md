@@ -1,6 +1,6 @@
-# Releasing Pond
+# Releasing ClawTeam
 
-Pond ships **macOS DMG**, **Windows MSI**, and **Linux AppImage** via [GitHub Releases](https://github.com/tageecc/pond/releases). Builds run in CI when you push a **version tag** (`v*`), using [tauri-apps/tauri-action](https://github.com/tauri-apps/tauri-action).
+ClawTeam ships **macOS DMG**, **Windows MSI**, and **Linux AppImage** via [GitHub Releases](https://github.com/tageecc/clawteam/releases). Builds run in CI when you push a **version tag** (`v*`), using [tauri-apps/tauri-action](https://github.com/tauri-apps/tauri-action).
 
 ## One-time: repository settings
 

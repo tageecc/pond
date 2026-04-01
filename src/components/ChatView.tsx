@@ -331,7 +331,7 @@ function channelLabel(row: {
     ch === "feishu" || ch === "lark"
       ? i18n.t("chat.sourceFeishu")
       : ch === "pond"
-        ? "Pond"
+        ? "ClawTeam"
         : ch === "telegram"
           ? "Telegram"
           : ch === "discord"
@@ -1662,7 +1662,7 @@ export function ChatView() {
                             {s.channel === "feishu" || s.channel === "lark"
                               ? t("chat.sourceFeishu")
                               : s.channel === "pond"
-                                ? "Pond"
+                                ? "ClawTeam"
                                 : s.channel === "telegram"
                                   ? "TG"
                                   : s.channel === "discord"

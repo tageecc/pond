@@ -1,5 +1,5 @@
 //! Team metadata: `{instance root}/team/{instance}.json`
-//! Instance-level skill `skills/pond-team/`: matches OpenClaw; shared by agents in this instance (workspace skills with the same name can override).
+//! Instance-level skill `skills/clawteam-collab/`: matches OpenClaw; shared by agents in this instance (workspace skills with the same name can override).
 
 use fs4::fs_std::FileExt;
 use serde::{Deserialize, Serialize};
@@ -11,11 +11,11 @@ use crate::commands::config;
 /// Pond client: Team Leader maps to `agents.list` id (same as frontend `TEAM_LEADER_AGENT_ID`).
 pub const POND_LEADER_AGENT_ID: &str = "main";
 
-/// Bundled collaboration skill: `{instance root}/skills/pond-team/SKILL.md`
-const BUNDLED_TEAM_SKILL_ID: &str = "pond-team";
+/// Bundled collaboration skill: `{instance root}/skills/clawteam-collab/SKILL.md`
+const BUNDLED_TEAM_SKILL_ID: &str = "clawteam-collab";
 const BUNDLED_TEAM_SKILL_MD: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
-    "/resources/bundled_skills/pond-team/SKILL.md"
+    "/resources/bundled_skills/clawteam-collab/SKILL.md"
 ));
 
 const LEGACY_PATHS_FILE: &str = "POND_TEAM_PATHS.md";
@@ -49,7 +49,7 @@ fn team_space_has_data(instance_id: &str) -> Result<bool, String> {
     Ok(tasks.exists())
 }
 
-/// Write `skills/pond-team/SKILL.md` from bundled template (relative paths only; no absolute host paths).
+/// Write `skills/clawteam-collab/SKILL.md` from bundled template (relative paths only; no absolute host paths).
 pub fn sync_pond_team_skill_artifacts(instance_id: &str) -> Result<(), String> {
     let inst = instance_id.trim();
     if inst.is_empty() {
@@ -70,7 +70,7 @@ pub fn sync_pond_team_skill_artifacts(instance_id: &str) -> Result<(), String> {
     }
 
     std::fs::write(skill_dir.join("SKILL.md"), BUNDLED_TEAM_SKILL_MD)
-        .map_err(|e| format!("写入协作技能 pond-team 失败: {e}"))?;
+        .map_err(|e| format!("写入协作技能 clawteam-collab 失败: {e}"))?;
 
     Ok(())
 }

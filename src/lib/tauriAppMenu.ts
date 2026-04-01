@@ -18,7 +18,7 @@ export async function installTauriAppMenu(
     Submenu.new({
       text: t("menu.pond"),
       items: [
-        { item: { About: { name: "Pond" } }, text: t("menu.about") },
+        { item: { About: { name: "ClawTeam" } }, text: t("menu.about") },
         { item: "Services", text: t("menu.services") },
         { item: "Separator" },
         { item: "Hide", text: t("menu.hide") },

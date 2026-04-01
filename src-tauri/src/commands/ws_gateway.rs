@@ -843,7 +843,7 @@ async fn notify_team_task_agents_impl(instance_id: String, agent_ids: Vec<String
             "params": {
                 "sessionKey": session_key,
                 "message": message.as_str(),
-                "idempotencyKey": format!("pond-team-{}", uuid::Uuid::new_v4()),
+                "idempotencyKey": format!("clawteam-collab-{}", uuid::Uuid::new_v4()),
             },
         });
         if conn

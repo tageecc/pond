@@ -1,14 +1,14 @@
 <div align="center">
 
-# Pond
+# ClawTeam
 
 **OpenClaw 的桌面控制中心 — 一体化运维、团队协作与多实例编排**
 
-[![GitHub Release](https://img.shields.io/github/v/release/tageecc/pond)](https://github.com/tageecc/pond/releases)
-[![License](https://img.shields.io/github/license/tageecc/pond)](https://github.com/tageecc/pond/blob/main/LICENSE)
-[![GitHub Stars](https://img.shields.io/github/stars/tageecc/pond)](https://github.com/tageecc/pond/stargazers)
+[![GitHub Release](https://img.shields.io/github/v/release/tageecc/clawteam)](https://github.com/tageecc/clawteam/releases)
+[![License](https://img.shields.io/github/license/tageecc/clawteam)](https://github.com/tageecc/clawteam/blob/main/LICENSE)
+[![GitHub Stars](https://img.shields.io/github/stars/tageecc/clawteam)](https://github.com/tageecc/clawteam/stargazers)
 
-[下载安装包](https://github.com/tageecc/pond/releases/latest) · [快速开始](#快速开始) · [功能特性](#功能特性)
+[下载安装包](https://github.com/tageecc/clawteam/releases/latest) · [快速开始](#快速开始) · [功能特性](#功能特性)
 
 **[English](./README.md)** | 简体中文
 
@@ -63,21 +63,21 @@
 
 ### 下载安装包
 
-从 [GitHub Releases](https://github.com/tageecc/pond/releases/latest) 下载：
+从 [GitHub Releases](https://github.com/tageecc/clawteam/releases/latest) 下载：
 
 | 平台 | 文件 |
 |------|------|
-| **macOS (Apple Silicon)** | `Pond_<version>_aarch64.dmg` |
-| **macOS (Intel)** | `Pond_<version>_x64.dmg` |
-| **Windows** | `Pond_<version>_x64.msi` |
-| **Linux** | `Pond_<version>_amd64.deb` |
+| **macOS (Apple Silicon)** | `ClawTeam_<version>_aarch64.dmg` |
+| **macOS (Intel)** | `ClawTeam_<version>_x64.dmg` |
+| **Windows** | `ClawTeam_<version>_x64.msi` |
+| **Linux** | `ClawTeam_<version>_amd64.deb` |
 
 > [!IMPORTANT]
 > **macOS 首次打开提示"已损坏"？** 这是正常的安全提示，因为应用暂未经过苹果公证。解决方法：
 > 
 > **方法 1（推荐）**：打开 **系统设置 → 隐私与安全性**，找到被阻止的应用，点击 **"仍要打开"**
 > 
-> **方法 2（快速）**：在终端运行：`xattr -cr /Applications/Pond.app`
+> **方法 2（快速）**：在终端运行：`xattr -cr /Applications/ClawTeam.app`
 > 
 > 详见：https://support.apple.com/zh-cn/guide/mac-help/mh40616
 
@@ -92,8 +92,8 @@
 **启动开发环境**
 
 ```bash
-git clone https://github.com/tageecc/pond.git
-cd pond
+git clone https://github.com/tageecc/clawteam.git
+cd clawteam
 pnpm install
 pnpm tauri:dev
 ```
@@ -122,7 +122,7 @@ pnpm tauri build
 - **角色管理** — 从 `agents.list` 自动同步，定义 Leader（`main`）与执行角色职责
 - **任务状态机** — `open`（待领取）→ `claimed`（进行中）→ `done`（完成）/ `failed`（失败，需填原因）
 - **实时通知** — 任务变更通过 WebSocket 推送到相关角色会话
-- **协作 Skill** — 内置 `pond-team` 技能，定义 Leader 统筹需求、拆解任务与执行方任务闭环的完整工作流
+- **协作 Skill** — 内置 `clawteam-collab` 技能，定义 Leader 统筹需求、拆解任务与执行方任务闭环的完整工作流
 - **团队空间** — 元数据（`team/<instance>.json`）与任务（`team/<instance>_tasks.json`），与 OpenClaw 原生 `read`/`write` 工具无缝集成
 
 </details>
@@ -234,7 +234,7 @@ Rust 命令：`src-tauri/src/commands/` · 注册：`lib.rs` · UI 组件：`src
 | 应用偏好（主题、自启、托盘、视图） | Tauri [Store](https://v2.tauri.app/plugin/store/) — `src/lib/appStore.ts` |
 | OpenClaw 配置 | 各实例目录（`openclaw.json`、`agents.list` 等） |
 | 团队数据 | 实例根目录下 `team/<instance>.json` 与 `team/<instance>_tasks.json` |
-| 应用数据（用量、聊天） | `app_data_dir`（macOS: `~/Library/Application Support/ai.clawhub.pond`） |
+| 应用数据（用量、聊天） | `app_data_dir`（macOS: `~/Library/Application Support/ai.clawhub.clawteam`） |
 
 ---
 
@@ -249,7 +249,7 @@ Rust 命令：`src-tauri/src/commands/` · 注册：`lib.rs` · UI 组件：`src
 - [x] 实时任务通知（WebSocket 推送到相关角色会话）
 - [x] 数据分析与可视化（Token 用量、消费趋势、会话追踪）
 - [x] 可视化配置编辑（模型、渠道、技能、浏览器、Hooks、日志）
-- [x] 内置 `pond-team` 协作 Skill（Leader 统筹与执行方闭环）
+- [x] 内置 `clawteam-collab` 协作 Skill（Leader 统筹与执行方闭环）
 - [x] 跨平台支持（macOS Apple Silicon / Intel、Windows、Linux）
 - [x] 技能管理（安装/卸载/打开目录）
 - [x] 日志聚合与检索
@@ -290,7 +290,7 @@ Rust 命令：`src-tauri/src/commands/` · 注册：`lib.rs` · UI 组件：`src
 
 ## Star 历史
 
-[![Star History Chart](https://api.star-history.com/svg?repos=tageecc/pond&type=Date)](https://www.star-history.com/#tageecc/pond&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=tageecc/clawteam&type=Date)](https://www.star-history.com/#tageecc/clawteam&Date)
 
 ---
 

@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Pond",
+  "productName": "ClawTeam",
   "version": "1.0.6",
-  "identifier": "ai.clawhub.pond",
+  "identifier": "ai.clawhub.clawteam",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",

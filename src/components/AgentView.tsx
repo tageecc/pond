@@ -772,11 +772,11 @@ export function AgentView() {
       setTeamFetchError(null)
       setTeamSpaceInitialized(true)
 
-      // Invalidate all sessions' skillsSnapshot cache so they can see pond-team skill
+      // Invalidate all sessions' skillsSnapshot cache so they can see clawteam-collab skill
       const invalidatedCount = await invoke<number>("invalidate_all_skills_snapshots", { instanceId: selectedId })
       console.log(`Invalidated ${invalidatedCount} session skillsSnapshot(s)`)
 
-      // Restart gateway to reload skills (pond-team skill needs to be recognized)
+      // Restart gateway to reload skills (clawteam-collab skill needs to be recognized)
       try {
         await invoke("restart_gateway", { instanceId: selectedId })
         toast.success(t("agentView.toast.teamSpaceEnabledWithRestart"))

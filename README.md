@@ -1,14 +1,14 @@
 <div align="center">
 
-# Pond
+# ClawTeam
 
 **Desktop Control Center for OpenClaw — Unified Operations, Team Collaboration & Multi-Instance Orchestration**
 
-[![GitHub Release](https://img.shields.io/github/v/release/tageecc/pond)](https://github.com/tageecc/pond/releases)
-[![License](https://img.shields.io/github/license/tageecc/pond)](https://github.com/tageecc/pond/blob/main/LICENSE)
-[![GitHub Stars](https://img.shields.io/github/stars/tageecc/pond)](https://github.com/tageecc/pond/stargazers)
+[![GitHub Release](https://img.shields.io/github/v/release/tageecc/clawteam)](https://github.com/tageecc/clawteam/releases)
+[![License](https://img.shields.io/github/license/tageecc/clawteam)](https://github.com/tageecc/clawteam/blob/main/LICENSE)
+[![GitHub Stars](https://img.shields.io/github/stars/tageecc/clawteam)](https://github.com/tageecc/clawteam/stargazers)
 
-[Download](https://github.com/tageecc/pond/releases/latest) · [Quick Start](#quick-start) · [Features](#features)
+[Download](https://github.com/tageecc/clawteam/releases/latest) · [Quick Start](#quick-start) · [Features](#features)
 
 English | **[简体中文](./README_zh.md)**
 
@@ -63,21 +63,21 @@ English | **[简体中文](./README_zh.md)**
 
 ### Download Installers
 
-Download from [GitHub Releases](https://github.com/tageecc/pond/releases/latest):
+Download from [GitHub Releases](https://github.com/tageecc/clawteam/releases/latest):
 
 | Platform | File |
 |----------|------|
-| **macOS (Apple Silicon)** | `Pond_<version>_aarch64.dmg` |
-| **macOS (Intel)** | `Pond_<version>_x64.dmg` |
-| **Windows** | `Pond_<version>_x64.msi` |
-| **Linux** | `Pond_<version>_amd64.deb` |
+| **macOS (Apple Silicon)** | `ClawTeam_<version>_aarch64.dmg` |
+| **macOS (Intel)** | `ClawTeam_<version>_x64.dmg` |
+| **Windows** | `ClawTeam_<version>_x64.msi` |
+| **Linux** | `ClawTeam_<version>_amd64.deb` |
 
 > [!IMPORTANT]
 > **macOS shows "damaged" error?** This is a normal security prompt since the app isn't notarized yet. Solutions:
 > 
 > **Method 1 (Recommended)**: Open **System Settings → Privacy & Security**, find the blocked app, click **"Open Anyway"**
 > 
-> **Method 2 (Quick)**: Run in Terminal: `xattr -cr /Applications/Pond.app`
+> **Method 2 (Quick)**: Run in Terminal: `xattr -cr /Applications/ClawTeam.app`
 > 
 > See: https://support.apple.com/guide/mac-help/mh40616
 
@@ -92,8 +92,8 @@ Download from [GitHub Releases](https://github.com/tageecc/pond/releases/latest)
 **Start Development Environment**
 
 ```bash
-git clone https://github.com/tageecc/pond.git
-cd pond
+git clone https://github.com/tageecc/clawteam.git
+cd clawteam
 pnpm install
 pnpm tauri:dev
 ```
@@ -122,7 +122,7 @@ Artifacts will be in `src-tauri/target/release/bundle/`
 - **Role Management** — Auto-sync from `agents.list`, define Leader (`main`) and executor role responsibilities
 - **Task State Machine** — `open` (unclaimed) → `claimed` (in progress) → `done` (completed) / `failed` (requires reason)
 - **Real-Time Notifications** — Task changes pushed via WebSocket to relevant role sessions
-- **Collaboration Skill** — Built-in `pond-team` skill defining complete workflow for Leader coordination, task breakdown, and executor closure
+- **Collaboration Skill** — Built-in `clawteam-collab` skill defining complete workflow for Leader coordination, task breakdown, and executor closure
 - **Team Space** — Metadata (`team/<instance>.json`) and tasks (`team/<instance>_tasks.json`), seamlessly integrated with OpenClaw native `read`/`write` tools
 
 </details>
@@ -234,7 +234,7 @@ Rust commands: `src-tauri/src/commands/` · Registration: `lib.rs` · UI compone
 | App Preferences (theme, autostart, tray, view) | Tauri [Store](https://v2.tauri.app/plugin/store/) — `src/lib/appStore.ts` |
 | OpenClaw Config | Each instance directory (`openclaw.json`, `agents.list`, etc.) |
 | Team Data | Instance root directory `team/<instance>.json` and `team/<instance>_tasks.json` |
-| App Data (usage, chat) | `app_data_dir` (macOS: `~/Library/Application Support/ai.clawhub.pond`) |
+| App Data (usage, chat) | `app_data_dir` (macOS: `~/Library/Application Support/ai.clawhub.clawteam`) |
 
 ---
 
@@ -249,7 +249,7 @@ Rust commands: `src-tauri/src/commands/` · Registration: `lib.rs` · UI compone
 - [x] Real-time task notifications (WebSocket push to relevant role sessions)
 - [x] Data analytics and visualization (token usage, cost trends, session tracking)
 - [x] Visual config editing (models, channels, skills, browser, hooks, logs)
-- [x] Built-in `pond-team` collaboration skill (Leader coordination & executor closure)
+- [x] Built-in `clawteam-collab` collaboration skill (Leader coordination & executor closure)
 - [x] Cross-platform support (macOS Apple Silicon / Intel, Windows, Linux)
 - [x] Skill management (install/uninstall/open directory)
 - [x] Log aggregation and search
@@ -290,7 +290,7 @@ Issues and PRs are welcome!
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=tageecc/pond&type=Date)](https://www.star-history.com/#tageecc/pond&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=tageecc/clawteam&type=Date)](https://www.star-history.com/#tageecc/clawteam&Date)
 
 ---
 

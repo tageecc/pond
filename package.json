@@ -1,5 +1,5 @@
 {
-  "name": "pond",
+  "name": "clawteam",
   "private": true,
   "version": "1.0.6",
   "description": "Desktop control plane for OpenClaw: multi-instance Gateway, team management, chat, and observability (Tauri + React).",
@@ -13,13 +13,13 @@
     "rust",
     "react"
   ],
-  "homepage": "https://github.com/tageecc/pond#readme",
+  "homepage": "https://github.com/tageecc/clawteam#readme",
   "bugs": {
-    "url": "https://github.com/tageecc/pond/issues"
+    "url": "https://github.com/tageecc/clawteam/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/tageecc/pond.git"
+    "url": "https://github.com/tageecc/clawteam.git"
   },
   "type": "module",
   "engines": {
@@ -32,8 +32,8 @@
     "tauri": "tauri",
     "tauri:dev": "node scripts/bundle-tauri-resources.mjs && pnpm exec tauri dev",
     "tauri:build": "node scripts/bundle-tauri-resources.mjs && env -u CI pnpm exec tauri build",
-    "icons:prepare": "node scripts/prepare-app-icon.mjs && cp src-tauri/icons/logo-source.png public/pond.png",
-    "icons:build": "node scripts/prepare-app-icon.mjs && cp src-tauri/icons/logo-source.png public/pond.png && pnpm exec tauri icon src-tauri/icons/logo-source.png -o src-tauri/icons && rm -rf src-tauri/icons/ios src-tauri/icons/android && rm -f src-tauri/icons/64x64.png"
+    "icons:prepare": "node scripts/prepare-app-icon.mjs && cp src-tauri/icons/logo-source.png public/clawteam.png",
+    "icons:build": "node scripts/prepare-app-icon.mjs && cp src-tauri/icons/logo-source.png public/clawteam.png && pnpm exec tauri icon src-tauri/icons/logo-source.png -o src-tauri/icons && rm -rf src-tauri/icons/ios src-tauri/icons/android && rm -f src-tauri/icons/64x64.png"
   },
   "dependencies": {
     "@lobehub/icons": "^5.0.1",
