@@ -42,6 +42,23 @@
     height: 100%;
     overflow: hidden;
   }
+  /* Tauri/WebView: disable selection on controls and menus only; body text, hints, labels stay selectable */
+  button,
+  [role="button"],
+  [role="tab"],
+  [role="menuitem"],
+  [role="menubar"],
+  [role="tablist"],
+  [role="toolbar"],
+  [role="option"],
+  [role="slider"],
+  [role="switch"],
+  .titlebar-drag,
+  .titlebar-no-drag,
+  .icon-button {
+    user-select: none;
+    -webkit-user-select: none;
+  }
   body {
     @apply text-foreground;
     margin: 0;
