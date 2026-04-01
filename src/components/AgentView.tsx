@@ -82,7 +82,6 @@ import {
 import { cn, getAgentDisplayName } from "../lib/utils"
 import type {
   OpenClawConfig,
-  OpenClawAgentsShape,
   LLMModelConfig,
   BrowserConfig,
   BrowserProfileConfig,
@@ -91,13 +90,11 @@ import type {
   TeamTask,
   MultiAgentActivityRow,
 } from "../types"
-import { normalizeAgentsListOrder } from "../lib/agentsList"
 import {
   isUnifiedDmContinuity,
   SESSION_RESET_LONG_IDLE_MINUTES,
 } from "../lib/chatSessionKeys"
 import {
-  normalizeAgentListModelForPersist,
   primaryRefToFlatModelInstanceId,
 } from "../lib/openclawAgentModelRef"
 import { resolveTeamLeaderAgentId, TEAM_LEADER_AGENT_ID } from "../lib/teamLeader"
@@ -904,61 +901,6 @@ export function AgentView() {
       ? modelList.map(({ id, raw }) => ({ value: id, label: getModelDisplayName(raw, id) }))
       : [{ value: defaultModelId || "openai", label: t("agentView.model.defaultOptionLabel", { id: defaultModelId || "openai" }) }]
 
-  const persistRoleAgentsList = async (newList: NonNullable<OpenClawAgentsShape["list"]>) => {
-    if (!selectedId) return
-    const defaultsPrimary = openclawConfig.agents?.defaults?.model?.primary as string | undefined
-    const fallbackInst = defaultModelId || llmOrder[0] || "openai"
-    const ordered = normalizeAgentsListOrder(newList)
-    const normalized = ordered.map((entry) => ({
-      ...entry,
-      model: normalizeAgentListModelForPersist(
-        entry.model as string | undefined,
-        llmModels,
-        fallbackInst,
-        defaultsPrimary
-      ),
-    }))
-    setRoleListSaving(true)
-    try {
-      await saveOpenClawConfig(
-        {
-          ...openclawConfig,
-          agents: { ...(openclawConfig.agents ?? {}), list: normalized },
-        } as OpenClawConfig,
-        selectedId
-      )
-      await loadInstanceConfig(selectedId)
-      try {
-        const synced = await invoke<boolean>("sync_team_meta_members_from_agents", {
-          instanceId: selectedId,
-        })
-        if (synced) {
-          const meta = await invoke<TeamMeta>("read_team_meta", { instanceId: selectedId })
-          setTeamEditMeta({ team_name: meta.team_name, members: meta.members ?? [] })
-        }
-      } catch {
-        /* Ignore when team space off or sync failed */
-      }
-      toast.success(t("agentView.toast.rolesListUpdated"), {
-        description:
-          t("agentView.toast.rolesListUpdatedDesc"),
-        action: {
-          label: t("agentView.toast.restartGateway"),
-          onClick: () => {
-            void restartAgentGateway(selectedId).catch((err) =>
-              toast.error(err instanceof Error ? err.message : String(err))
-            )
-          },
-        },
-        duration: 14_000,
-      })
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e))
-    } finally {
-      setRoleListSaving(false)
-    }
-  }
-
   const openAddRoleDialog = () => {
     setNewRoleName("")
     setNewRoleDescription("")
@@ -981,20 +923,21 @@ export function AgentView() {
     
     // Generate unique agent_id automatically
     const agentId = `agent-${Date.now().toString(36)}-${Math.random().toString(36).substr(2, 5)}`
-    
-    const list = [...(openclawConfig.agents?.list ?? [])]
-    const modelKey = newRoleModelKey || defaultModelId || modelSelectOptions[0]?.value || "openai"
-    list.push({ id: agentId, name, model: modelKey })
 
+    const modelKey = newRoleModelKey || defaultModelId || modelSelectOptions[0]?.value || "openai"
+
+    setRoleListSaving(true)
     try {
-      // Add role agent using OpenClaw CLI (creates workspace, registers agent)
+      // Add role agent using OpenClaw CLI (automatically updates agents.list in config)
       await invoke("add_role_agent_with_cli", {
         instanceId: selectedId,
         roleId: agentId,
         model: modelKey,
         name,
       })
-      await persistRoleAgentsList(list)
+      
+      // Reload config to get the updated agents.list from CLI
+      await loadConfigs()
       
       // Also update team meta with name and role description
       const updatedMeta = { ...teamEditMeta }
@@ -1011,26 +954,81 @@ export function AgentView() {
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e))
       return
+    } finally {
+      setRoleListSaving(false)
     }
   }
 
   const handleRoleModelChange = async (agentId: string, modelKey: string) => {
-    const list = (openclawConfig.agents?.list ?? []).map((a) =>
-      a.id === agentId ? { ...a, model: modelKey } : a
-    )
-    await persistRoleAgentsList(list)
+    if (!selectedId) return
+    
+    setRoleListSaving(true)
+    try {
+      // Find the agent index in agents.list
+      const list = openclawConfig.agents?.list ?? []
+      const index = list.findIndex((a) => a.id === agentId)
+      
+      if (index === -1) {
+        toast.error(t("agentView.toast.roleNotFound"))
+        return
+      }
+      
+      // Use OpenClaw CLI to update the model
+      await invoke("run_openclaw_config_set", {
+        instanceId: selectedId,
+        path: `agents.list[${index}].model`,
+        value: modelKey,
+      })
+      
+      // Reload config to get the updated value
+      await loadConfigs()
+      
+      toast.success(t("agentView.toast.rolesListUpdated"), {
+        description: t("agentView.toast.rolesListUpdatedDesc"),
+        action: {
+          label: t("agentView.toast.restartGateway"),
+          onClick: () => {
+            void restartAgentGateway(selectedId).catch((err) =>
+              toast.error(err instanceof Error ? err.message : String(err))
+            )
+          },
+        },
+      })
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e))
+    } finally {
+      setRoleListSaving(false)
+    }
   }
 
   const confirmDeleteRole = async () => {
-    if (!deleteRoleId) return
+    if (!deleteRoleId || !selectedId) return
     const id = deleteRoleId
-    const list = (openclawConfig.agents?.list ?? []).filter((a) => a.id !== id)
-    await persistRoleAgentsList(list)
-    setTeamEditMeta((m) => ({
-      ...m,
-      members: m.members.filter((x) => x.agent_id !== id),
-    }))
-    setDeleteRoleId(null)
+    
+    setRoleListSaving(true)
+    try {
+      // Delete role agent using OpenClaw CLI (removes from config and deletes workspace)
+      await invoke("delete_role_agent_with_cli", {
+        instanceId: selectedId,
+        roleId: id,
+      })
+      
+      // Reload config to get the updated agents.list from CLI
+      await loadConfigs()
+      
+      // Update team meta
+      setTeamEditMeta((m) => ({
+        ...m,
+        members: m.members.filter((x) => x.agent_id !== id),
+      }))
+      
+      toast.success(t("agentView.toast.roleDeleted"))
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e))
+    } finally {
+      setRoleListSaving(false)
+      setDeleteRoleId(null)
+    }
   }
 
   const effectiveModelKeyForAgent = (agent: { id: string; model?: string }) =>

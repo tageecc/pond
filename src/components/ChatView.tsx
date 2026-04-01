@@ -34,6 +34,8 @@ import {
 import { cn, getAgentDisplayName } from "../lib/utils";
 import { resolvePondInstanceId } from "../lib/pondInstanceId";
 import { resolveTeamLeaderAgentId, TEAM_LEADER_AGENT_ID } from "../lib/teamLeader";
+
+const DEFAULT_GATEWAY_PORT = 18789
 import {
   chatSessionStoreKey,
   isUnifiedDmContinuity,
@@ -790,7 +792,7 @@ export function ChatView() {
       updateChatSession(chatStoreKey, { sessionKey });
     }
 
-    const port = Number(effectivePort) || 18789;
+    const port = Number(effectivePort) || DEFAULT_GATEWAY_PORT;
     const pondKey = sanitizeForBackend(pondInstanceId) || pondInstanceId;
     const agentKey = pondKey || "default";
     const safeMessage = sanitizeForBackend(text) || text;

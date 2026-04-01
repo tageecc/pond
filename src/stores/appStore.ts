@@ -23,6 +23,8 @@ import type {
 import { SYSTEM_CHART_HISTORY_LEN } from '../types'
 import type { ExecutionStep } from '../components/ExecutionTimeline'
 
+const DEFAULT_GATEWAY_PORT = 18789
+
 /** Per-instance chat UI state (persisted across views) */
 export interface ChatSessionState {
   messages: ChatMessage[]
@@ -344,7 +346,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     // Runtime env follows instance config; load that instance if not selected
     try {
       set((s) => ({
-        agentGateways: { ...s.agentGateways, [key]: { ...s.agentGateways[key], status: 'starting' as GatewayStatus, port: port ?? s.agentGateways[key]?.port ?? 18789, pid: null, uptimeSeconds: null, memoryMb: null } },
+        agentGateways: { ...s.agentGateways, [key]: { ...s.agentGateways[key], status: 'starting' as GatewayStatus, port: port ?? s.agentGateways[key]?.port ?? DEFAULT_GATEWAY_PORT, pid: null, uptimeSeconds: null, memoryMb: null } },
         gatewayError: null,
       }))
       await invoke('start_gateway', { instanceId: agentId, port: port ?? null })
@@ -432,7 +434,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   getAgentGatewayStatus: (agentId) => {
     const key = (!agentId || agentId === 'default') ? 'default' : agentId
     const entry = get().agentGateways[key]
-    return entry ? { status: entry.status, port: entry.port } : { status: 'stopped' as GatewayStatus, port: 18789 }
+    return entry ? { status: entry.status, port: entry.port } : { status: 'stopped' as GatewayStatus, port: DEFAULT_GATEWAY_PORT }
   },
 
   updateAgentExecutionState: (agentId, executionState) => {
@@ -446,7 +448,7 @@ export const useAppStore = create<AppState>((set, get) => ({
             ...s.agentGateways,
             [key]: {
               status: 'stopped' as GatewayStatus,
-              port: 18789,
+              port: DEFAULT_GATEWAY_PORT,
               pid: null,
               uptimeSeconds: null,
               memoryMb: null,
@@ -525,7 +527,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const key = (!agentId || agentId === 'default') ? 'default' : agentId
     const gw = get().agentGateways[key]
     return {
-      port: gw?.port ?? 18789,
+      port: gw?.port ?? DEFAULT_GATEWAY_PORT,
       agentGatewayStatus: gw?.status ?? 'stopped' as GatewayStatus,
     }
   },
@@ -717,24 +719,27 @@ export const useAppStore = create<AppState>((set, get) => ({
       // Build config based on mode
       if (options?.mode === 'manual' && options.providerId && options.apiKey) {
         // Manual configuration: build config from user input
+        const modelId = options.model || defaultModelHint(options.providerId)
         const config: any = {
           gateway: {
-            port: 18789,
+            port: DEFAULT_GATEWAY_PORT,
             bind: 'loopback',
           },
           models: {
+            mode: 'merge',
             providers: {
               [options.providerId]: {
                 apiKey: options.apiKey,
                 ...(options.baseURL ? { baseUrl: options.baseURL } : {}),
-                ...(options.model ? { defaultModel: options.model } : {}),
+                api: 'openai-completions',
+                models: [{ id: modelId, name: modelId }],
               },
             },
           },
           agents: {
             defaults: {
               model: {
-                primary: `${options.providerId}/${options.model || defaultModelHint(options.providerId)}`,
+                primary: `${options.providerId}/${modelId}`,
               },
             },
             list: [{ id, default: true }],
@@ -754,25 +759,28 @@ export const useAppStore = create<AppState>((set, get) => ({
           const provider = currentConfig.models.providers[selectedProviderId]
           
           if (provider?.apiKey) {
+            const modelId = provider.models?.[0]?.id || defaultModelHint(selectedProviderId)
+            
             const config: any = {
               gateway: {
-                port: 18789,
+                port: DEFAULT_GATEWAY_PORT,
                 bind: 'loopback',
               },
               models: {
+                mode: 'merge',
                 providers: {
                   [selectedProviderId]: {
                     apiKey: provider.apiKey,
                     ...(provider.baseUrl ? { baseUrl: provider.baseUrl } : {}),
-                    ...(provider.defaultModel ? { defaultModel: provider.defaultModel } : {}),
-                    ...(provider.models ? { models: provider.models } : {}),
+                    api: provider.api || 'openai-completions',
+                    models: provider.models || [{ id: modelId, name: modelId }],
                   },
                 },
               },
               agents: {
                 defaults: {
                   model: {
-                    primary: `${selectedProviderId}/${provider.defaultModel || provider.models?.[0]?.id || defaultModelHint(selectedProviderId)}`,
+                    primary: `${selectedProviderId}/${modelId}`,
                   },
                 },
                 list: [{ id, default: true }],
@@ -819,35 +827,64 @@ export const useAppStore = create<AppState>((set, get) => ({
     const key = apiKey?.trim()
     if (!key) return
     
-    // Only providers with native OpenClaw support; others use custom-api-key
-    const NATIVE_PROVIDERS: Record<string, string> = {
-      'anthropic': 'anthropic-api-key',
-      'openai': 'openai-api-key',
-      'google': 'gemini-api-key',
-      'openrouter': 'openrouter-api-key',
-      'xai': 'xai-api-key',
-      'mistral': 'mistral-api-key',
-      'together': 'together-api-key',
-      'moonshot': 'moonshot-api-key',
-      'volcengine': 'volcengine-api-key',
-      'huggingface': 'huggingface-api-key',
-      'opencode': 'opencode-zen',
-      'vercel-ai-gateway': 'ai-gateway-api-key',
+    // Check if OpenClaw config already exists
+    const existingCheck = await invoke<{ exists: boolean }>('detect_system_openclaw').catch(() => ({ exists: false }))
+    
+    if (existingCheck.exists) {
+      // Config exists, just import it instead of re-onboarding
+      try {
+        await get().importSystemOpenClaw()
+        set({ needsOnboarding: false })
+        await get().loadConfigs()
+        
+        // Start gateway if configured
+        const config = get().openclawConfig
+        if (hasConfiguredModelFromConfig(config)) {
+          void get().restartAgentGateway('default').catch(() => {})
+        }
+        return
+      } catch (importError) {
+        // If import fails, proceed with setup
+        console.warn('Failed to import existing config, proceeding with setup:', importError)
+      }
     }
     
-    const authChoice = NATIVE_PROVIDERS[providerId] || 'custom-api-key'
-    const needsCustomParams = !(providerId in NATIVE_PROVIDERS)
+    // Use openclaw setup (same as createOpenClawInstance) instead of onboard
+    // Step 1: Create basic instance structure with openclaw setup
+    await invoke('run_openclaw_agents_add', { agentId: 'default' })
     
-    await invoke('run_openclaw_onboard_non_interactive', {
+    // Step 2: Write configuration programmatically
+    const modelId = model || defaultModelHint(providerId)
+    const config: any = {
+      gateway: {
+        port: DEFAULT_GATEWAY_PORT,
+        bind: 'loopback',
+      },
+      models: {
+        mode: 'merge',
+        providers: {
+          [providerId]: {
+            apiKey: key,
+            ...(baseURL ? { baseUrl: baseURL } : {}),
+            api: 'openai-completions',
+            models: [{ id: modelId, name: modelId }],
+          },
+        },
+      },
+      agents: {
+        defaults: {
+          model: {
+            primary: `${providerId}/${modelId}`,
+          },
+        },
+        list: [{ id: 'main', default: true }],
+      },
+      skills: [],
+    }
+    
+    await invoke('save_openclaw_config_for_instance', {
       instanceId: 'default',
-      gatewayPort: 18789,
-      authChoice,
-      anthropicApiKey: providerId === 'anthropic' ? key : undefined,
-      openaiApiKey: providerId === 'openai' ? key : undefined,
-      geminiApiKey: providerId === 'google' ? key : undefined,
-      customBaseUrl: needsCustomParams ? baseURL : undefined,
-      customModelId: needsCustomParams ? (model || defaultModelHint(providerId)) : undefined,
-      customApiKey: needsCustomParams ? key : undefined,
+      config,
     })
     
     set({ needsOnboarding: false })

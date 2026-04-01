@@ -7,6 +7,8 @@ import { resolvePondInstanceId } from "../lib/pondInstanceId"
 import { cn } from "../lib/utils"
 import { Button } from "./ui/button"
 
+const DEFAULT_GATEWAY_PORT = 18789
+
 export function TitleBarGateway() {
   const { t } = useTranslation()
   const instanceIds = useAppStore((s) => s.instanceIds)
@@ -27,7 +29,7 @@ export function TitleBarGateway() {
   const gatewayKey =
     !instanceId || instanceId === "default" ? "default" : instanceId
   const gwEntry = useAppStore((s) => s.agentGateways[gatewayKey])
-  const port = gwEntry?.port ?? 18789
+  const port = gwEntry?.port ?? DEFAULT_GATEWAY_PORT
   const agentGatewayStatus = gwEntry?.status ?? "stopped"
   const running = agentGatewayStatus === "running"
   const starting = agentGatewayStatus === "starting"

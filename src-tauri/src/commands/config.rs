@@ -449,7 +449,7 @@ pub fn load_openclaw_config_for_instance(instance_id: String) -> Result<OpenClaw
 /// - Converting the full OpenClawConfig object to `openclaw config set --batch-json` format
 ///   (array of {path, value} entries) would require extensive flattening logic (~200 LOC)
 /// - The function already uses CLI for skills sync (`sync_skills_disabled_with_openclaw_cli`),
-///   which was the main performance bottleneck (fixed by using `openclaw onboard` for init)
+///   which was the main performance bottleneck (fixed by using `openclaw setup` + config write)
 /// - Manual write is fast (<50ms) when no skill changes detected
 ///
 /// **Safety measures**:

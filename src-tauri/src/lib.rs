@@ -201,9 +201,10 @@ pub fn run() {
             workspace::read_agent_workspace_file,
             workspace::write_agent_workspace_file,
             workspace::add_role_agent_with_cli,
+            workspace::delete_role_agent_with_cli,
+            workspace::run_openclaw_config_set,
         workspace::invalidate_all_skills_snapshots,
             workspace::run_openclaw_agents_add,
-            workspace::run_openclaw_onboard_non_interactive,
             // Skills commands
             skills::list_available_skills,
             skills::list_installed_skill_ids,

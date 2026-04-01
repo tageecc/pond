@@ -383,6 +383,22 @@ pub fn run_openclaw_config_set_sync(
     run_openclaw_config_set_impl(app_handle, instance_id, path, value, false)
 }
 
+/// Run `openclaw config set` command (Tauri wrapper).
+#[tauri::command]
+pub async fn run_openclaw_config_set(
+    app_handle: AppHandle,
+    instance_id: String,
+    path: String,
+    value: String,
+) -> Result<(), String> {
+    tokio::task::spawn_blocking(move || {
+        run_openclaw_config_set_sync(&app_handle, &instance_id, &path, &value)
+    })
+    .await
+    .map_err(|e| format!("Background task failed: {}", e))??;
+    Ok(())
+}
+
 pub fn run_openclaw_config_set_strict_json_sync(
     app_handle: &AppHandle,
     instance_id: &str,
@@ -514,6 +530,29 @@ pub async fn add_role_agent_with_cli(
     Ok(())
 }
 
+/// Delete role agent using OpenClaw CLI (removes agent from config and deletes workspace).
+#[tauri::command]
+pub async fn delete_role_agent_with_cli(
+    app_handle: AppHandle,
+    instance_id: String,
+    role_id: String,
+) -> Result<(), String> {
+    let inst = instance_id.trim().to_string();
+    let rid = role_id.trim().to_string();
+
+    if rid.is_empty() {
+        return Err("role_id cannot be empty".to_string());
+    }
+
+    tokio::task::spawn_blocking(move || {
+        run_openclaw_agents_delete_sync(&app_handle, &inst, &rid)
+    })
+    .await
+    .map_err(|e| format!("Background task failed: {}", e))??;
+
+    Ok(())
+}
+
 /// Set agent identity name using OpenClaw CLI.
 pub fn run_openclaw_agents_set_identity_sync(
     app_handle: &AppHandle,
@@ -596,61 +635,35 @@ pub fn run_openclaw_agents_add_sync(
     Ok(())
 }
 
-/// Helper to push non-empty optional string arguments to CLI args
-fn push_arg_if_nonempty<'a>(args: &mut Vec<&'a str>, flag: &'a str, value: Option<&'a str>) {
-    if let Some(v) = value {
-        if !v.is_empty() {
-            args.push(flag);
-            args.push(v);
-        }
-    }
-}
-
-/// Run `openclaw onboard` non-interactively; init default workspace and config (see OpenClaw wizard docs, non-interactive mode).
-/// Requires at least one auth method (e.g. api_key_provider + api_key). Skips channels, skills, etc.; minimal init only.
-#[tauri::command]
-pub fn run_openclaw_onboard_non_interactive(
-    app_handle: AppHandle,
-    instance_id: String,
-    gateway_port: Option<u16>,
-    auth_choice: Option<String>,
-    anthropic_api_key: Option<String>,
-    openai_api_key: Option<String>,
-    gemini_api_key: Option<String>,
-    custom_base_url: Option<String>,
-    custom_model_id: Option<String>,
-    custom_api_key: Option<String>,
+pub fn run_openclaw_agents_delete_sync(
+    app_handle: &AppHandle,
+    instance_id: &str,
+    role_id: &str,
 ) -> Result<(), String> {
-    let id = instance_id.trim();
-    if id.is_empty() {
-        return Err("instance_id 不能为空".to_string());
+    let inst = instance_id.trim();
+    let rid = role_id.trim();
+    if rid.is_empty() {
+        return Ok(());
     }
     
-    let port = gateway_port.unwrap_or(18789);
-    let port_str = port.to_string();
-    let mut args: Vec<&str> = vec![
-        "onboard",
+    let args = vec![
+        "agents",
+        "delete",
+        rid,
         "--non-interactive",
-        "--accept-risk",
-        "--mode", "local",
-        "--gateway-port", &port_str,
-        "--gateway-bind", "loopback",
-        "--skip-skills",
     ];
     
-    push_arg_if_nonempty(&mut args, "--auth-choice", auth_choice.as_deref());
-    push_arg_if_nonempty(&mut args, "--anthropic-api-key", anthropic_api_key.as_deref());
-    push_arg_if_nonempty(&mut args, "--openai-api-key", openai_api_key.as_deref());
-    push_arg_if_nonempty(&mut args, "--gemini-api-key", gemini_api_key.as_deref());
-    push_arg_if_nonempty(&mut args, "--custom-base-url", custom_base_url.as_deref());
-    push_arg_if_nonempty(&mut args, "--custom-model-id", custom_model_id.as_deref());
-    push_arg_if_nonempty(&mut args, "--custom-api-key", custom_api_key.as_deref());
-    
-    let mut cmd = gateway::build_openclaw_cli_for_instance_sync(&app_handle, id, &args)?;
-    let out = cmd.output().map_err(|e| format!("执行 openclaw onboard 失败: {}", e))?;
+    let mut cmd = gateway::build_openclaw_cli_for_instance_sync(app_handle, inst, &args)?;
+    let out = cmd.output().map_err(|e| e.to_string())?;
     if !out.status.success() {
         let stderr = gateway::strip_npm_warn_lines(&String::from_utf8_lossy(&out.stderr));
-        return Err(format!("openclaw onboard 失败: {}", stderr.trim()));
+        let stdout = String::from_utf8_lossy(&out.stdout);
+        return Err(format!(
+            "openclaw agents delete {} 失败: {}\n{}",
+            rid,
+            stderr.trim(),
+            stdout.trim()
+        ));
     }
     Ok(())
 }

@@ -27,6 +27,8 @@ import { Popover, PopoverContent, PopoverTrigger, PopoverClose } from "./ui/popo
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "./ui/tooltip"
 import { toast } from "sonner"
 
+const DEFAULT_GATEWAY_PORT = 18789
+
 function formatUptime(seconds: number | null): string {
   if (seconds == null || seconds < 0) return "—"
   const h = Math.floor(seconds / 3600)
@@ -405,7 +407,7 @@ export function Dashboard() {
                 const gwStarting = gwStatus === "starting"
                 const gwStopping = stoppingId === key
                 const gwRestarting = restartingId === key
-                const gwPort = gw?.port ?? 18789
+                const gwPort = gw?.port ?? DEFAULT_GATEWAY_PORT
                 const gwUptime = gw?.uptimeSeconds
                 const gwExecState = gw?.executionState
                 const gwLastActivity = gw?.lastActivity

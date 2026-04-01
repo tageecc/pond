@@ -58,7 +58,7 @@ export function CreateOpenClawInstanceDialog({
             id,
             apiKey: p?.apiKey || '',
             baseUrl: p?.baseUrl,
-            model: p?.defaultModel || p?.models?.[0]?.id,
+            model: p?.models?.[0]?.id,
           }))
       : []
   }, [openclawConfig?.models?.providers])
