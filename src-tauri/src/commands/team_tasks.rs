@@ -1,9 +1,11 @@
 //! Team tasks: `{instance root}/team/{instance}_tasks.json`
 
+use crate::commands::config;
 use crate::commands::team_meta::{
     sync_pond_team_skill_artifacts_if_initialized, POND_LEADER_AGENT_ID,
 };
 use crate::commands::ws_gateway::spawn_team_task_notify;
+use std::collections::HashSet;
 use fs4::fs_std::FileExt;
 use serde::{Deserialize, Serialize};
 use std::fs::OpenOptions;
@@ -34,6 +36,13 @@ struct TeamTasksFile {
 fn tasks_path(instance_id: &str) -> Result<PathBuf, String> {
     crate::utils::paths::team_tasks_json_path(instance_id).map_err(|e| e.to_string())
 }
+
+fn agent_ids_for_instance(instance_id: &str) -> Result<HashSet<String>, String> {
+    let cfg = config::load_openclaw_config_for_instance(instance_id.trim().to_string())?;
+    Ok(config::get_agent_ids(&cfg).into_iter().collect())
+}
+
+const TASK_STATUS_ALLOWED: &[&str] = &["open", "claimed", "done", "failed"];
 
 fn with_tasks_file_mut<R, F>(instance_id: &str, f: F) -> Result<(R, bool), String>
 where
@@ -125,6 +134,12 @@ pub fn add_team_task(
         .map(|s| s.trim())
         .filter(|s| !s.is_empty())
         .map(|s| s.to_string());
+    let allowed = agent_ids_for_instance(&instance_id)?;
+    if let Some(ref aid) = assignee {
+        if !allowed.contains(aid) {
+            return Err("指派的角色不在当前实例的 agents.list 中".to_string());
+        }
+    }
     let now = chrono::Utc::now().timestamp_millis();
     let (task, _) = with_tasks_file_mut(&instance_id, |file| {
         let (status, claimed) = match &assignee {
@@ -160,6 +175,13 @@ pub fn update_team_task(
     claimed_by_agent_id: Option<String>,
     failure_reason: Option<String>,
 ) -> Result<TeamTask, String> {
+    let allowed = agent_ids_for_instance(&instance_id)?;
+    if let Some(ref s) = status {
+        let x = s.trim();
+        if !x.is_empty() && !TASK_STATUS_ALLOWED.contains(&x) {
+            return Err("无效的任务状态".to_string());
+        }
+    }
     let ((task, old_claimed), did_persist) = with_tasks_file_mut(&instance_id, |file| {
         let now = chrono::Utc::now().timestamp_millis();
         let task = file
@@ -182,6 +204,9 @@ pub fn update_team_task(
             let cid = claimed_by_agent_id.as_ref().map(|c| c.trim()).unwrap_or("");
             if cid.is_empty() {
                 return Err("领取时需指定角色".to_string());
+            }
+            if !allowed.contains(cid) {
+                return Err("领取的角色不在当前实例的 agents.list 中".to_string());
             }
         }
 
@@ -217,10 +242,14 @@ pub fn update_team_task(
             }
         }
         if let Some(ref cid) = claimed_by_agent_id {
-            task.claimed_by_agent_id = if cid.trim().is_empty() {
+            let t = cid.trim();
+            if !t.is_empty() && !allowed.contains(t) {
+                return Err("认领人不在当前实例的 agents.list 中".to_string());
+            }
+            task.claimed_by_agent_id = if t.is_empty() {
                 None
             } else {
-                Some(cid.trim().to_string())
+                Some(t.to_string())
             };
         }
         if task.status == "open" {

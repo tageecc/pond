@@ -938,15 +938,33 @@ export function AgentView() {
       
       // Reload config to get the updated agents.list from CLI
       await loadConfigs()
-      
-      // Also update team meta with name and role description
-      const updatedMeta = { ...teamEditMeta }
-      if (!updatedMeta.members.some(m => m.agent_id === agentId)) {
+
+      const agentsList = useAppStore.getState().openclawConfig?.agents?.list ?? []
+      const updatedMeta: TeamMetaEditForm = { ...teamEditMeta }
+      if (!updatedMeta.members.some((m) => m.agent_id === agentId)) {
         updatedMeta.members.push({ agent_id: agentId, name, role: roleDesc })
       }
-      await invoke("save_team_meta", { instanceId: selectedId, meta: updatedMeta })
       setTeamEditMeta(updatedMeta)
-      
+
+      const teamInit = await invoke<boolean>("is_team_space_initialized", {
+        instanceId: selectedId,
+      })
+      if (teamInit) {
+        const leaderId = resolveTeamLeaderAgentId(agentsList)
+        await invoke("save_team_meta", {
+          instanceId: selectedId,
+          meta: {
+            team_name: updatedMeta.team_name,
+            leader_agent_id: leaderId,
+            members: agentsList.map((a) => ({
+              agent_id: a.id,
+              name: a.name || a.id,
+              role: updatedMeta.members.find((m) => m.agent_id === a.id)?.role || "",
+            })),
+          },
+        })
+      }
+
       setAddRoleDialogOpen(false)
       setNewRoleName("")
       setNewRoleDescription("")
@@ -982,7 +1000,15 @@ export function AgentView() {
       
       // Reload config to get the updated value
       await loadConfigs()
-      
+
+      const teamInit = await invoke<boolean>("is_team_space_initialized", {
+        instanceId: selectedId,
+      })
+      if (teamInit) {
+        const m = await invoke<TeamMeta>("read_team_meta", { instanceId: selectedId })
+        setTeamEditMeta({ team_name: m.team_name, members: m.members ?? [] })
+      }
+
       toast.success(t("agentView.toast.rolesListUpdated"), {
         description: t("agentView.toast.rolesListUpdatedDesc"),
         action: {
@@ -1015,13 +1041,23 @@ export function AgentView() {
       
       // Reload config to get the updated agents.list from CLI
       await loadConfigs()
-      
-      // Update team meta
-      setTeamEditMeta((m) => ({
-        ...m,
-        members: m.members.filter((x) => x.agent_id !== id),
-      }))
-      
+
+      const teamInit = await invoke<boolean>("is_team_space_initialized", {
+        instanceId: selectedId,
+      })
+      if (teamInit) {
+        const m = await invoke<TeamMeta>("read_team_meta", { instanceId: selectedId })
+        setTeamEditMeta({
+          team_name: m.team_name,
+          members: m.members ?? [],
+        })
+      } else {
+        setTeamEditMeta((m) => ({
+          ...m,
+          members: m.members.filter((x) => x.agent_id !== id),
+        }))
+      }
+
       toast.success(t("agentView.toast.roleDeleted"))
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e))

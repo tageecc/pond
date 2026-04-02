@@ -1,6 +1,7 @@
 //! Workspace bootstrap files (AGENTS.md, SOUL.md, etc.). No auto templates; when missing, return guidance only.
 
 use crate::commands::gateway;
+use crate::commands::team_meta;
 use crate::utils::paths;
 use serde_json::Value;
 use std::collections::HashSet;
@@ -391,11 +392,17 @@ pub async fn run_openclaw_config_set(
     path: String,
     value: String,
 ) -> Result<(), String> {
+    let app_sync = app_handle.clone();
+    let inst_sync = instance_id.clone();
+    let path_for_sync = path.clone();
     tokio::task::spawn_blocking(move || {
         run_openclaw_config_set_sync(&app_handle, &instance_id, &path, &value)
     })
     .await
     .map_err(|e| format!("Background task failed: {}", e))??;
+    if path_for_sync.trim_start().starts_with("agents.") {
+        let _ = team_meta::sync_team_meta_members_from_agents(app_sync, inst_sync);
+    }
     Ok(())
 }
 
@@ -506,7 +513,6 @@ pub async fn add_role_agent_with_cli(
     let workspace_path = implicit_role_workspace_dir(&inst, &rid)?;
     let workspace_str = workspace_path.to_string_lossy().to_string();
 
-    // Clone values for the second task
     let inst_clone = inst.clone();
     let rid_clone = rid.clone();
 
@@ -520,8 +526,9 @@ pub async fn add_role_agent_with_cli(
 
     // Set agent identity name if provided
     if let Some(agent_name) = name {
+        let app_id = app_handle.clone();
         tokio::task::spawn_blocking(move || {
-            run_openclaw_agents_set_identity_sync(&app_handle, &inst_clone, &rid_clone, &agent_name)
+            run_openclaw_agents_set_identity_sync(&app_id, &inst_clone, &rid_clone, &agent_name)
         })
         .await
         .map_err(|e| format!("Background task failed: {}", e))??;
@@ -544,11 +551,15 @@ pub async fn delete_role_agent_with_cli(
         return Err("role_id cannot be empty".to_string());
     }
 
+    let app_del = app_handle.clone();
+    let inst_del = inst.clone();
     tokio::task::spawn_blocking(move || {
-        run_openclaw_agents_delete_sync(&app_handle, &inst, &rid)
+        run_openclaw_agents_delete_sync(&app_del, &inst_del, &rid)
     })
     .await
     .map_err(|e| format!("Background task failed: {}", e))??;
+
+    let _ = team_meta::sync_team_meta_members_from_agents(app_handle, inst);
 
     Ok(())
 }

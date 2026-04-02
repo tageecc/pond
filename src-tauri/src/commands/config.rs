@@ -6,7 +6,7 @@ use std::sync::Mutex;
 use std::collections::{HashMap, HashSet};
 use chrono::{Local, Utc};
 use tauri::{AppHandle, State};
-use crate::commands::team_meta::sync_pond_team_skill_artifacts_if_initialized;
+use crate::commands::team_meta::{sync_pond_team_skill_artifacts_if_initialized, sync_team_meta_members_from_agents};
 use crate::commands::workspace;
 use crate::utils::paths;
 
@@ -529,6 +529,7 @@ pub fn save_openclaw_config_for_instance(
     let id = instance_id.trim();
     merge_write_openclaw_config(id, config, &app_handle, None)?;
     let _ = sync_pond_team_skill_artifacts_if_initialized(id);
+    let _ = sync_team_meta_members_from_agents(app_handle.clone(), instance_id);
     Ok(())
 }
 
@@ -716,7 +717,7 @@ pub fn load_agent_raw_config(agent_id: String) -> Result<String, String> {
 /// Write raw JSON; strip unknown keys before save to avoid invalid config.
 #[tauri::command]
 pub fn save_agent_raw_config(
-    _app_handle: AppHandle,
+    app_handle: AppHandle,
     agent_id: String,
     raw_json: String,
 ) -> Result<(), String> {
@@ -734,6 +735,9 @@ pub fn save_agent_raw_config(
     }
     let pretty = serde_json::to_string_pretty(&Value::Object(root)).map_err(|e| e.to_string())?;
     fs::write(&path, pretty).map_err(|e| format!("写入 Agent 配置失败: {}", e))?;
+    let inst = agent_id.trim().to_string();
+    let _ = sync_team_meta_members_from_agents(app_handle.clone(), inst.clone());
+    let _ = sync_pond_team_skill_artifacts_if_initialized(&inst);
     Ok(())
 }
 

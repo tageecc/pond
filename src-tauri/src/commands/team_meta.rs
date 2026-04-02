@@ -3,12 +3,14 @@
 
 use fs4::fs_std::FileExt;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use std::collections::HashSet;
 use std::fs::OpenOptions;
 use std::io::{Read, Seek, SeekFrom, Write};
 
 use crate::commands::config;
 
-/// Pond client: Team Leader maps to `agents.list` id (same as frontend `TEAM_LEADER_AGENT_ID`).
+/// Pond client: Team Leader maps to `agents.list` id `main` (same as frontend `TEAM_LEADER_AGENT_ID`).
 pub const POND_LEADER_AGENT_ID: &str = "main";
 
 /// Bundled collaboration skill: `{instance root}/skills/clawteam-collab/SKILL.md`
@@ -102,6 +104,127 @@ fn load_team_meta_disk(instance_id: &str) -> Result<TeamMeta, String> {
     Ok(meta)
 }
 
+fn dedupe_preserve_order(ids: Vec<String>) -> Vec<String> {
+    let mut seen = HashSet::new();
+    let mut out = Vec::with_capacity(ids.len());
+    for id in ids {
+        if seen.insert(id.clone()) {
+            out.push(id);
+        }
+    }
+    out
+}
+
+fn lookup_agent_name(agents_list: &[Value], id: &str) -> String {
+    agents_list
+        .iter()
+        .find(|agent_val| {
+            agent_val
+                .get("id")
+                .and_then(|i| i.as_str())
+                .map(|s| s == id)
+                .unwrap_or(false)
+        })
+        .and_then(|agent_val| agent_val.get("name"))
+        .and_then(|name_val| name_val.as_str())
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| id.to_string())
+}
+
+/// Build canonical team metadata from `openclaw.json` `agents.list` and merge role hints (`client` vs `old_disk`).
+/// Returns `None` when `agents.list` has no ids (nothing to persist).
+fn merge_team_meta_with_agents_list(
+    instance_id: &str,
+    client: &TeamMeta,
+    old_disk: &TeamMeta,
+) -> Result<Option<TeamMeta>, String> {
+    let cfg = config::load_openclaw_config_for_instance(instance_id.to_string())?;
+    let agent_ids = dedupe_preserve_order(config::get_agent_ids(&cfg));
+    if agent_ids.is_empty() {
+        return Ok(None);
+    }
+
+    let agents_list: Vec<Value> = cfg
+        .agents
+        .get("list")
+        .and_then(|l| l.as_array())
+        .cloned()
+        .unwrap_or_default();
+
+    let team_name = client.team_name.clone().or_else(|| old_disk.team_name.clone());
+
+    let members: Vec<TeamMetaMember> = agent_ids
+        .iter()
+        .map(|id| {
+            let name = lookup_agent_name(&agents_list, id);
+            let role = client
+                .members
+                .iter()
+                .find(|m| &m.agent_id == id)
+                .map(|m| m.role.clone())
+                .or_else(|| {
+                    old_disk
+                        .members
+                        .iter()
+                        .find(|m| &m.agent_id == id)
+                        .map(|m| m.role.clone())
+                })
+                .unwrap_or_default();
+            TeamMetaMember {
+                agent_id: id.clone(),
+                name,
+                role,
+            }
+        })
+        .collect();
+
+    let leader_agent_id = agent_ids
+        .iter()
+        .any(|id| id == POND_LEADER_AGENT_ID)
+        .then(|| POND_LEADER_AGENT_ID.to_string());
+
+    Ok(Some(TeamMeta {
+        team_name,
+        leader_agent_id,
+        members,
+    }))
+}
+
+fn persist_team_meta(app_handle: &tauri::AppHandle, instance_id: &str, meta: &TeamMeta) -> Result<(), String> {
+    let inst = instance_id.trim();
+    if inst.is_empty() {
+        return Err("instance_id 不能为空".to_string());
+    }
+
+    let path = crate::utils::paths::team_meta_json_path(inst).map_err(|e| e.to_string())?;
+    let is_first_time = !path.exists();
+
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+    let mut file = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .open(&path)
+        .map_err(|e| e.to_string())?;
+    file.lock_exclusive()
+        .map_err(|e| format!("团队元数据文件锁定失败: {e}"))?;
+    let content = serde_json::to_string_pretty(meta).map_err(|e| e.to_string())?;
+    file.set_len(0).map_err(|e| e.to_string())?;
+    file.seek(SeekFrom::Start(0)).map_err(|e| e.to_string())?;
+    file.write_all(content.as_bytes())
+        .map_err(|e| e.to_string())?;
+    file.sync_all().map_err(|e| e.to_string())?;
+
+    if is_first_time {
+        ensure_team_file_access(app_handle, inst)?;
+    }
+
+    sync_pond_team_skill_artifacts(inst)?;
+    Ok(())
+}
+
 /// Read team metadata for the current instance (Pond side).
 #[tauri::command]
 pub fn read_team_meta(instance_id: String) -> Result<TeamMeta, String> {
@@ -118,58 +241,11 @@ pub fn sync_team_meta_members_from_agents(
     if !team_space_has_data(inst)? {
         return Ok(false);
     }
-    let cfg = config::load_openclaw_config_for_instance(instance_id.clone())?;
-    let agent_ids = config::get_agent_ids(&cfg);
-    if agent_ids.is_empty() {
+    let hint = load_team_meta_disk(inst)?;
+    let Some(normalized) = merge_team_meta_with_agents_list(inst, &hint, &hint)? else {
         return Ok(false);
-    }
-    let mut meta = load_team_meta_disk(inst)?;
-    let old = std::mem::take(&mut meta.members);
-    
-    // Get agents list to extract names
-    let agents_list = cfg.agents
-        .get("list")
-        .and_then(|l| l.as_array())
-        .cloned()
-        .unwrap_or_default();
-    
-    meta.members = agent_ids
-        .iter()
-        .map(|id| {
-            // Find name from agents.list
-            let name = agents_list.iter()
-                .find(|agent_val| {
-                    agent_val.get("id")
-                        .and_then(|i| i.as_str())
-                        .map(|s| s == id.as_str())
-                        .unwrap_or(false)
-                })
-                .and_then(|agent_val| agent_val.get("name"))
-                .and_then(|name_val| name_val.as_str())
-                .map(|s| s.to_string())
-                .unwrap_or_else(|| id.clone());
-            
-            // Preserve role from old members, update name
-            let old_member = old.iter().find(|m| &m.agent_id == id);
-            match old_member {
-                Some(m) => TeamMetaMember {
-                    agent_id: id.clone(),
-                    name,
-                    role: m.role.clone(),
-                },
-                None => TeamMetaMember {
-                    agent_id: id.clone(),
-                    name,
-                    role: String::new(),
-                },
-            }
-        })
-        .collect();
-    meta.leader_agent_id = agent_ids
-        .iter()
-        .any(|id| id == POND_LEADER_AGENT_ID)
-        .then(|| POND_LEADER_AGENT_ID.to_string());
-    save_team_meta(app_handle, instance_id, meta)?;
+    };
+    persist_team_meta(&app_handle, &instance_id, &normalized)?;
     Ok(true)
 }
 
@@ -179,7 +255,7 @@ pub fn is_team_space_initialized(instance_id: String) -> Result<bool, String> {
     team_space_has_data(instance_id.trim())
 }
 
-/// Persist team metadata for the current instance.
+/// Persist team metadata for the current instance. Members and leader are derived from `agents.list`; client payload only supplies role/name hints.
 #[tauri::command]
 pub fn save_team_meta(
     app_handle: tauri::AppHandle,
@@ -187,58 +263,28 @@ pub fn save_team_meta(
     meta: TeamMeta,
 ) -> Result<(), String> {
     let inst = instance_id.trim();
-    if inst.is_empty() {
-        return Err("instance_id 不能为空".to_string());
-    }
-    
-    let path = crate::utils::paths::team_meta_json_path(inst).map_err(|e| e.to_string())?;
-    let is_first_time = !path.exists();
-    
-    if let Some(parent) = path.parent() {
-        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
-    }
-    let mut file = OpenOptions::new()
-        .read(true)
-        .write(true)
-        .create(true)
-        .open(&path)
-        .map_err(|e| e.to_string())?;
-    file.lock_exclusive()
-        .map_err(|e| format!("团队元数据文件锁定失败: {e}"))?;
-    let content = serde_json::to_string_pretty(&meta).map_err(|e| e.to_string())?;
-    file.set_len(0).map_err(|e| e.to_string())?;
-    file.seek(SeekFrom::Start(0)).map_err(|e| e.to_string())?;
-    file.write_all(content.as_bytes())
-        .map_err(|e| e.to_string())?;
-    file.sync_all().map_err(|e| e.to_string())?;
-    
-    // Only set file permissions on first-time team space creation
-    if is_first_time {
-        ensure_team_file_access(&app_handle, inst)?;
-    }
-    
-    sync_pond_team_skill_artifacts(inst)?;
-    Ok(())
+    let old_disk = load_team_meta_disk(inst).unwrap_or_default();
+    let Some(normalized) = merge_team_meta_with_agents_list(inst, &meta, &old_disk)? else {
+        return Err("agents.list has no roles".to_string());
+    };
+    persist_team_meta(&app_handle, &instance_id, &normalized)
 }
 
-/// Configure file system permissions and session visibility for team collaboration.
+/// Configure file system permissions and session visibility for team collaboration (via OpenClaw CLI only).
 fn ensure_team_file_access(app_handle: &tauri::AppHandle, instance_id: &str) -> Result<(), String> {
     use crate::commands::workspace;
-    
-    // 1. Set tools.fs.workspaceOnly = false to allow agents reading ../team/*.json files
+
     workspace::run_openclaw_config_set_strict_json_sync(
         app_handle,
         instance_id,
         "tools.fs.workspaceOnly",
         "false",
     )?;
-    
-    // 2. Set tools.sessions.visibility = "all" to enable cross-agent communication
-    // This allows agents to use sessions_send/sessions_history across different agents
+
     workspace::run_openclaw_config_set_strict_json_sync(
         app_handle,
         instance_id,
         "tools.sessions.visibility",
-        "\"all\"",  // JSON string value needs quotes
+        "\"all\"",
     )
 }
