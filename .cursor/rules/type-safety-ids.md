@@ -121,7 +121,7 @@ fn process_agent(id: AgentId) { ... }
 
 ## 📚 Reference
 
-- **Instance ID**: Identifies a Pond instance (directory: `~/.openclaw/` or `~/.openclaw-{id}/`)
+- **Instance ID**: Identifies an OpenClaw / ClawTeam instance (directory: `~/.openclaw/` or `~/.openclaw-{id}/`)
 - **Agent ID**: Identifies an OpenClaw role within an instance (e.g., "main", "researcher")
 - **Key insight**: An instance contains multiple agents; agents don't exist outside instances
 

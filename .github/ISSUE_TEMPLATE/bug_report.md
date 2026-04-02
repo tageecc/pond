@@ -1,12 +1,12 @@
 ---
 name: Bug report
-about: Something is broken in Pond
+about: Something is broken in ClawTeam
 ---
 
 ## Environment
 
 - OS and version (e.g. macOS 14, Windows 11, Ubuntu 22.04):
-- Pond version or commit:
+- ClawTeam version or commit:
 - OpenClaw / Gateway (if relevant):
 
 ## What happened

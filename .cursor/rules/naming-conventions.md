@@ -10,7 +10,7 @@
 
 | Concept | Type | Variable Name | ❌ Don't Use |
 |---------|------|--------------|-------------|
-| Pond Instance | `InstanceId` | `instance_id`, `instanceId` | `id`, `agent_id`, `key` |
+| ClawTeam instance | `InstanceId` | `instance_id`, `instanceId` | `id`, `agent_id`, `key` |
 | OpenClaw Agent | `AgentId` | `agent_id`, `agentId` | `id`, `instance_id`, `role` |
 | Any ID | `String` | ❌ **Avoid** - be specific! | `id`, `key` |
 
@@ -125,7 +125,7 @@ If a name could still be ambiguous, add a comment:
 /// Get the default agent ID for a given instance
 ///
 /// # Arguments
-/// * `instance_id` - The Pond instance (e.g., "default", "work")
+/// * `instance_id` - The OpenClaw instance (e.g., "default", "work")
 ///
 /// # Returns
 /// The ID of the first agent in that instance's agents.list (typically "main")
@@ -163,7 +163,7 @@ let id = AgentId::new(id);  // Confusing!
 
 1. **Be explicit**: Use full names like `instance_id`, not `id`
 2. **Be consistent**: Same name pattern across codebase
-3. **Match domain**: Use Pond/OpenClaw terminology
+3. **Match domain**: Use ClawTeam/OpenClaw terminology
 4. **Add types**: Use `InstanceId` and `AgentId` types
 5. **Comment edge cases**: Explain non-obvious conversions
 

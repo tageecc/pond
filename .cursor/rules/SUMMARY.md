@@ -23,7 +23,7 @@
 
 ## 📚 Quick Reference
 
-**Instance ID**: Identifies Pond instance → `~/.openclaw/` or `~/.openclaw-{id}/`
+**Instance ID**: Identifies OpenClaw / ClawTeam instance → `~/.openclaw/` or `~/.openclaw-{id}/`
 **Agent ID**: Identifies role within instance → `agents.list[].id` (e.g., "main")
 
 ## ✅ Use This Checklist

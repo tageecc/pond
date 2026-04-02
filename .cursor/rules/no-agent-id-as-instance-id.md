@@ -1,10 +1,10 @@
-# Pond Instance ID vs OpenClaw Agent ID
+# ClawTeam Instance ID vs OpenClaw Agent ID
 
 ## Critical Distinction
 
 **NEVER confuse instance IDs with agent IDs:**
 
-- **Instance ID** (Pond concept): `"default"`, `"abc123"`, etc. Used for `~/.openclaw/` vs `~/.openclaw-{id}/` directories
+- **Instance ID** (ClawTeam concept): `"default"`, `"abc123"`, etc. Used for `~/.openclaw/` vs `~/.openclaw-{id}/` directories
 - **Agent ID** (OpenClaw concept): `"main"`, `"researcher"`, etc. Defined in `agents.list[].id` within an instance's config
 
 ## Rule
@@ -38,7 +38,7 @@ When agent ID `"main"` is used as an instance ID:
 This bug existed in:
 - `AgentView.tsx:279`
 - `Dashboard.tsx:162`, `Dashboard.tsx:192`
-- `pondInstanceId.ts:8`
+- `clawteamInstanceId.ts`
 
 All fixed by removing `getAgentIds` fallback and using `["default"]` instead.
 

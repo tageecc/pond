@@ -1,4 +1,4 @@
-# Pond Instance Management Rules
+# ClawTeam Instance Management Rules
 
 ## Instance CLI Flags Policy
 
@@ -57,7 +57,7 @@ fn build_cli_args_with_profile<'a>(instance_id: &'a str, subargs: &'a [&'a str])
 
 2. **DO NOT** call `sync_agents_list_with_openclaw_cli` automatically
 
-3. Let users manually manage agents through OpenClaw CLI or Pond UI
+3. Let users manually manage agents through OpenClaw CLI or ClawTeam UI
 
 ### Why
 

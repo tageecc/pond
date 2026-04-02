@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest an idea for Pond
+about: Suggest an idea for ClawTeam
 ---
 
 ## Problem

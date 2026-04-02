@@ -1,4 +1,5 @@
 use std::collections::{HashMap, HashSet};
+use std::env;
 use std::path::PathBuf;
 use tauri::{AppHandle, Emitter};
 use serde::{Deserialize, Serialize};
@@ -26,7 +27,7 @@ struct DeviceIdentity {
 
 fn identity_path() -> PathBuf {
     paths::get_app_data_dir()
-        .unwrap_or_else(|_| PathBuf::from("/tmp"))
+        .unwrap_or_else(|_| env::temp_dir())
         .join("device_identity.json")
 }
 

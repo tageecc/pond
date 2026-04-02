@@ -1,5 +1,5 @@
 ---
-name: ClawTeam Team
+name: ClawTeam
 description: 仅当 ClawTeam「团队空间」已开启（存在 team/*.json 或团队任务文件）时适用；否则忽略本技能。简单请求按普通单 agent 处理；复杂多角色需求再用团队流程。遵守 OpenClaw：技能为说明，工具以 Gateway 为准，openclaw.json 为配置权威。
 ---
 
