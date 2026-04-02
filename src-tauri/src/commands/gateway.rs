@@ -69,7 +69,7 @@ fn build_cli_args_with_profile<'a>(instance_id: &'a str, subargs: &'a [&'a str])
 }
 
 fn force_bundled_openclaw() -> bool {
-    std::env::var("POND_FORCE_BUNDLED_OPENCLAW")
+    std::env::var("CLAWTEAM_FORCE_BUNDLED_OPENCLAW")
         .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
         .unwrap_or(false)
 }
@@ -1068,7 +1068,7 @@ pub fn discover_system_agents() -> Result<Vec<Value>, String> {
     Ok(discovered)
 }
 
-/// Delete an on-disk OpenClaw profile directory that exists but is not managed by Pond.
+/// Delete an on-disk OpenClaw profile directory that exists but is not managed by ClawTeam.
 #[tauri::command]
 pub fn delete_system_agent_dir(profile_id: String) -> Result<(), String> {
     if profile_id.is_empty() {
@@ -1118,7 +1118,7 @@ pub async fn delete_agent_cleanup(
         .map(|p| vec![p, p.saturating_add(2)])
         .unwrap_or_default();
 
-    // Stop Gateway (Pond-managed process)
+    // Stop Gateway (ClawTeam-managed process)
     let _ = stop_gateway(state.clone(), app_handle.clone(), Some(key.clone())).await;
 
     // Stop system services
@@ -1444,13 +1444,13 @@ pub fn bundled_skill_directory(app_handle: &AppHandle, skill_name: &str) -> Opti
     None
 }
 
-/// Parse only metadata.openclaw.configSchema from HOOK.md path (Pond convention; not in OpenClaw spec yet).
+/// Parse only metadata.openclaw.configSchema from HOOK.md path (ClawTeam convention; not in OpenClaw spec yet).
 fn parse_config_schema_from_hook_md(path: &Path) -> Option<Vec<ConfigFieldSchema>> {
     let (_, _, schema) = parse_hook_md(path)?;
     schema.filter(|s| !s.is_empty())
 }
 
-/// Parse hook dir HOOK.md for name, metadata.openclaw.emoji, optional configSchema (Pond convention).
+/// Parse hook dir HOOK.md for name, metadata.openclaw.emoji, optional configSchema (ClawTeam convention).
 fn parse_hook_md(path: &Path) -> Option<(String, String, Option<Vec<ConfigFieldSchema>>)> {
     let content = std::fs::read_to_string(path).ok()?;
     let mut name = None;

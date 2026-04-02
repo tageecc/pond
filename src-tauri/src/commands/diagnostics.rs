@@ -71,7 +71,7 @@ pub fn run_doctor(app: AppHandle) -> Result<Vec<DiagnosticResult>, String> {
                 passed: false,
                 message: e,
                 suggestion: Some(
-                    "运行 node scripts/bundle-tauri-resources.mjs，或安装全局 openclaw（npm/pnpm），或设置 POND_FORCE_BUNDLED_OPENCLAW=1 强制内置"
+                    "运行 node scripts/bundle-tauri-resources.mjs，或安装全局 openclaw（npm/pnpm），或设置 CLAWTEAM_FORCE_BUNDLED_OPENCLAW=1 强制内置"
                         .to_string(),
                 ),
             });

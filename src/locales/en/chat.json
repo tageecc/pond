@@ -14,7 +14,7 @@
     "sourceSession": "Session",
     "sourceCli": "CLI",
     "sourceWebchat": "Web",
-    "sourcePond": "This app",
+    "sourceInApp": "This app",
     "sourceLark": "Lark",
     "loadHistoryFailed": "Failed to load chat history",
     "stoppedPartial": "_（generation stopped）_",

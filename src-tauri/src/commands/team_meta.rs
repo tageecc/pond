@@ -10,8 +10,8 @@ use std::io::{Read, Seek, SeekFrom, Write};
 
 use crate::commands::config;
 
-/// Pond client: Team Leader maps to `agents.list` id `main` (same as frontend `TEAM_LEADER_AGENT_ID`).
-pub const POND_LEADER_AGENT_ID: &str = "main";
+/// Team Leader role id in `agents.list` (same as frontend `TEAM_LEADER_AGENT_ID`).
+pub const TEAM_LEADER_AGENT_ID: &str = "main";
 
 /// Bundled collaboration skill: `{instance root}/skills/clawteam-collab/SKILL.md`
 const BUNDLED_TEAM_SKILL_ID: &str = "clawteam-collab";
@@ -19,9 +19,6 @@ const BUNDLED_TEAM_SKILL_MD: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/resources/bundled_skills/clawteam-collab/SKILL.md"
 ));
-
-const LEGACY_PATHS_FILE: &str = "POND_TEAM_PATHS.md";
-const LEGACY_SNAPSHOT: &str = "POND_TEAM_SNAPSHOT.md";
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct TeamMetaMember {
@@ -52,7 +49,7 @@ fn team_space_has_data(instance_id: &str) -> Result<bool, String> {
 }
 
 /// Write `skills/clawteam-collab/SKILL.md` from bundled template (relative paths only; no absolute host paths).
-pub fn sync_pond_team_skill_artifacts(instance_id: &str) -> Result<(), String> {
+pub fn sync_team_collab_skill_artifacts(instance_id: &str) -> Result<(), String> {
     let inst = instance_id.trim();
     if inst.is_empty() {
         return Err("instance_id 不能为空".to_string());
@@ -62,15 +59,6 @@ pub fn sync_pond_team_skill_artifacts(instance_id: &str) -> Result<(), String> {
     let skill_dir = dir.join(BUNDLED_TEAM_SKILL_ID);
     std::fs::create_dir_all(&skill_dir).map_err(|e| format!("创建技能目录失败: {e}"))?;
 
-    let legacy_snapshot = skill_dir.join(LEGACY_SNAPSHOT);
-    if legacy_snapshot.exists() {
-        let _ = std::fs::remove_file(&legacy_snapshot);
-    }
-    let legacy_paths = skill_dir.join(LEGACY_PATHS_FILE);
-    if legacy_paths.exists() {
-        let _ = std::fs::remove_file(&legacy_paths);
-    }
-
     std::fs::write(skill_dir.join("SKILL.md"), BUNDLED_TEAM_SKILL_MD)
         .map_err(|e| format!("写入协作技能 clawteam-collab 失败: {e}"))?;
 
@@ -78,11 +66,11 @@ pub fn sync_pond_team_skill_artifacts(instance_id: &str) -> Result<(), String> {
 }
 
 /// If team metadata or task file exists, sync skill (for config save and task changes).
-pub fn sync_pond_team_skill_artifacts_if_initialized(instance_id: &str) -> Result<(), String> {
+pub fn sync_team_collab_skill_artifacts_if_initialized(instance_id: &str) -> Result<(), String> {
     if !team_space_has_data(instance_id.trim())? {
         return Ok(());
     }
-    sync_pond_team_skill_artifacts(instance_id.trim())
+    sync_team_collab_skill_artifacts(instance_id.trim())
 }
 
 fn load_team_meta_disk(instance_id: &str) -> Result<TeamMeta, String> {
@@ -180,8 +168,8 @@ fn merge_team_meta_with_agents_list(
 
     let leader_agent_id = agent_ids
         .iter()
-        .any(|id| id == POND_LEADER_AGENT_ID)
-        .then(|| POND_LEADER_AGENT_ID.to_string());
+        .any(|id| id == TEAM_LEADER_AGENT_ID)
+        .then(|| TEAM_LEADER_AGENT_ID.to_string());
 
     Ok(Some(TeamMeta {
         team_name,
@@ -221,11 +209,11 @@ fn persist_team_meta(app_handle: &tauri::AppHandle, instance_id: &str, meta: &Te
         ensure_team_file_access(app_handle, inst)?;
     }
 
-    sync_pond_team_skill_artifacts(inst)?;
+    sync_team_collab_skill_artifacts(inst)?;
     Ok(())
 }
 
-/// Read team metadata for the current instance (Pond side).
+/// Read team metadata for the current instance.
 #[tauri::command]
 pub fn read_team_meta(instance_id: String) -> Result<TeamMeta, String> {
     load_team_meta_disk(instance_id.trim())

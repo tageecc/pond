@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next"
 import { Loader2, Play, RotateCw, Square } from "lucide-react"
 import { toast } from "sonner"
 import { useAppStore } from "../stores/appStore"
-import { resolvePondInstanceId } from "../lib/pondInstanceId"
+import { resolveClawteamInstanceId } from "../lib/clawteamInstanceId"
 import { cn } from "../lib/utils"
 import { Button } from "./ui/button"
 
@@ -23,7 +23,7 @@ export function TitleBarGateway() {
   )
 
   const instanceId =
-    resolvePondInstanceId(instanceIds, selectedInstanceId) ??
+    resolveClawteamInstanceId(instanceIds, selectedInstanceId) ??
     "default"
 
   const gatewayKey =

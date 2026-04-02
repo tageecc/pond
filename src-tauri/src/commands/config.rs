@@ -6,7 +6,7 @@ use std::sync::Mutex;
 use std::collections::{HashMap, HashSet};
 use chrono::{Local, Utc};
 use tauri::{AppHandle, State};
-use crate::commands::team_meta::{sync_pond_team_skill_artifacts_if_initialized, sync_team_meta_members_from_agents};
+use crate::commands::team_meta::{sync_team_collab_skill_artifacts_if_initialized, sync_team_meta_members_from_agents};
 use crate::commands::workspace;
 use crate::utils::paths;
 
@@ -277,7 +277,7 @@ fn prepare_raw_root_for_openclaw(root: &mut serde_json::Map<String, Value>) {
 
 /// Build `agents` section for this instance's `openclaw.json`.
 ///
-/// `agents.list[].id` is the **OpenClaw role id** (primary role is usually `main`; not the same as Pond instance id).
+/// `agents.list[].id` is the **OpenClaw role id** (primary role is usually `main`; not the same as ClawTeam instance / profile id).
 /// Write `list` as-is; if empty, fall back to a single `main` entry.
 fn agents_value_for_instance(agents: &Value) -> Value {
     let defaults = agents.get("defaults").cloned().unwrap_or_else(|| json!({ "model": { "primary": "openai/gpt-4o" } }));
@@ -344,7 +344,7 @@ pub fn get_instance_gateway_port(instance_id: &str) -> Option<u16> {
 }
 
 /// `default` -> `~/.openclaw/openclaw.json`; other ids -> `~/.openclaw-{id}/openclaw.json`.
-/// Skip `.openclaw-default`-style dirs (not a Pond convention; avoids duplicating `~/.openclaw`).
+/// Skip `.openclaw-default`-style dirs (not an OpenClaw layout we use; avoids duplicating `~/.openclaw`).
 #[tauri::command]
 pub fn list_openclaw_instances() -> Result<Vec<String>, String> {
     let home = paths::get_home_dir().map_err(|e| e.to_string())?;
@@ -441,7 +441,7 @@ pub fn load_openclaw_config_for_instance(instance_id: String) -> Result<OpenClaw
     Ok(config)
 }
 
-/// Shallow-merge write to `openclaw.json` for Pond UI config edits.
+/// Shallow-merge write to `openclaw.json` for ClawTeam UI config edits.
 ///
 /// NOTE: This function manually writes the config file instead of using `openclaw config set`.
 /// 
@@ -528,7 +528,7 @@ pub fn save_openclaw_config_for_instance(
 ) -> Result<(), String> {
     let id = instance_id.trim();
     merge_write_openclaw_config(id, config, &app_handle, None)?;
-    let _ = sync_pond_team_skill_artifacts_if_initialized(id);
+    let _ = sync_team_collab_skill_artifacts_if_initialized(id);
     let _ = sync_team_meta_members_from_agents(app_handle.clone(), instance_id);
     Ok(())
 }
@@ -664,7 +664,7 @@ pub fn detect_system_openclaw() -> Result<serde_json::Value, String> {
     }))
 }
 
-/// Import system ~/.openclaw into Pond.
+/// Import system ~/.openclaw into ClawTeam.
 #[tauri::command]
 pub fn import_system_openclaw_config() -> Result<(), String> {
     let config_path = paths::instance_config_path("default")?;
@@ -737,7 +737,7 @@ pub fn save_agent_raw_config(
     fs::write(&path, pretty).map_err(|e| format!("写入 Agent 配置失败: {}", e))?;
     let inst = agent_id.trim().to_string();
     let _ = sync_team_meta_members_from_agents(app_handle.clone(), inst.clone());
-    let _ = sync_pond_team_skill_artifacts_if_initialized(&inst);
+    let _ = sync_team_collab_skill_artifacts_if_initialized(&inst);
     Ok(())
 }
 

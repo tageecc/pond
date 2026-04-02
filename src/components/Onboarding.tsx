@@ -80,7 +80,7 @@ export function Onboarding() {
     setImporting(true)
     await yieldToPaint()
     try {
-      // Import system ~/.openclaw into Pond
+      // Import system ~/.openclaw into ClawTeam
       await importSystemOpenClaw()
       
       // Close wizard; user can finish model setup in app

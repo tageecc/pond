@@ -25,11 +25,9 @@ struct DeviceIdentity {
 }
 
 fn identity_path() -> PathBuf {
-    let dir = paths::get_app_data_dir().unwrap_or_else(|_| {
-        let home = std::env::var("HOME").or_else(|_| std::env::var("USERPROFILE")).unwrap_or_default();
-        PathBuf::from(home).join("Library/Application Support").join("ai.clawhub.pond")
-    });
-    dir.join("device_identity.json")
+    paths::get_app_data_dir()
+        .unwrap_or_else(|_| PathBuf::from("/tmp"))
+        .join("device_identity.json")
 }
 
 fn load_or_generate_identity() -> Result<DeviceIdentity, String> {
@@ -200,7 +198,7 @@ async fn try_ws_connect_once(url: &str, identity: &DeviceIdentity, token: &str) 
             "auth": { "token": token },
             "device": signed_device,
             "locale": "zh-CN",
-            "userAgent": format!("pond/{}", env!("CARGO_PKG_VERSION")),
+            "userAgent": format!("clawteam/{}", env!("CARGO_PKG_VERSION")),
             "caps": ["agent-events", "tool-events"],
         },
     });
@@ -418,7 +416,7 @@ pub async fn ws_chat_send(
         "params": {
             "sessionKey": session_key,
             "message": message,
-            "idempotencyKey": format!("pond-{}", uuid::Uuid::new_v4()),
+            "idempotencyKey": format!("clawteam-{}", uuid::Uuid::new_v4()),
         },
     });
 
@@ -463,7 +461,7 @@ pub(crate) async fn openclaw_gateway_ws_ready(instance_id: &str, port: u16) -> b
 
 // --- Full session list (sessions.list, all channels) ---
 
-/// One Gateway session row (all channels: Pond, Feishu, Telegram, etc.)
+/// One Gateway session row (all channels: in-app, Feishu, Telegram, etc.)
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct GatewaySessionRow {
@@ -471,7 +469,7 @@ pub struct GatewaySessionRow {
     pub session_id: Option<String>,
     /// Display label (from origin.label or channel).
     pub label: Option<String>,
-    /// Channel: feishu / telegram / pond, etc.
+    /// Channel: feishu / telegram / clawteam (in-app), etc.
     pub channel: Option<String>,
     pub updated_at: Option<u64>,
 }
@@ -510,8 +508,8 @@ fn extract_sessions_array(payload: &Value) -> Result<Vec<&Value>, String> {
 }
 
 fn infer_channel_from_key(key: &str) -> Option<String> {
-    if key.contains(":pond") {
-        Some("pond".to_string())
+    if key.contains(":clawteam") {
+        Some("clawteam".to_string())
     } else if key.contains(":feishu") || key.contains(":lark") {
         Some("feishu".to_string())
     } else if key.contains(":telegram") {
@@ -753,17 +751,17 @@ pub async fn list_multi_agent_activity(instance_id: String, port: u16) -> Result
     Ok(rows)
 }
 
-fn new_pond_notify_session_key(target_agent_id: &str) -> String {
+fn new_clawteam_notify_session_key(target_agent_id: &str) -> String {
     let u = uuid::Uuid::new_v4();
     let b = u.as_bytes();
     format!(
-        "agent:{}:pond-{}",
+        "agent:{}:clawteam-{}",
         target_agent_id,
         hex::encode(&b[..4])
     )
 }
 
-fn pick_best_pond_session_key(sessions: &[&Value], target_agent_id: &str) -> Option<String> {
+fn pick_best_clawteam_session_key(sessions: &[&Value], target_agent_id: &str) -> Option<String> {
     let mut best: Option<(u64, String)> = None;
     for s in sessions {
         let Some(key) = s
@@ -773,7 +771,8 @@ fn pick_best_pond_session_key(sessions: &[&Value], target_agent_id: &str) -> Opt
         else {
             continue;
         };
-        if main_session_agent_id(key) != Some(target_agent_id) || !key.contains("pond") {
+        let in_app = key.contains(":clawteam");
+        if main_session_agent_id(key) != Some(target_agent_id) || !in_app {
             continue;
         }
         let raw = s.get("updatedAt").map(updated_at_to_ms).unwrap_or(0);
@@ -790,7 +789,7 @@ async fn notify_team_task_agents_impl(instance_id: String, agent_ids: Vec<String
     let port = match config::get_instance_gateway_port(id) {
         Some(p) => p,
         None => {
-            eprintln!("[pond] team task notify: no gateway port (instance id: {id:?})");
+            eprintln!("[clawteam] team task notify: no gateway port (instance id: {id:?})");
             return;
         }
     };
@@ -801,24 +800,24 @@ async fn notify_team_task_agents_impl(instance_id: String, agent_ids: Vec<String
     };
     let token = read_gateway_token(profile);
     if token.is_empty() {
-        eprintln!("[pond] team task notify: empty gateway token");
+        eprintln!("[clawteam] team task notify: empty gateway token");
         return;
     }
     let Ok(identity) = load_or_generate_identity() else {
-        eprintln!("[pond] team task notify: device identity unavailable");
+        eprintln!("[clawteam] team task notify: device identity unavailable");
         return;
     };
     let mut conn = match ws_connect(port, &identity, &token).await {
         Ok(c) => c,
         Err(e) => {
-            eprintln!("[pond] team task notify: ws connect failed: {e}");
+            eprintln!("[clawteam] team task notify: ws connect failed: {e}");
             return;
         }
     };
     let payload = match ws_send_req_and_wait_res(&mut conn, "sessions.list", json!({ "limit": 500 })).await {
         Ok(p) => p,
         Err(e) => {
-            eprintln!("[pond] team task notify: sessions.list failed: {e}");
+            eprintln!("[clawteam] team task notify: sessions.list failed: {e}");
             let _ = conn.write.send(WsMessage::Close(None)).await;
             return;
         }
@@ -826,7 +825,7 @@ async fn notify_team_task_agents_impl(instance_id: String, agent_ids: Vec<String
     let sessions = match extract_sessions_array(&payload) {
         Ok(s) => s,
         Err(e) => {
-            eprintln!("[pond] team task notify: sessions payload: {e}");
+            eprintln!("[clawteam] team task notify: sessions payload: {e}");
             let _ = conn.write.send(WsMessage::Close(None)).await;
             return;
         }
@@ -834,7 +833,7 @@ async fn notify_team_task_agents_impl(instance_id: String, agent_ids: Vec<String
 
     for aid in agent_ids {
         let session_key =
-            pick_best_pond_session_key(&sessions, &aid).unwrap_or_else(|| new_pond_notify_session_key(&aid));
+            pick_best_clawteam_session_key(&sessions, &aid).unwrap_or_else(|| new_clawteam_notify_session_key(&aid));
         let req_id = uuid::Uuid::new_v4().to_string();
         let chat_req = json!({
             "type": "req",
@@ -852,11 +851,11 @@ async fn notify_team_task_agents_impl(instance_id: String, agent_ids: Vec<String
             .await
             .is_err()
         {
-            eprintln!("[pond] team task notify: chat.send write failed (agent {aid})");
+            eprintln!("[clawteam] team task notify: chat.send write failed (agent {aid})");
             break;
         }
         if let Err(e) = drain_gateway_chat_stream(&mut conn.read, None).await {
-            eprintln!("[pond] team task notify: stream failed (agent {aid}): {e}");
+            eprintln!("[clawteam] team task notify: stream failed (agent {aid}): {e}");
             break;
         }
     }

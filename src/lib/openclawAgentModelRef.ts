@@ -39,7 +39,7 @@ export function flatModelInstanceToPrimaryRef(
 /**
  * Normalize agents.list[].model to OpenClaw persist form.
  * - Already `provider/modelId` → keep
- * - Pond flat instance id present in models → convert
+ * - Flat instance id present in models → convert
  * - Else → fallback instance; then defaultsPrimary or defaultPrimaryRef()
  */
 export function normalizeAgentListModelForPersist(

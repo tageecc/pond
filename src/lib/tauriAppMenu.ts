@@ -14,9 +14,9 @@ export async function installTauriAppMenu(
 
   const mac = isMac()
 
-  const [pondSub, fileSub, editSub, viewSub, windowSub] = await Promise.all([
+  const [clawteamSub, fileSub, editSub, viewSub, windowSub] = await Promise.all([
     Submenu.new({
-      text: t("menu.pond"),
+      text: t("menu.clawteam"),
       items: [
         { item: { About: { name: "ClawTeam" } }, text: t("menu.about") },
         { item: "Services", text: t("menu.services") },
@@ -74,8 +74,8 @@ export async function installTauriAppMenu(
 
   const menu = await Menu.new({
     items: helpSub
-      ? [pondSub, fileSub, editSub, viewSub, windowSub, helpSub]
-      : [pondSub, fileSub, editSub, viewSub, windowSub],
+      ? [clawteamSub, fileSub, editSub, viewSub, windowSub, helpSub]
+      : [clawteamSub, fileSub, editSub, viewSub, windowSub],
   })
 
   if (isCancelled()) return

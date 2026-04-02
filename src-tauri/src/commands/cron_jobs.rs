@@ -140,7 +140,7 @@ fn collect_cron_jobs_from_root(root: &serde_json::Value) -> Vec<CronJobWithNext>
     all_jobs
 }
 
-/// Cron jobs from each role's data dir for the current Pond instance `openclaw.json`.
+/// Cron jobs from each role's data dir for the current instance `openclaw.json`.
 #[tauri::command]
 pub fn list_cron_jobs_for_instance(instance_id: String) -> Result<Vec<CronJobWithNext>, String> {
     let config_path = paths::instance_config_path(instance_id.trim())?;

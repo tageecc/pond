@@ -14,7 +14,7 @@
     "sourceSession": "会话",
     "sourceCli": "终端",
     "sourceWebchat": "网页",
-    "sourcePond": "本应用",
+    "sourceInApp": "本应用",
     "sourceLark": "飞书",
     "loadHistoryFailed": "加载会话历史失败",
     "stoppedPartial": "_（已停止生成）_",

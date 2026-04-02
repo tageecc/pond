@@ -2,7 +2,7 @@
 
 use crate::commands::config;
 use crate::commands::team_meta::{
-    sync_pond_team_skill_artifacts_if_initialized, POND_LEADER_AGENT_ID,
+    sync_team_collab_skill_artifacts_if_initialized, TEAM_LEADER_AGENT_ID,
 };
 use crate::commands::ws_gateway::spawn_team_task_notify;
 use std::collections::HashSet;
@@ -105,7 +105,7 @@ where
 fn team_task_change_notify_message(instance_id: &str) -> String {
     let stem = crate::utils::paths::team_instance_filename_stem(instance_id);
     format!(
-        "[Pond] 团队任务列表已更新。请读取你 workspace 下的 team/{}_tasks.json（相对 workspace 可用 ../team/{}_tasks.json），查看与你相关的任务。",
+        "[ClawTeam] 团队任务列表已更新。请读取你 workspace 下的 team/{}_tasks.json（相对 workspace 可用 ../team/{}_tasks.json），查看与你相关的任务。",
         stem, stem
     )
 }
@@ -158,11 +158,11 @@ pub fn add_team_task(
         file.tasks.push(task.clone());
         Ok((task, true))
     })?;
-    let _ = sync_pond_team_skill_artifacts_if_initialized(&instance_id);
+    let _ = sync_team_collab_skill_artifacts_if_initialized(&instance_id);
     let msg = team_task_change_notify_message(&instance_id);
     let notify_ids = assignee
         .map(|id| vec![id])
-        .unwrap_or_else(|| vec![POND_LEADER_AGENT_ID.to_string()]);
+        .unwrap_or_else(|| vec![TEAM_LEADER_AGENT_ID.to_string()]);
     spawn_team_task_notify(instance_id.clone(), notify_ids, msg);
     Ok(task)
 }
@@ -264,7 +264,7 @@ pub fn update_team_task(
         task.updated_at_ms = now;
         Ok(((task.clone(), old_claimed), true))
     })?;
-    let _ = sync_pond_team_skill_artifacts_if_initialized(&instance_id);
+    let _ = sync_team_collab_skill_artifacts_if_initialized(&instance_id);
     if did_persist {
         let mut notify: Vec<String> = Vec::new();
         if let Some(ref o) = old_claimed {
@@ -276,7 +276,7 @@ pub fn update_team_task(
             notify.push(c.clone());
         }
         if task.status == "failed" {
-            notify.push(POND_LEADER_AGENT_ID.to_string());
+            notify.push(TEAM_LEADER_AGENT_ID.to_string());
         }
         notify.sort();
         notify.dedup();

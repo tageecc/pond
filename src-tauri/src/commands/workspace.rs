@@ -106,7 +106,7 @@ pub fn invalidate_all_skills_snapshots(instance_id: String) -> Result<usize, Str
     Ok(invalidated_count)
 }
 
-/// `agent_id`: Pond instance id. `openclaw_role_id`: `agents.list[].id`; None uses default `workspace/` under the instance dir.
+/// `agent_id`: OpenClaw instance id. `openclaw_role_id`: `agents.list[].id`; None uses default `workspace/` under the instance dir.
 fn resolve_workspace_dir(
     agent_id: Option<&str>,
     openclaw_role_id: Option<&str>,
@@ -246,7 +246,7 @@ pub struct ListWorkspaceFilesResult {
     pub guide: Option<String>,
 }
 
-/// List editable bootstrap files and whether they exist (`agent_id` = Pond instance; with `openclaw_role_id`, use that role's `workspace` from config).
+/// List editable bootstrap files and whether they exist (`agent_id` = instance id; with `openclaw_role_id`, use that role's `workspace` from config).
 #[tauri::command]
 pub fn list_agent_workspace_files(
     agent_id: Option<String>,
@@ -459,7 +459,7 @@ pub fn run_openclaw_config_unset_sync(
     Ok(())
 }
 
-/// Align Pond-modeled disabled skill ids with disk `openclaw.json` via CLI `skills.entries[id].enabled`.
+/// Align UI-modeled disabled skill ids with disk `openclaw.json` via CLI `skills.entries[id].enabled`.
 pub fn sync_skills_disabled_with_openclaw_cli(
     app_handle: &AppHandle,
     instance_id: &str,

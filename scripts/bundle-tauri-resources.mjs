@@ -2,7 +2,7 @@
 /**
  * Copies OpenClaw from node_modules and the matching official Node binary into resources/.
  * The Node **dist triple** must match the **Rust target** of the Tauri build (e.g. Intel mac
- * DMG needs darwin-x64 even when built on an arm64 runner). CI sets POND_NODE_DIST_TRIPLE.
+ * DMG needs darwin-x64 even when built on an arm64 runner). CI sets CLAWTEAM_NODE_DIST_TRIPLE.
  */
 import {
   chmodSync,
@@ -60,7 +60,7 @@ function hostNodeDistTriple() {
 }
 
 function effectiveNodeDistTriple() {
-  const explicit = process.env.POND_NODE_DIST_TRIPLE?.trim()
+  const explicit = process.env.CLAWTEAM_NODE_DIST_TRIPLE?.trim()
   if (explicit) return explicit
   const rust =
     process.env.TAURI_ENV_TARGET_TRIPLE?.trim() ||
@@ -122,7 +122,7 @@ async function downloadToFile(url, dest) {
 }
 
 function extractNodeArchive(archivePath, triple) {
-  const tmp = join(tmpdir(), `pond-node-${Date.now()}`)
+  const tmp = join(tmpdir(), `clawteam-node-${Date.now()}`)
   mkdirSync(tmp, { recursive: true })
   try {
     if (archivePath.endsWith(".zip")) {
@@ -170,7 +170,7 @@ async function ensureBundledNode(triple) {
   const name = `node-v${NODE_VERSION}-${triple}`
   const file = `${name}.${ext}`
   const url = `https://nodejs.org/dist/v${NODE_VERSION}/${file}`
-  const dl = join(tmpdir(), `pond-${file}`)
+  const dl = join(tmpdir(), `clawteam-${file}`)
   console.log(`Downloading ${url}`)
   await downloadToFile(url, dl)
   try {
@@ -182,10 +182,10 @@ async function ensureBundledNode(triple) {
 
 /**
  * Full flat `pnpm install` is slow; skip when the bundled tree already matches root lockfile openclaw version.
- * Set POND_FORCE_BUNDLE=1 to always rebuild (e.g. after manual edits under openclaw-runtime).
+ * Set CLAWTEAM_FORCE_BUNDLE=1 to always rebuild (e.g. after manual edits under openclaw-runtime).
  */
 function openclawFlatBundleIsCurrent(srcMod) {
-  if (process.env.POND_FORCE_BUNDLE === "1" || process.env.POND_FORCE_BUNDLE === "true") {
+  if (process.env.CLAWTEAM_FORCE_BUNDLE === "1" || process.env.CLAWTEAM_FORCE_BUNDLE === "true") {
     return false
   }
   const dst = OPENCLAW_DST
@@ -371,12 +371,12 @@ function copyOpenclaw(src) {
 async function main() {
   const triple = effectiveNodeDistTriple()
   console.log(
-    `Bundle Node dist triple: ${triple} (host ${process.platform}/${process.arch}; POND_NODE_DIST_TRIPLE=${process.env.POND_NODE_DIST_TRIPLE ?? ""} TARGET=${process.env.TARGET ?? ""})`,
+    `Bundle Node dist triple: ${triple} (host ${process.platform}/${process.arch}; CLAWTEAM_NODE_DIST_TRIPLE=${process.env.CLAWTEAM_NODE_DIST_TRIPLE ?? ""} TARGET=${process.env.TARGET ?? ""})`,
   )
   const srcMod = resolveOpenclawSource()
   if (openclawFlatBundleIsCurrent(srcMod)) {
     console.log(
-      `OpenClaw flat bundle already matches root dependency version; skipping pnpm install (set POND_FORCE_BUNDLE=1 to rebuild).`,
+      `OpenClaw flat bundle already matches root dependency version; skipping pnpm install (set CLAWTEAM_FORCE_BUNDLE=1 to rebuild).`,
     )
   } else {
     copyOpenclaw(srcMod)

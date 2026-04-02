@@ -113,8 +113,8 @@ pub fn list_installed_skill_ids() -> Result<Vec<String>, String> {
     use std::collections::HashSet;
     let mut all_ids = HashSet::new();
 
-    for pond_id in config::list_openclaw_instances()? {
-        let base = paths::instance_home(pond_id.as_str())?;
+    for instance_id in config::list_openclaw_instances()? {
+        let base = paths::instance_home(instance_id.as_str())?;
         for name in paths::skill_subdir_names(&base.join("workspace").join("skills")) {
             all_ids.insert(name);
         }

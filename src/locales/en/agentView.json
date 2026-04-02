@@ -138,8 +138,8 @@
     "team": {
       "namePlaceholder": "Team name",
       "leaderUnset": "Unassigned",
-      "pondTeamHint": "After enabling team space, writes skills/clawteam-collab/SKILL.md in this instance for collaboration.",
-      "syncing": "Syncing Pond team…",
+      "teamSpaceHint": "After enabling team space, writes skills/clawteam-collab/SKILL.md in this instance for collaboration.",
+      "syncing": "Syncing team…",
       "checking": "Checking team space…",
       "notEnabledTitle": "Team space not enabled",
       "nameOptional": "Team name (optional)",
@@ -341,7 +341,7 @@
     },
     "deleteRole": {
       "title": "Delete role “{{id}}”?",
-      "desc": "Removes from agents.list for this instance; Pond team view updates. Keep at least one role. Restart Gateway and check bindings. Back up ~/.openclaw-* if needed."
+      "desc": "Removes from agents.list for this instance; team view updates. Keep at least one role. Restart Gateway and check bindings. Back up ~/.openclaw-* if needed."
     },
     "cron": {
       "empty": "No cron jobs; ask the Agent in chat to create one.",

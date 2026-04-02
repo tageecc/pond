@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu"
 import { CreateOpenClawInstanceDialog } from "./CreateOpenClawInstanceDialog"
-import { pondInstanceIdsList, resolvePondInstanceId } from "../lib/pondInstanceId"
+import { clawteamInstanceIdsList, resolveClawteamInstanceId } from "../lib/clawteamInstanceId"
 
 export function GlobalInstanceSwitcher() {
   const { t } = useTranslation()
@@ -23,8 +23,8 @@ export function GlobalInstanceSwitcher() {
 
   const [createOpen, setCreateOpen] = useState(false)
 
-  const agents = pondInstanceIdsList(instanceIds)
-  const currentId = resolvePondInstanceId(instanceIds, selectedInstanceId)
+  const agents = clawteamInstanceIdsList(instanceIds)
+  const currentId = resolveClawteamInstanceId(instanceIds, selectedInstanceId)
   const displayNames = instanceDisplayNames as Record<string, string>
 
   return (

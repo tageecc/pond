@@ -26,7 +26,7 @@ export type AgentConfigNavGroup = {
   items: AgentConfigNavItem[]
 }
 
-/** Team group: separate from OpenClaw config; multi-role and Pond collaboration */
+/** Team group: separate from OpenClaw config; multi-role and team collaboration */
 export const TEAM_NAV_GROUP: AgentConfigNavGroup = {
   groupKey: "team",
   items: [{ id: "team_agents" }, { id: "team_space" }],

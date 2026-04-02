@@ -372,13 +372,13 @@ export interface TokenStatsResult {
 /** Session row from Gateway sessions.list */
 export interface ChatSessionInfo {
   sessionKey: string
-  /** Pond instance id when this list was fetched (not sessionKey) */
+  /** OpenClaw instance id when this list was fetched (not sessionKey) */
   instanceId: string
   messageCount: number
   lastPreview: string
 }
 
-/** Gateway session row (Pond, Feishu, Telegram, …) */
+/** Gateway session row (in-app, Feishu, Telegram, …) */
 export interface GatewaySessionRow {
   sessionKey: string
   sessionId?: string
@@ -396,7 +396,7 @@ export interface MultiAgentActivityRow {
   sessionCount: number
 }
 
-/** Pond team task queue (not OpenClaw spawn) */
+/** ClawTeam team task queue (not OpenClaw spawn) */
 export interface TeamTask {
   id: string
   title: string

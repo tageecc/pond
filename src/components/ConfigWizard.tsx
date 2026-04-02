@@ -57,7 +57,7 @@ import type {
   HooksInternalEntry,
   HooksListResult,
 } from "../types";
-import { resolvePondInstanceId } from "../lib/pondInstanceId";
+import { resolveClawteamInstanceId } from "../lib/clawteamInstanceId";
 import { getAgentIds } from "../lib/openclawAgentsModels";
 import {
   ChannelBindingsEditor,
@@ -145,12 +145,12 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
   const { openclawConfig, loadConfigs, loadInstanceConfig } = useAppStore();
   const selectedInstanceId = useAppStore((s) => s.selectedInstanceId);
   const instanceIds = useAppStore((s) => s.instanceIds);
-  const pondInstanceId = resolvePondInstanceId(
+  const clawteamInstanceId = resolveClawteamInstanceId(
     instanceIds,
     selectedInstanceId,
     
   );
-  const openclawInstanceId = pondInstanceId ?? "default";
+  const openclawInstanceId = clawteamInstanceId ?? "default";
   const channelTypeLabel = (id: ChannelTypeId) => t(`channelTypes.${id}`);
   const roleIds = useMemo(
     () => getAgentIds(openclawConfig ?? undefined),
@@ -257,7 +257,7 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
 
   useEffect(() => {
     setSelectedId(null);
-  }, [pondInstanceId]);
+  }, [clawteamInstanceId]);
 
   useEffect(() => {
     if (selectedId && channels[selectedId]) loadForm(selectedId);
@@ -267,7 +267,7 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
     if (!openclawConfig) return;
     setBindingsDraft(normalizeBindingsFromConfig(openclawConfig.bindings));
     setBindingsError(null);
-  }, [openclawConfig, pondInstanceId]);
+  }, [openclawConfig, clawteamInstanceId]);
 
   const handleAddChannel = async () => {
     if (!addType) {
@@ -917,7 +917,7 @@ export function ChannelManager({ embedded }: { embedded?: boolean }) {
                                       message: string;
                                     }[]
                                   >("test_channel_connection", {
-                                    instanceId: pondInstanceId ?? "default",
+                                    instanceId: clawteamInstanceId ?? "default",
                                   });
                                   const bad = rows.filter((r) => !r.success);
                                   if (bad.length === 0) {
@@ -1116,12 +1116,12 @@ export function HooksManager({ embedded }: { embedded?: boolean }) {
     setHooksListCache,
   } = useAppStore();
   const instanceIds = useAppStore((s) => s.instanceIds);
-  const pondInstanceId = resolvePondInstanceId(
+  const clawteamInstanceId = resolveClawteamInstanceId(
     instanceIds,
     selectedInstanceId,
     
   );
-  const currentInstanceId = pondInstanceId ?? "default";
+  const currentInstanceId = clawteamInstanceId ?? "default";
   const list = hooksListCache[currentInstanceId] ?? null;
   const showList = (list?.hooks?.length ?? 0) > 0;
 
@@ -1156,7 +1156,7 @@ export function HooksManager({ embedded }: { embedded?: boolean }) {
           internal: { ...prevInternal, enabled: v },
         } as OpenClawConfig["hooks"],
       },
-      pondInstanceId,
+      clawteamInstanceId,
     ).catch((e) => setSaveError(e instanceof Error ? e.message : String(e)));
   };
 
@@ -1174,7 +1174,7 @@ export function HooksManager({ embedded }: { embedded?: boolean }) {
           internal: { ...prevInternal, entries },
         } as OpenClawConfig["hooks"],
       },
-      pondInstanceId,
+      clawteamInstanceId,
     ).catch((e) => setSaveError(e instanceof Error ? e.message : String(e)));
   };
 
@@ -1221,7 +1221,7 @@ export function HooksManager({ embedded }: { embedded?: boolean }) {
           ...openclawConfig,
           hooks: { ...prev, internal: { ...prevInternal, entries } } as OpenClawConfig["hooks"],
         },
-        pondInstanceId,
+        clawteamInstanceId,
       );
       setEditingConfig((c) => {
         const next = { ...c };

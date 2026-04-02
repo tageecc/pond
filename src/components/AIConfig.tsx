@@ -29,7 +29,7 @@ import { Bot, Save, Loader2, TestTube, Plus, Trash2, Star, ChevronDown, External
 import { cn } from "../lib/utils"
 import type { OpenClawConfig, LLMModelConfig } from "../types"
 import { agentsModelsToFlatView, flatViewToAgentsModels } from "../lib/openclawAgentsModels"
-import { resolvePondInstanceId } from "../lib/pondInstanceId"
+import { resolveClawteamInstanceId } from "../lib/clawteamInstanceId"
 
 /** App provider id → Lobe Icons provider id (some entries are aliased) */
 const PROVIDER_ICON_ID: Record<string, string> = {
@@ -130,7 +130,7 @@ export function AIConfig() {
   const { openclawConfig, loadConfigs, saveOpenClawConfig } = useAppStore()
   const selectedInstanceId = useAppStore((s) => s.selectedInstanceId)
   const instanceIds = useAppStore((s) => s.instanceIds)
-  const pondInstanceId = resolvePondInstanceId(
+  const clawteamInstanceId = resolveClawteamInstanceId(
     instanceIds,
     selectedInstanceId,
     
@@ -212,7 +212,7 @@ export function AIConfig() {
     const nextView = { ...view, modelInstanceOrder: newOrder, models: newModels, defaultModelId: nextDefault }
     const { agents: nextAgents, models: nextModels } = flatViewToAgentsModels(nextView, openclawConfig?.agents, openclawConfig?.models)
     try {
-      await saveOpenClawConfig({ ...openclawConfig, agents: nextAgents, models: nextModels } as OpenClawConfig, pondInstanceId)
+      await saveOpenClawConfig({ ...openclawConfig, agents: nextAgents, models: nextModels } as OpenClawConfig, clawteamInstanceId)
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : String(e))
       return
@@ -259,7 +259,7 @@ export function AIConfig() {
     const nextView = { ...view, models: nextModels }
     const { agents: nextAgents, models: nextModelsShape } = flatViewToAgentsModels(nextView, openclawConfig?.agents, openclawConfig?.models)
     try {
-      await saveOpenClawConfig({ ...openclawConfig, agents: nextAgents, models: nextModelsShape } as OpenClawConfig, pondInstanceId)
+      await saveOpenClawConfig({ ...openclawConfig, agents: nextAgents, models: nextModelsShape } as OpenClawConfig, clawteamInstanceId)
       setSaveMsg(t("agentView.model.saved"))
       setTimeout(() => setSaveMsg(null), 2000)
     } catch (e) {
@@ -274,7 +274,7 @@ export function AIConfig() {
     const nextView = { ...view, defaultModelId: selectedId }
     const { agents: nextAgents, models: nextModels } = flatViewToAgentsModels(nextView, openclawConfig?.agents, openclawConfig?.models)
     try {
-      await saveOpenClawConfig({ ...openclawConfig, agents: nextAgents, models: nextModels } as OpenClawConfig, pondInstanceId)
+      await saveOpenClawConfig({ ...openclawConfig, agents: nextAgents, models: nextModels } as OpenClawConfig, clawteamInstanceId)
       setSaveMsg(t("agentView.model.setDefault"))
       setTimeout(() => setSaveMsg(null), 2000)
     } catch (e) {
@@ -294,7 +294,7 @@ export function AIConfig() {
     const nextView = { ...view, modelInstanceOrder: nextOrder, models: nextModels, defaultModelId: nextDefault ?? "", agentModel: nextAgentModel }
     const { agents: nextAgents, models: nextModelsShape } = flatViewToAgentsModels(nextView, openclawConfig?.agents, openclawConfig?.models)
     try {
-      await saveOpenClawConfig({ ...openclawConfig, agents: nextAgents, models: nextModelsShape } as OpenClawConfig, pondInstanceId)
+      await saveOpenClawConfig({ ...openclawConfig, agents: nextAgents, models: nextModelsShape } as OpenClawConfig, clawteamInstanceId)
       setSelectedId(nextOrder[0] ?? null)
       setSaveError(null)
     } catch (e) {

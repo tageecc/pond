@@ -1,13 +1,13 @@
 {
   "menu": {
-    "pond": "ClawTeam",
-    "about": "About Pond",
+    "clawteam": "ClawTeam",
+    "about": "About ClawTeam",
     "services": "Services",
-    "hide": "Hide Pond",
+    "hide": "Hide ClawTeam",
     "hideOthers": "Hide Others",
     "showAll": "Show All",
     "preferences": "Preferences…",
-    "quit": "Quit Pond",
+    "quit": "Quit ClawTeam",
     "file": "File",
     "closeWindow": "Close Window",
     "edit": "Edit",

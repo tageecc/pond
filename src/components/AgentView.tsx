@@ -1287,11 +1287,11 @@ export function AgentView() {
     const deletedName = getAgentDisplayName(selectedId, displayNames)
     
     try {
-      // Backend: stop Pond children, openclaw gateway stop/uninstall per profile, clean LaunchAgent/systemd/tasks, free port, delete dirs
+      // Backend: stop child processes, openclaw gateway stop/uninstall per profile, clean LaunchAgent/systemd/tasks, free port, delete dirs
       await invoke("delete_agent_cleanup", { instanceId: selectedId })
       
       // Clear all chat sessions for this instance (frontend memory state)
-      // storeKey format: "<pondInstanceId>::<roleAgentId>" (e.g., "default::main", "myinstance::coder")
+      // storeKey format: "<instanceId>::<roleAgentId>" (e.g., "default::main", "myinstance::coder")
       const currentChatByInstance = useAppStore.getState().chatByInstance
       const cleanedChatByInstance: typeof currentChatByInstance = {}
       const instancePrefix = `${selectedId}::`
@@ -2245,9 +2245,9 @@ export function AgentView() {
                           <div className="space-y-5">
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                               <div className="min-w-0 flex-1 space-y-1.5 sm:max-w-xs">
-                                <Label htmlFor="team-name-pond" className="text-xs text-app-muted">{t("agentView.label.teamName")}</Label>
+                                <Label htmlFor="team-name-clawteam" className="text-xs text-app-muted">{t("agentView.label.teamName")}</Label>
                                 <Input
-                                  id="team-name-pond"
+                                  id="team-name-clawteam"
                                   placeholder={t("agentView.team.namePlaceholder")}
                                   disabled={teamFetchLoading}
                                   value={teamEditMeta.team_name ?? ""}

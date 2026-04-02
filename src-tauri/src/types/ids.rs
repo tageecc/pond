@@ -6,7 +6,7 @@
 
 use serde::{Deserialize, Serialize};
 
-/// Pond instance ID (e.g., "default", "abc123")
+/// OpenClaw / ClawTeam instance ID (e.g., "default", "abc123")
 /// Maps to directory: ~/.openclaw/ or ~/.openclaw-{id}/
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(transparent)]

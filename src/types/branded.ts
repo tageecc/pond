@@ -21,7 +21,7 @@ declare const instanceIdBrand: unique symbol
 declare const agentIdBrand: unique symbol
 
 /**
- * Pond instance ID (e.g., "default", "abc123")
+ * OpenClaw / ClawTeam instance ID (e.g., "default", "abc123")
  * Maps to directory: ~/.openclaw/ or ~/.openclaw-{id}/
  */
 export type InstanceId = string & { [instanceIdBrand]: never }

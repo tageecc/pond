@@ -57,7 +57,7 @@ export function InstanceSidebar() {
   return (
     <aside
       className={cn(
-        "pond-panel-chrome relative z-[1] flex min-h-0 shrink-0 flex-col self-stretch overflow-hidden py-3.5 pl-3 pr-2.5",
+        "clawteam-panel-chrome relative z-[1] flex min-h-0 shrink-0 flex-col self-stretch overflow-hidden py-3.5 pl-3 pr-2.5",
         "sidebar-glass",
       )}
       style={{ width: SIDEBAR_WIDTH }}

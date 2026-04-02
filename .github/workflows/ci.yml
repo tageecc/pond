@@ -119,19 +119,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          POND_NODE_DIST_TRIPLE: ${{ matrix.node-dist-triple }}
+          CLAWTEAM_NODE_DIST_TRIPLE: ${{ matrix.node-dist-triple }}
           RUST_BACKTRACE: 1
           VERBOSE: 1
           NO_STRIP: true
           APPIMAGE_EXTRACT_AND_RUN: 1
         with:
           tagName: v__VERSION__
-          releaseName: 'Pond v__VERSION__'
+          releaseName: 'ClawTeam v__VERSION__'
           args: ${{ matrix.tauri-args }}
           releaseBody: |
             **macOS (two DMGs):** **Apple Silicon (M1/M2/M3)** — asset name usually contains `aarch64` or `arm64`. **Intel (x86_64)** — separate DMG. Pick the one that matches your Mac.
 
-            Open the DMG, drag Pond to Applications. If Gatekeeper blocks the app, Control-click the app, choose Open once, or allow in System Settings.
+            Open the DMG, drag ClawTeam to Applications. If Gatekeeper blocks the app, Control-click the app, choose Open once, or allow in System Settings.
 
             **Windows:** MSI installer for 64-bit Windows.
 

@@ -58,8 +58,8 @@ import {
   hasConfiguredModel as hasConfiguredModelFromConfig,
 } from '../lib/openclawAgentsModels'
 import { defaultModelHint } from '../constants/providers'
-import { normalizePondProfileId, resolveChatStoreKey } from '../lib/chatSessionKeys'
-import { resolvePondInstanceId } from '../lib/pondInstanceId'
+import { normalizeInstanceProfileId, resolveChatStoreKey } from '../lib/chatSessionKeys'
+import { resolveClawteamInstanceId } from '../lib/clawteamInstanceId'
 import type { AgentConfigSectionId, TeamSpaceTabId } from '../constants/agentConfigNav'
 
 const _unlisteners: UnlistenFn[] = []
@@ -172,7 +172,7 @@ interface AppState {
   setPreferencesOpen: (open: boolean) => void
   setLocale: (lng: AppLocale) => Promise<void>
 
-  /** Import ~/.openclaw into Pond and reload */
+  /** Import ~/.openclaw into ClawTeam and reload */
   importSystemOpenClaw: () => Promise<void>
   /** Dismiss onboarding without writing config */
   finishOnboarding: () => void
@@ -323,7 +323,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         : null
     const instanceId =
       explicit ??
-      resolvePondInstanceId(
+      resolveClawteamInstanceId(
         get().instanceIds,
         get().selectedInstanceId,
       ) ??
@@ -492,7 +492,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   loadSessionTranscript: async (fileInstanceId, sessionKey, sessionId, storeKeyParam) => {
-    const fileInstanceKey = normalizePondProfileId(fileInstanceId)
+    const fileInstanceKey = normalizeInstanceProfileId(fileInstanceId)
     const storeKey = resolveChatStoreKey(storeKeyParam)
     const json = await invoke<string>('load_session_transcript', {
       instanceId: fileInstanceKey,
@@ -534,7 +534,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   loadSkills: async () => {
     const selectedId =
-      resolvePondInstanceId(
+      resolveClawteamInstanceId(
         get().instanceIds,
         get().selectedInstanceId,
       ) ?? 'default'
@@ -576,7 +576,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         : null
     const instanceId =
       explicit ??
-      resolvePondInstanceId(
+      resolveClawteamInstanceId(
         get().instanceIds,
         get().selectedInstanceId,
       ) ??
@@ -605,7 +605,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   fetchChatSessions: async () => {
     const instanceId =
-      resolvePondInstanceId(
+      resolveClawteamInstanceId(
         get().instanceIds,
         get().selectedInstanceId,
       ) ?? 'default'

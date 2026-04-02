@@ -1,13 +1,13 @@
 {
   "menu": {
-    "pond": "ClawTeam",
-    "about": "关于 Pond",
+    "clawteam": "ClawTeam",
+    "about": "关于 ClawTeam",
     "services": "服务",
-    "hide": "隐藏 Pond",
+    "hide": "隐藏 ClawTeam",
     "hideOthers": "隐藏其他",
     "showAll": "全部显示",
     "preferences": "偏好设置…",
-    "quit": "退出 Pond",
+    "quit": "退出 ClawTeam",
     "file": "文件",
     "closeWindow": "关闭窗口",
     "edit": "编辑",

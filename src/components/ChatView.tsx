@@ -32,14 +32,14 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { cn, getAgentDisplayName } from "../lib/utils";
-import { resolvePondInstanceId } from "../lib/pondInstanceId";
+import { resolveClawteamInstanceId } from "../lib/clawteamInstanceId";
 import { resolveTeamLeaderAgentId, TEAM_LEADER_AGENT_ID } from "../lib/teamLeader";
 
 const DEFAULT_GATEWAY_PORT = 18789
 import {
   chatSessionStoreKey,
   isUnifiedDmContinuity,
-  normalizePondProfileId,
+  normalizeInstanceProfileId,
   sessionKeyBelongsToOpenClawRole,
 } from "../lib/chatSessionKeys";
 import { MarkdownContent } from "./MarkdownContent";
@@ -330,7 +330,7 @@ function channelLabel(row: {
   const name =
     ch === "feishu" || ch === "lark"
       ? i18n.t("chat.sourceFeishu")
-      : ch === "pond"
+      : ch === "clawteam"
         ? "ClawTeam"
         : ch === "telegram"
           ? "Telegram"
@@ -355,7 +355,7 @@ function senderToFriendlySource(
   const map: Record<string, string> = {
     cli: i18n.t("chat.sourceCli"),
     webchat: i18n.t("chat.sourceWebchat"),
-    pond: i18n.t("chat.sourcePond"),
+    clawteam: i18n.t("chat.sourceInApp"),
     feishu: i18n.t("chat.sourceFeishu"),
     lark: i18n.t("chat.sourceLark"),
     telegram: "Telegram",
@@ -431,9 +431,9 @@ export function ChatView() {
   const instanceIds = useAppStore((s) => s.instanceIds);
   const instanceDisplayNames = useAppStore((s) => s.instanceDisplayNames);
   const selectedInstanceId = useAppStore((s) => s.selectedInstanceId);
-  /** Current Pond profile (gateway, tokens, workspace) */
-  const pondInstanceId =
-    resolvePondInstanceId(instanceIds, selectedInstanceId) ??
+  /** Current OpenClaw profile (gateway, tokens, workspace) */
+  const clawteamInstanceId =
+    resolveClawteamInstanceId(instanceIds, selectedInstanceId) ??
     "default";
   const agentsListForRoles = openclawConfig?.agents?.list ?? [];
   const roleIds = useMemo(
@@ -460,7 +460,7 @@ export function ChatView() {
     });
   }, [agentsListForRoles, roleIds]);
 
-  const chatStoreKey = chatSessionStoreKey(pondInstanceId, chatRoleId);
+  const chatStoreKey = chatSessionStoreKey(clawteamInstanceId, chatRoleId);
 
   const defaultChatState = useMemo(() => getDefaultChatState(), []);
   const chatState =
@@ -532,12 +532,12 @@ export function ChatView() {
   }, [loadConfigs]);
 
   const displayNames = (instanceDisplayNames ?? {}) as Record<string, string>;
-  const gatewayInfo = getEffectiveGatewayInfo(pondInstanceId);
+  const gatewayInfo = getEffectiveGatewayInfo(clawteamInstanceId);
   const effectivePort = gatewayInfo.port;
   const agentGwStatus = gatewayInfo.agentGatewayStatus;
   const canSend = agentGwStatus === "running" && effectivePort > 0;
 
-  // When gateway is up, list sessions for all channels (Feishu, Pond, Telegram, …)
+  // When gateway is up, list sessions for all channels (Feishu, in-app, Telegram, …)
   useEffect(() => {
     if (!canSend || !effectivePort) {
       setGatewaySessions([]);
@@ -546,7 +546,7 @@ export function ChatView() {
     let cancelled = false;
     setSessionsLoading(true);
     invoke<GatewaySessionRow[]>("list_gateway_sessions", {
-      instanceId: normalizePondProfileId(pondInstanceId),
+      instanceId: normalizeInstanceProfileId(clawteamInstanceId),
       port: effectivePort,
     })
       .then((list) => {
@@ -561,7 +561,7 @@ export function ChatView() {
     return () => {
       cancelled = true;
     };
-  }, [canSend, effectivePort, pondInstanceId]);
+  }, [canSend, effectivePort, clawteamInstanceId]);
 
   const gatewaySessionsForRole = useMemo(() => {
     const filtered = gatewaySessions.filter((s) =>
@@ -582,9 +582,9 @@ export function ChatView() {
     gatewaySessionsForRole.length > 0 &&
     !isUnifiedDmContinuity(openclawConfig?.session);
 
-  const nextPondSessionKey = useCallback(() => {
+  const nextClawteamSessionKey = useCallback(() => {
     const r = sanitizeForBackend(chatRoleId) || chatRoleId || "main";
-    return `agent:${r}:pond-${crypto.randomUUID().slice(0, 8)}`;
+    return `agent:${r}:clawteam-${crypto.randomUUID().slice(0, 8)}`;
   }, [chatRoleId]);
 
   const applyGatewayRow = useCallback(
@@ -601,7 +601,7 @@ export function ChatView() {
       });
       setTranscriptLoading(true);
       return loadSessionTranscript(
-        normalizePondProfileId(pondInstanceId),
+        normalizeInstanceProfileId(clawteamInstanceId),
         row.sessionKey,
         row.sessionId,
         chatStoreKey,
@@ -616,7 +616,7 @@ export function ChatView() {
     },
     [
       chatStoreKey,
-      pondInstanceId,
+      clawteamInstanceId,
       loadSessionTranscript,
       updateChatSession,
       getChatSessionState,
@@ -682,11 +682,11 @@ export function ChatView() {
     updateChatSession(chatStoreKey, {
       ...getDefaultChatState(),
       messages: [],
-      sessionKey: nextPondSessionKey(),
+      sessionKey: nextClawteamSessionKey(),
       sending: false,
       error: null,
     });
-  }, [sending, chatStoreKey, updateChatSession, nextPondSessionKey]);
+  }, [sending, chatStoreKey, updateChatSession, nextClawteamSessionKey]);
 
   const handleStop = useCallback(() => {
     for (const unsub of unlistenersRef.current) unsub();
@@ -782,19 +782,19 @@ export function ChatView() {
       ],
     });
     setInput("");
-    updateAgentExecutionState(pondInstanceId, "thinking");
+    updateAgentExecutionState(clawteamInstanceId, "thinking");
 
     let sessionKey = useAppStore
       .getState()
       .getChatSessionState(chatStoreKey).sessionKey;
     if (!sessionKey) {
-      sessionKey = nextPondSessionKey();
+      sessionKey = nextClawteamSessionKey();
       updateChatSession(chatStoreKey, { sessionKey });
     }
 
     const port = Number(effectivePort) || DEFAULT_GATEWAY_PORT;
-    const pondKey = sanitizeForBackend(pondInstanceId) || pondInstanceId;
-    const agentKey = pondKey || "default";
+    const profileKey = sanitizeForBackend(clawteamInstanceId) || clawteamInstanceId;
+    const agentKey = profileKey || "default";
     const safeMessage = sanitizeForBackend(text) || text;
     const wsProfile = agentKey === "default" ? null : agentKey;
 
@@ -842,7 +842,7 @@ export function ChatView() {
               executionState: "executing_tool",
             });
           }
-          updateAgentExecutionState(pondInstanceId, "executing_tool");
+          updateAgentExecutionState(clawteamInstanceId, "executing_tool");
           break;
         }
         case "reasoning_delta": {
@@ -854,7 +854,7 @@ export function ChatView() {
           };
           let nextSteps = s.executionSteps;
           if (s.executionState === "idle") {
-            updateAgentExecutionState(pondInstanceId, "thinking");
+            updateAgentExecutionState(clawteamInstanceId, "thinking");
             nextSteps = [
               ...s.executionSteps,
               {
@@ -889,7 +889,7 @@ export function ChatView() {
               },
             ],
           });
-          updateAgentExecutionState(pondInstanceId, "error");
+          updateAgentExecutionState(clawteamInstanceId, "error");
           break;
       }
     };
@@ -920,13 +920,13 @@ export function ChatView() {
         error: ev.payload,
         executionState: "error",
       });
-      updateAgentExecutionState(pondInstanceId, "error");
+      updateAgentExecutionState(clawteamInstanceId, "error");
     });
     const unWsDone = await listen<string>("ws-chat-done", () => {
       updateChatSession(chatStoreKey, { executionState: "done" });
-      updateAgentExecutionState(pondInstanceId, "done");
+      updateAgentExecutionState(clawteamInstanceId, "done");
       setTimeout(
-        () => refreshInstanceDisplayName(pondInstanceId).catch(() => {}),
+        () => refreshInstanceDisplayName(clawteamInstanceId).catch(() => {}),
         2000,
       );
     });
@@ -975,7 +975,7 @@ export function ChatView() {
         executionSteps: [],
         sending: false,
       });
-      updateAgentExecutionState(pondInstanceId, "error");
+      updateAgentExecutionState(clawteamInstanceId, "error");
     } else if (!hasAnyContent && !final.error) {
       updateChatSession(chatStoreKey, {
         error: i18n.t("chat.noReplyContent"),
@@ -987,12 +987,12 @@ export function ChatView() {
         executionSteps: [],
         sending: false,
       });
-      updateAgentExecutionState(pondInstanceId, "error");
+      updateAgentExecutionState(clawteamInstanceId, "error");
     } else {
       const doneState = "done";
-      updateAgentExecutionState(pondInstanceId, doneState);
+      updateAgentExecutionState(clawteamInstanceId, doneState);
       setTimeout(
-        () => refreshInstanceDisplayName(pondInstanceId).catch(() => {}),
+        () => refreshInstanceDisplayName(clawteamInstanceId).catch(() => {}),
         2500,
       );
 
@@ -1034,7 +1034,7 @@ export function ChatView() {
 
       setTimeout(() => {
         updateChatSession(chatStoreKey, { executionState: "idle" });
-        updateAgentExecutionState(pondInstanceId, "idle");
+        updateAgentExecutionState(clawteamInstanceId, "idle");
       }, 3000);
     }
   }, [
@@ -1042,12 +1042,12 @@ export function ChatView() {
     sending,
     canSend,
     chatStoreKey,
-    pondInstanceId,
+    clawteamInstanceId,
     effectivePort,
     updateChatSession,
     updateAgentExecutionState,
     refreshInstanceDisplayName,
-    nextPondSessionKey,
+    nextClawteamSessionKey,
   ]);
 
   const running = canSend;
@@ -1060,7 +1060,7 @@ export function ChatView() {
     );
   }
 
-  const displayName = getAgentDisplayName(pondInstanceId, displayNames);
+  const displayName = getAgentDisplayName(clawteamInstanceId, displayNames);
 
   return (
     <div className="flex h-full min-w-0 flex-col overflow-hidden bg-transparent">
@@ -1091,7 +1091,7 @@ export function ChatView() {
                   setGatewayStarting(true);
                   updateChatSession(chatStoreKey, { error: null });
                   try {
-                    await startAgentGateway(pondInstanceId);
+                    await startAgentGateway(clawteamInstanceId);
                   } catch (e) {
                     updateChatSession(chatStoreKey, {
                       error:
@@ -1244,7 +1244,7 @@ export function ChatView() {
                         setGatewayStarting(true);
                         updateChatSession(chatStoreKey, { error: null });
                         try {
-                          await startAgentGateway(pondInstanceId);
+                          await startAgentGateway(clawteamInstanceId);
                         } catch (e) {
                           updateChatSession(chatStoreKey, {
                             error:
@@ -1640,7 +1640,7 @@ export function ChatView() {
                               "shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium",
                               (s.channel === "feishu" || s.channel === "lark") &&
                                 "bg-blue-500/20 text-blue-600 dark:text-blue-400",
-                              s.channel === "pond" &&
+                              s.channel === "clawteam" &&
                                 "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400",
                               s.channel === "telegram" &&
                                 "bg-sky-500/20 text-sky-600 dark:text-sky-400",
@@ -1651,7 +1651,7 @@ export function ChatView() {
                               ![
                                 "feishu",
                                 "lark",
-                                "pond",
+                                "clawteam",
                                 "telegram",
                                 "discord",
                                 "webchat",
@@ -1661,7 +1661,7 @@ export function ChatView() {
                           >
                             {s.channel === "feishu" || s.channel === "lark"
                               ? t("chat.sourceFeishu")
-                              : s.channel === "pond"
+                              : s.channel === "clawteam"
                                 ? "ClawTeam"
                                 : s.channel === "telegram"
                                   ? "TG"

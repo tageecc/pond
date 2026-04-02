@@ -1,9 +1,9 @@
 import type { SessionConfig } from "../types"
 
 /**
- * Chat store key combines Pond instance id (Gateway / openclaw path) with agents.list[].id.
+ * Chat store key combines instance id (Gateway / openclaw profile) with agents.list[].id.
  */
-export function normalizePondProfileId(id: string | null | undefined): string {
+export function normalizeInstanceProfileId(id: string | null | undefined): string {
   const t = id?.trim()
   if (!t || t === "default") return "default"
   return t
@@ -15,9 +15,9 @@ export function normalizeChatRoleId(id: string | null | undefined): string {
   return t && t.length > 0 ? t : "main"
 }
 
-/** Zustand chatByInstance key: `<pondInstanceId>::<agents.list id>` */
-export function chatSessionStoreKey(pondInstanceId: string, roleAgentId: string): string {
-  return `${normalizePondProfileId(pondInstanceId)}::${normalizeChatRoleId(roleAgentId)}`
+/** Zustand chatByInstance key: `<instanceId>::<agents.list id>` */
+export function chatSessionStoreKey(instanceId: string, roleAgentId: string): string {
+  return `${normalizeInstanceProfileId(instanceId)}::${normalizeChatRoleId(roleAgentId)}`
 }
 
 export function resolveChatStoreKey(storeKey: string): string {

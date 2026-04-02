@@ -139,8 +139,8 @@
     "team": {
       "namePlaceholder": "请输入团队名称",
       "leaderUnset": "未指定",
-      "pondTeamHint": "开启团队空间后写入当前实例 skills/clawteam-collab/SKILL.md，供角色按协作约定使用。",
-      "syncing": "正在同步 Pond 团队信息…",
+      "teamSpaceHint": "开启团队空间后写入当前实例 skills/clawteam-collab/SKILL.md，供角色按协作约定使用。",
+      "syncing": "正在同步团队信息…",
       "checking": "正在检查团队空间…",
       "notEnabledTitle": "尚未开启团队空间",
       "nameOptional": "团队名称（可选）",
@@ -342,7 +342,7 @@
     },
     "deleteRole": {
       "title": "删除角色「{{id}}」？",
-      "desc": "将从当前实例的 agents.list 中移除；Pond 团队展示中对应条目也会去掉。至少保留一个角色。删除后请重启 Gateway，并检查 bindings 是否仍引用该 agentId。若该 agent 已有数据目录，请自行备份对应 ~/.openclaw-* 或 OpenClaw 文档中的路径。"
+      "desc": "将从当前实例的 agents.list 中移除；团队展示中对应条目也会去掉。至少保留一个角色。删除后请重启 Gateway，并检查 bindings 是否仍引用该 agentId。若该 agent 已有数据目录，请自行备份对应 ~/.openclaw-* 或 OpenClaw 文档中的路径。"
     },
     "cron": {
       "empty": "当前实例暂无定时任务，在对话中让 Agent 创建定时任务后会在此显示",
