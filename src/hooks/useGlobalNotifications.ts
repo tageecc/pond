@@ -121,11 +121,10 @@ export function useGlobalNotifications() {
 
     listen<{ instanceId?: string }>("team-tasks-updated", (event) => {
         const payload = event.payload
-        const selected = useAppStore.getState().selectedInstanceId
         const pid = payload.instanceId
-        if (pid && (!selected || pid !== selected)) {
-          return
-        }
+        if (!pid) return
+        const selected = useAppStore.getState().selectedInstanceId
+        if (!selected || pid !== selected) return
         useAppStore.getState().bumpTeamTasksSyncEpoch()
         const st = useAppStore.getState()
         const inTeamSpace =

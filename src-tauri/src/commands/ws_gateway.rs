@@ -868,7 +868,7 @@ async fn notify_team_task_agents_impl(instance_id: String, per_agent: Vec<(Strin
 pub fn spawn_team_task_notify(instance_id: String, per_agent: Vec<(String, String)>) {
     let pairs: Vec<(String, String)> = per_agent
         .into_iter()
-        .filter(|(id, msg)| !id.trim().is_empty() && !msg.trim().is_empty())
+        .filter(|(id, _)| !id.trim().is_empty())
         .collect();
     if pairs.is_empty() {
         return;
