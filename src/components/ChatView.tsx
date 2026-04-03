@@ -68,6 +68,7 @@ import type {
   ChatMessage as StoreChatMessage,
   ChatToolCallPart,
   ChatReasoningPart,
+  TeamTask,
 } from "../types";
 
 /** Single tool call row (display; matches store types) */
@@ -431,6 +432,7 @@ export function ChatView() {
   const instanceIds = useAppStore((s) => s.instanceIds);
   const instanceDisplayNames = useAppStore((s) => s.instanceDisplayNames);
   const selectedInstanceId = useAppStore((s) => s.selectedInstanceId);
+  const teamTasksSyncEpoch = useAppStore((s) => s.teamTasksSyncEpoch);
   /** Current OpenClaw profile (gateway, tokens, workspace) */
   const clawteamInstanceId =
     resolveClawteamInstanceId(instanceIds, selectedInstanceId) ??
@@ -482,6 +484,33 @@ export function ChatView() {
   const listRef = useRef<HTMLDivElement>(null);
   const unlistenersRef = useRef<UnlistenFn[]>([]);
   const [newLocalThread, setNewLocalThread] = useState(false);
+  const [roleTeamTasksPreview, setRoleTeamTasksPreview] = useState<TeamTask[]>(
+    [],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    invoke<TeamTask[]>("list_team_tasks", {
+      instanceId: clawteamInstanceId,
+    })
+      .then((list) => {
+        if (cancelled) return;
+        const r = chatRoleId.trim() || "main";
+        const relevant = list.filter((t) => {
+          if (t.status === "open") return true;
+          if (t.status === "claimed" && t.claimedByAgentId === r) return true;
+          if (t.status === "failed" && r === TEAM_LEADER_AGENT_ID) return true;
+          return false;
+        });
+        setRoleTeamTasksPreview(relevant);
+      })
+      .catch(() => {
+        if (!cancelled) setRoleTeamTasksPreview([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [clawteamInstanceId, chatRoleId, teamTasksSyncEpoch]);
 
   useEffect(() => {
     setNewLocalThread(false);
@@ -1692,6 +1721,16 @@ export function ChatView() {
                 <span className="ml-auto hidden text-[11px] text-app-muted md:inline">
                   {t("chat.sendHint")}
                 </span>
+              </div>
+            ) : null}
+            {roleTeamTasksPreview.length > 0 ? (
+              <div
+                role="status"
+                className="mx-1.5 mb-0 rounded-lg border border-claw-500/25 bg-claw-500/5 px-3 py-2 text-xs text-app-text"
+              >
+                {t("chat.teamTasksHint", {
+                  count: roleTeamTasksPreview.length,
+                })}
               </div>
             ) : null}
             <div

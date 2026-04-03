@@ -20,6 +20,9 @@
     "unknownError": "Unknown error",
     "agentStopped": "Agent stopped",
     "agentStoppedDesc": "“{{name}}” Gateway closed",
-    "gatewayError": "Gateway error"
+    "gatewayError": "Gateway error",
+    "teamTasksUpdated": "Team tasks updated",
+    "teamTasksUpdatedDesc": "Related agents were notified via Gateway. Refresh the team board if it is open.",
+    "openTeamTasks": "Open team tasks"
   }
 }

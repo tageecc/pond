@@ -39,6 +39,7 @@
     "chatTitleMultiRole": "{{name}} — separate session per role",
     "chatRolesAria": "Chat roles under {{name}}",
     "teamLeader": "Team Leader",
+    "teamTasksHint": "{{count}} team task(s) need attention for this role (open, yours, or failed for Leader).",
     "switchToRole": "Switch to {{id}} (separate session)",
     "switchedTo": "Switched to “{{id}}”",
     "hintStartBelow": "Type a message below to start",

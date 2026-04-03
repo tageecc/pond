@@ -1,11 +1,15 @@
 //! Team tasks: `{instance root}/team/{instance}_tasks.json`
+//!
+//! On change, agents receive **per-role** Gateway `chat.send` messages (digest + paths) and the UI gets `team-tasks-updated`.
 
 use crate::commands::config;
 use crate::commands::team_meta::{
     sync_team_collab_skill_artifacts_if_initialized, TEAM_LEADER_AGENT_ID,
 };
 use crate::commands::ws_gateway::spawn_team_task_notify;
+use serde_json::json;
 use std::collections::HashSet;
+use tauri::{AppHandle, Emitter};
 use fs4::fs_std::FileExt;
 use serde::{Deserialize, Serialize};
 use std::fs::OpenOptions;
@@ -102,12 +106,58 @@ where
     f(&data)
 }
 
-fn team_task_change_notify_message(instance_id: &str) -> String {
+fn emit_team_tasks_updated(app: &AppHandle, instance_id: &str) {
+    let _ = app.emit("team-tasks-updated", json!({ "instanceId": instance_id }));
+}
+
+/// Lines this role should act on: all `open`, `claimed` by this agent, and `failed` visible to team leader only.
+fn build_gateway_notify_body(instance_id: &str, agent_id: &str, tasks: &[TeamTask]) -> String {
     let stem = crate::utils::paths::team_instance_filename_stem(instance_id);
-    format!(
-        "[ClawTeam] 团队任务列表已更新。请读取你 workspace 下的 team/{}_tasks.json（相对 workspace 可用 ../team/{}_tasks.json），查看与你相关的任务。",
+    let mut lines: Vec<String> = Vec::new();
+    for t in tasks {
+        let include = match t.status.as_str() {
+            "open" => true,
+            "claimed" => t.claimed_by_agent_id.as_deref() == Some(agent_id),
+            "failed" => agent_id == TEAM_LEADER_AGENT_ID,
+            _ => false,
+        };
+        if !include {
+            continue;
+        }
+        let mut s = format!("- id={} | {} | status={}", t.id, t.title, t.status);
+        if let Some(ref c) = t.claimed_by_agent_id {
+            s.push_str(&format!(" | assignee={}", c));
+        }
+        if t.status == "failed" {
+            if let Some(ref r) = t.failure_reason {
+                s.push_str(&format!(" | reason={}", r));
+            }
+        }
+        lines.push(s);
+    }
+    let path_line = format!(
+        "Task file (instance root): team/{}_tasks.json — from a role workspace use ../team/{}_tasks.json",
         stem, stem
+    );
+    if lines.is_empty() {
+        return format!(
+            "[ClawTeam task sync] No actionable items for role `{}`.\n{}\nIf new `open` tasks appear, read the file and claim via UI or JSON (`claimed`).",
+            agent_id, path_line
+        );
+    }
+    format!(
+        "[ClawTeam task sync] Role `{}` — relevant tasks:\n\n{}\n\n{}\n\nFollow clawteam-collab SKILL: claim `open` tasks, execute `claimed`, set `done` or `failed` with reason.",
+        agent_id,
+        lines.join("\n"),
+        path_line
     )
+}
+
+fn pairs_for_agents(instance_id: &str, agent_ids: &[String], tasks: &[TeamTask]) -> Vec<(String, String)> {
+    agent_ids
+        .iter()
+        .map(|id| (id.clone(), build_gateway_notify_body(instance_id, id, tasks)))
+        .collect()
 }
 
 #[tauri::command]
@@ -121,6 +171,7 @@ pub fn list_team_tasks(instance_id: String) -> Result<Vec<TeamTask>, String> {
 
 #[tauri::command]
 pub fn add_team_task(
+    app: AppHandle,
     instance_id: String,
     title: String,
     assigned_to_agent_id: Option<String>,
@@ -141,7 +192,7 @@ pub fn add_team_task(
         }
     }
     let now = chrono::Utc::now().timestamp_millis();
-    let (task, _) = with_tasks_file_mut(&instance_id, |file| {
+    let ((task, all_tasks), _) = with_tasks_file_mut(&instance_id, |file| {
         let (status, claimed) = match &assignee {
             Some(id) => ("claimed".to_string(), Some(id.clone())),
             None => ("open".to_string(), None),
@@ -156,19 +207,25 @@ pub fn add_team_task(
             failure_reason: None,
         };
         file.tasks.push(task.clone());
-        Ok((task, true))
+        Ok(((task, file.tasks.clone()), true))
     })?;
     let _ = sync_team_collab_skill_artifacts_if_initialized(&instance_id);
-    let msg = team_task_change_notify_message(&instance_id);
-    let notify_ids = assignee
-        .map(|id| vec![id])
-        .unwrap_or_else(|| vec![TEAM_LEADER_AGENT_ID.to_string()]);
-    spawn_team_task_notify(instance_id.clone(), notify_ids, msg);
+    let targets: Vec<String> = if let Some(ref a) = assignee {
+        vec![a.clone()]
+    } else {
+        let mut v: Vec<String> = allowed.iter().cloned().collect();
+        v.sort();
+        v
+    };
+    let pairs = pairs_for_agents(&instance_id, &targets, &all_tasks);
+    spawn_team_task_notify(instance_id.clone(), pairs);
+    emit_team_tasks_updated(&app, instance_id.trim());
     Ok(task)
 }
 
 #[tauri::command]
 pub fn update_team_task(
+    app: AppHandle,
     instance_id: String,
     task_id: String,
     status: Option<String>,
@@ -266,6 +323,7 @@ pub fn update_team_task(
     })?;
     let _ = sync_team_collab_skill_artifacts_if_initialized(&instance_id);
     if did_persist {
+        emit_team_tasks_updated(&app, instance_id.trim());
         let mut notify: Vec<String> = Vec::new();
         if let Some(ref o) = old_claimed {
             if task.claimed_by_agent_id.as_ref() != Some(o) {
@@ -281,11 +339,9 @@ pub fn update_team_task(
         notify.sort();
         notify.dedup();
         if !notify.is_empty() {
-            spawn_team_task_notify(
-                instance_id.clone(),
-                notify,
-                team_task_change_notify_message(&instance_id),
-            );
+            let all_tasks = with_tasks_file_read(&instance_id, |file| Ok(file.tasks.clone()))?;
+            let pairs = pairs_for_agents(&instance_id, &notify, &all_tasks);
+            spawn_team_task_notify(instance_id.clone(), pairs);
         }
     }
     Ok(task)

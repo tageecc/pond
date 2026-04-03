@@ -20,6 +20,9 @@
     "unknownError": "未知错误",
     "agentStopped": "Agent 已停止",
     "agentStoppedDesc": "「{{name}}」Gateway 已关闭",
-    "gatewayError": "Gateway 错误"
+    "gatewayError": "Gateway 错误",
+    "teamTasksUpdated": "团队任务已更新",
+    "teamTasksUpdatedDesc": "已通过 Gateway 向相关角色会话注入同步消息；若正在查看任务台，列表将自动刷新。",
+    "openTeamTasks": "打开任务台"
   }
 }

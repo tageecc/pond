@@ -119,6 +119,33 @@ export function useGlobalNotifications() {
       }
     }).then((unlisten) => unlisteners.push(unlisten))
 
+    listen<{ instanceId?: string }>("team-tasks-updated", (event) => {
+        const payload = event.payload
+        const selected = useAppStore.getState().selectedInstanceId
+        const pid = payload.instanceId
+        if (pid && (!selected || pid !== selected)) {
+          return
+        }
+        useAppStore.getState().bumpTeamTasksSyncEpoch()
+        const st = useAppStore.getState()
+        const inTeamSpace =
+          st.currentView === "agents" &&
+          st.agentConfigSection === "team_space"
+        if (inTeamSpace) return
+        toast.info(t("notifications.teamTasksUpdated"), {
+          description: t("notifications.teamTasksUpdatedDesc"),
+          duration: 6000,
+          action: {
+            label: t("notifications.openTeamTasks"),
+            onClick: () => {
+              useAppStore.getState().setCurrentView("agents")
+              useAppStore.getState().setAgentConfigSection("team_space")
+              useAppStore.getState().setTeamSpaceTab("tasks")
+            },
+          },
+        })
+    }).then((unlisten) => unlisteners.push(unlisten))
+
     listen<string>("gateway-log", (event) => {
       const log = event.payload
 

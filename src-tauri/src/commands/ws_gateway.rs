@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::env;
 use std::path::PathBuf;
 use tauri::{AppHandle, Emitter};
@@ -785,7 +785,7 @@ fn pick_best_clawteam_session_key(sessions: &[&Value], target_agent_id: &str) ->
     best.map(|b| b.1)
 }
 
-async fn notify_team_task_agents_impl(instance_id: String, agent_ids: Vec<String>, message: String) {
+async fn notify_team_task_agents_impl(instance_id: String, per_agent: Vec<(String, String)>) {
     let id = instance_id.trim();
     let port = match config::get_instance_gateway_port(id) {
         Some(p) => p,
@@ -832,7 +832,7 @@ async fn notify_team_task_agents_impl(instance_id: String, agent_ids: Vec<String
         }
     };
 
-    for aid in agent_ids {
+    for (aid, message) in per_agent {
         let session_key =
             pick_best_clawteam_session_key(&sessions, &aid).unwrap_or_else(|| new_clawteam_notify_session_key(&aid));
         let req_id = uuid::Uuid::new_v4().to_string();
@@ -853,27 +853,27 @@ async fn notify_team_task_agents_impl(instance_id: String, agent_ids: Vec<String
             .is_err()
         {
             eprintln!("[clawteam] team task notify: chat.send write failed (agent {aid})");
-            break;
+            continue;
         }
         if let Err(e) = drain_gateway_chat_stream(&mut conn.read, None).await {
             eprintln!("[clawteam] team task notify: stream failed (agent {aid}): {e}");
-            break;
+            continue;
         }
     }
     let _ = conn.write.send(WsMessage::Close(None)).await;
 }
 
 /// After team tasks are persisted, notify agents asynchronously via Gateway `chat.send` (no UI stream forwarding).
-pub fn spawn_team_task_notify(instance_id: String, agent_ids: Vec<String>, message: String) {
-    let ids: HashSet<String> = agent_ids
+/// Each pair is `(agent_id, message)` — message text is tailored per role (digest of relevant tasks).
+pub fn spawn_team_task_notify(instance_id: String, per_agent: Vec<(String, String)>) {
+    let pairs: Vec<(String, String)> = per_agent
         .into_iter()
-        .map(|s| s.trim().to_string())
-        .filter(|s| !s.is_empty())
+        .filter(|(id, msg)| !id.trim().is_empty() && !msg.trim().is_empty())
         .collect();
-    if ids.is_empty() {
+    if pairs.is_empty() {
         return;
     }
     tauri::async_runtime::spawn(async move {
-        notify_team_task_agents_impl(instance_id, ids.into_iter().collect(), message).await;
+        notify_team_task_agents_impl(instance_id, pairs).await;
     });
 }

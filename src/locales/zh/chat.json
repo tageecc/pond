@@ -39,6 +39,7 @@
     "chatTitleMultiRole": "{{name}}，各角色会话独立",
     "chatRolesAria": "{{name}} 下的对话角色",
     "teamLeader": "团队 Leader",
+    "teamTasksHint": "当前角色有 {{count}} 条团队任务待处理（待领取、已指派给你、或 Leader 可见的失败项）。",
     "switchToRole": "切换到 {{id}}（会话独立）",
     "switchedTo": "已切换到「{{id}}」",
     "hintStartBelow": "在下方输入消息即可开始",

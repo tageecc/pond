@@ -112,6 +112,8 @@ interface AppState {
   agentConfigSection: AgentConfigSectionId
   /** Team space sub-tab when agentConfigSection === 'team_space' */
   teamSpaceTab: TeamSpaceTabId
+  /** Incremented when backend emits `team-tasks-updated` (team task list / Gateway notify). */
+  teamTasksSyncEpoch: number
   pendingAgentId: string | null
   preferencesOpen: boolean
   /** UI language (synced with i18n + app.json) */
@@ -169,6 +171,7 @@ interface AppState {
   setCurrentView: (view: AppConfig["currentView"], pendingAgentId?: string | null) => void
   setAgentConfigSection: (section: AppState['agentConfigSection']) => void
   setTeamSpaceTab: (tab: TeamSpaceTabId) => void
+  bumpTeamTasksSyncEpoch: () => void
   setPreferencesOpen: (open: boolean) => void
   setLocale: (lng: AppLocale) => Promise<void>
 
@@ -217,6 +220,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   currentView: 'dashboard',
   agentConfigSection: 'model',
   teamSpaceTab: 'overview',
+  teamTasksSyncEpoch: 0,
   pendingAgentId: null,
   preferencesOpen: false,
   needsOnboarding: false,
@@ -663,6 +667,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   setAgentConfigSection: (section) => set({ agentConfigSection: section }),
   setTeamSpaceTab: (tab) => set({ teamSpaceTab: tab }),
+  bumpTeamTasksSyncEpoch: () =>
+    set((s) => ({ teamTasksSyncEpoch: s.teamTasksSyncEpoch + 1 })),
   setPreferencesOpen: (open) => set({ preferencesOpen: open }),
 
   setLocale: async (lng) => {
